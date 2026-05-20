@@ -1,0 +1,2 @@
+# Mortalidad por códigos basura en Argentina (2010–2023): redistribución hacia causas específicas
+El repositorio contiene los scripts utilizados para la limpieza y análisis de los datos de mortalidad en Argentina para el período 2010-2023.

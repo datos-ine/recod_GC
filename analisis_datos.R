@@ -1,0 +1,462 @@
+### Mortalidad por códigos basura en Argentina (2010–2023):
+### redistribución hacia causas específicas
+### Análisis de datos
+### Autora: Tamara Ricardo
+### Revisor: Juan I. Irassar
+# Última modificación: 20-05-2026 08:46
+
+# Cargar paquetes --------------------------------------------------------
+# remotes::install_github("datos-ine/joinpointR") # Instala versión desarrollo
+
+pacman::p_load(
+  # Gráficos
+  scico,
+  patchwork,
+  ggridges,
+  treemapify,
+  # Tablas
+  flextable,
+  gtsummary,
+  # Tasas estandarizadas
+  PHEindicatormethods,
+  # Regresión joinpoint
+  joinpointR,
+  # Manejo de datos
+  scales,
+  here,
+  rio,
+  janitor,
+  tidyverse
+  # ,
+  # update = TRUE
+)
+
+
+# Cargar/preparar datos --------------------------------------------------
+## Población estándar Argentina (2022) -----
+pob_est_2022 <- import(here("clean", "arg_pob_est_2022.rds"))
+
+## Proyecciones poblacionales Argentina (2010-2023) -----
+proy_2010_2023 <- import(here("clean", "arg_proy_mensual_2010_2023.rds")) |>
+  # Seleccionar primer mes del año
+  filter(mes == 1)
+
+
+## Defunciones por grupo de causas -----
+recod_defun <- import(here("clean", "arg_defun_mes_2010-2023_recod.rds")) |>
+  # Ordenar grupo nivel 1
+  mutate(
+    grupo_n1 = fct_relevel(
+      grupo_n1,
+      "ENT",
+      after = 0
+    )
+  ) |>
+  # Crear variable de agrupamiento nivel 2
+  mutate(
+    grupo_causa = fct_collapse(
+      grupo_n2i,
+      "GC1-GC2" = c("GC1", "GC2"),
+      "GC3-GC4" = c("GC3", "GC4")
+    )
+  )
+
+
+# Paletas colorblind-friendly --------------------------------------------
+pal <- scico(n = 4, palette = "managua")
+
+pal2 <- c(scico(n = 10, palette = "managua", direction = -1), "grey60")
+
+
+# Figura 1 ---------------------------------------------------------------
+## Cargar datos -----
+source("script_figura_1.R")
+
+# ## Guardar figura -----
+# export_svg(fig1) |>
+#   charToRaw() |>
+#   rsvg_png(
+#     file = "figuras/Figura1.png",
+#     width = 1772,
+#     height = 1500
+#   )
+
+# Análisis exploratorio --------------------------------------------------
+## Frecuencia defunciones por sexo
+recod_defun |>
+  count(sexo, wt = n) |>
+  mutate(pct = percent(n / sum(n)))
+
+## Frecuencia defunciones por grupo etario
+recod_defun |>
+  count(grupo_edad, wt = n) |>
+  mutate(pct = percent(n / sum(n), accuracy = .1))
+
+
+## Códigos garbage más frecuentes
+recod_defun |>
+  filter(grupo_causa == "GC1-GC2") |>
+  count(cie10_cod, wt = n) |>
+  mutate(pct = percent(n / sum(n), accuracy = .1)) |>
+  arrange(-n) |>
+  head(n = 15)
+
+
+## Frecuencia defunciones por grupo causa nivel 1
+recod_defun |>
+  count(grupo_edad, grupo_n1, wt = n) |>
+  mutate(pct = percent(n / sum(n), accuracy = .1))
+
+
+## Tabla S2 --------------------------------------------------------------
+theme_gtsummary_language(
+  language = "es",
+  decimal.mark = ",",
+  big.mark = "."
+)
+
+### Frecuencia defunciones por grupo etario y grupo de causas
+tabs2 <- recod_defun |>
+  # Individualizar filas para calcular frecuencias
+  uncount(weights = n) |>
+
+  # Tabla 2x2
+  tbl_summary(
+    by = grupo_edad,
+    include = c(grupo_n1, grupo_causa),
+    digits = list(all_categorical() ~ c(0, 1)),
+    label = list(grupo_n1 = "Nivel 1", grupo_causa = "Nivel 2")
+  ) |>
+  add_p() |>
+
+  # Opciones tabla
+  bold_labels() |>
+  modify_header(
+    label = "**Grupo causa**",
+    p.value = "**P**",
+    all_stat_cols() ~ "{level} ({style_percent(p, digits = 1)}%)"
+  ) |>
+  modify_spanning_header(all_stat_cols() ~ "**Grupo etario**") |>
+  remove_footnote_header() |>
+  modify_indent(columns = label, indent = 0L)
+
+
+# Evolución temporal tasas GC --------------------------------------------
+## Tasas estandarizadas por año -----
+datos_jp <- recod_defun |>
+  # Seleccionar muertes por GC
+  filter(str_detect(grupo_n1, "GC")) |>
+  droplevels() |>
+
+  # Agrupar datos por año
+  count(anio, grupo_edad, region_deis, grupo_n2i, wt = n) |>
+
+  # Unir con proyecciones poblacionales
+  left_join(
+    proy_2010_2023 |>
+      # Agrupar por año
+      count(anio, region_deis, grupo_edad, wt = proy_pob, name = "pob")
+  ) |>
+
+  # Añadir totales Argentina
+  (\(x) {
+    bind_rows(
+      x,
+      x |>
+        group_by(anio, grupo_edad, grupo_n2i) |>
+        summarise(
+          region_deis = "Argentina",
+          pob = sum(pob, na.rm = TRUE),
+          n = sum(n, na.rm = TRUE),
+          .groups = "drop"
+        )
+    )
+  })() |>
+
+  # Añadir población estándar 2022
+  left_join(pob_est_2022) |>
+
+  # Calcular tasa estandarizada
+  group_by(anio, region_deis, grupo_causa = grupo_n2i) |>
+  calculate_dsr(
+    x = n,
+    n = pob,
+    stdpop = pob_est_2022,
+    type = "standard"
+  )
+
+
+### Regresión joinpoint -----
+mod_jp <- model_jp(
+  data = datos_jp,
+  value = "value",
+  time = "anio",
+  group = c("region_deis", "grupo_causa"),
+  step = TRUE,
+  k = 3,
+  test = TRUE
+)
+
+
+## AAPCs modelos lineales
+get_aapc(mod_jp$NOA2_GC1)
+get_aapc(mod_jp$`Patagonia Norte_GC1`)
+
+
+get_aapc(mod_jp$`Patagonia Norte_GC2`)
+
+get_aapc(mod_jp$Argentina_GC3)
+get_aapc(mod_jp$Centro_GC3)
+get_aapc(mod_jp$Cuyo_GC3)
+get_aapc(mod_jp$NOA1_GC3)
+get_aapc(mod_jp$`Patagonia Norte_GC3`)
+
+get_aapc(mod_jp$NOA2_GC4)
+get_aapc(mod_jp$`Patagonia Norte_GC4`)
+
+
+## Tabla S3 --------------------------------------------------------------
+tabs3 <- mod_jp |>
+  # Descartar modelos regresión lineal
+  discard(
+    ~ inherits(.x, "lm") &&
+      !inherits(.x, "segmented")
+  ) |>
+
+  # Crear tabla
+  summary_jp(
+    var1 = "Región",
+    var2 = "Nivel",
+    lan = "es",
+    ft = TRUE
+  ) |>
+
+  # Cambiar fuente
+  font(fontname = "Times New Roman", part = "all")
+
+
+# Figura 2 ---------------------------------------------------------------
+fig2 <- datos_jp |>
+
+  # Gráfico
+  ggplot(aes(x = value, y = grupo_causa, fill = grupo_causa)) +
+  facet_wrap(~region_deis, ncol = 2) +
+
+  # Geometrías
+  geom_density_ridges(
+    jittered_points = TRUE,
+    position = "raincloud",
+    color = NA,
+    alpha = 0.75,
+    point_color = "grey40",
+    point_alpha = 0.5,
+    scale = 5
+  ) +
+
+  # Escalas
+  scale_x_continuous(limits = c(0, 150)) +
+  scale_fill_manual(values = pal, name = NULL) +
+
+  # Layout
+  labs(
+    x = "Tasa est. (100.000 hab.)",
+    y = NULL,
+    caption = c("GC1: amarillo; GC2: rojo; GC3: violeta; CG4: cian")
+  ) +
+
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    text = element_text(family = "Times New Roman", size = 12),
+    strip.text = element_text(face = "bold")
+  )
+
+
+### Guardar figura ----
+# ggsave(
+#   fig2,
+#   filename = "figuras/Figura2.png",
+#   width = 15,
+#   height = 18,
+#   units = "cm",
+#   dpi = 300
+# )
+
+# Figura 3 ---------------------------------------------------------------
+fig3 <- gg_jpoint(mods = mod_jp, facets = TRUE) +
+  # Facets
+  facet_wrap(
+    ~group,
+    ncol = 4,
+    labeller = as_labeller(
+      ~ str_remove(.x, "_.*") |> str_replace("Patagonia", "P.")
+    )
+  ) +
+
+  # Escalas
+  scale_x_continuous(n.breaks = 7) +
+  scale_color_manual(values = rep(pal, 8), name = NULL) +
+
+  # Layout
+  labs(
+    y = "log-tasa",
+    caption = c("GC1: amarillo; GC2: rojo; GC3: violeta; CG4: cian")
+  ) +
+  theme(
+    legend.position = "none",
+    text = element_text(family = "Times New Roman", size = 12),
+    axis.text.x = element_text(angle = 90),
+    strip.text = element_text(face = "bold")
+  )
+
+### Guardar figura -----
+# ggsave(
+#   fig3,
+#   filename = "figuras/Figura3.png",
+#   width = 15,
+#   height = 19,
+#   units = "cm",
+#   dpi = 300
+# )
+
+# Figura 4: Cambio frecuencia por grupo causa ----------------------------
+## Frecuencias paso1 -----
+g1 <- recod_defun |>
+  # Frecuencias por grupo
+  count(grupo_n1, grupo_causa, wt = n) |>
+  mutate(pct = n / sum(n)) |>
+
+  # Crear variable para color de relleno
+  mutate(
+    fill = fct_collapse(
+      grupo_causa,
+      "GC" = c("GC1-GC2", "GC3-GC4")
+    )
+  ) |>
+
+  # Crear etiquetas texto
+  mutate(
+    label = if_else(
+      pct < 0.02,
+      percent(pct, accuracy = .1, decimal.mark = ","),
+      paste0(grupo_causa, "\n", percent(pct, accuracy = .1, decimal.mark = ","))
+    )
+  ) |>
+
+  # Gráfico
+  ggplot(aes(area = pct, subgroup = grupo_n1, fill = fill)) +
+  geom_treemap()
+
+
+## Frecuencias paso 2 -----
+g2 <- recod_defun |>
+  # Reagrupar grupo nivel 1
+  mutate(
+    grupo_n1 = case_when(
+      grupo_n2m %in% c("DM", "ECV", "ERC", "NPL", "ONT") ~ "ENT",
+      grupo_n2m %in% c("HO", "SU", "TRA", "OCE") ~ "CE",
+      .default = grupo_n2m
+    ) |>
+      fct_relevel("ENT", after = 0)
+  ) |>
+  # Frecuencias por grupo
+  count(grupo_n1, grupo_n2m, wt = n) |>
+  mutate(pct = n / sum(n)) |>
+
+  # Crear variable para color de relleno
+  mutate(
+    fill = fct_collapse(
+      grupo_n2m,
+      "GC" = c("GC1", "GC2")
+    )
+  ) |>
+
+  # Crear etiquetas texto
+  mutate(
+    label = if_else(
+      pct < 0.02,
+      percent(pct, accuracy = .1, decimal.mark = ","),
+      paste0(grupo_n2m, "\n", percent(pct, accuracy = .1, decimal.mark = ","))
+    )
+  ) |>
+
+  # Gráfico
+  ggplot(aes(area = pct, subgroup = grupo_n1, fill = fill)) +
+  geom_treemap()
+
+
+## Frecuencias paso 3-4 -----
+g3 <- recod_defun |>
+  # Reagrupar grupo nivel 1
+  mutate(
+    grupo_n1 = case_when(
+      grupo_n2f %in% c("DM", "ECV", "ERC", "NPL", "ONT") ~ "ENT",
+      grupo_n2f %in% c("HO", "SU", "TRA", "OCE") ~ "CE",
+      .default = grupo_n2f
+    ) |>
+      fct_relevel("ENT", after = 0)
+  ) |>
+  # Frecuencias por grupo
+  count(grupo_n1, grupo_n2f, wt = n) |>
+  mutate(pct = n / sum(n)) |>
+
+  # Crear etiquetas texto
+  mutate(
+    label = if_else(
+      pct < 0.02,
+      percent(pct, accuracy = .1, decimal.mark = ","),
+      paste0(grupo_n2f, "\n", percent(pct, accuracy = .1, decimal.mark = ","))
+    )
+  ) |>
+
+  # Gráfico
+  ggplot(aes(area = pct, subgroup = grupo_n1, fill = grupo_n2f)) +
+  geom_treemap()
+
+
+## Unir gráficos -----
+fig4 <- (g1 + theme(legend.position = "none")) /
+  (g2 + theme(legend.position = "none")) /
+  (g3 +
+    guides(fill = guide_legend(nrow = 1)) +
+    theme(legend.position = "bottom")) &
+
+  # Añadir borde
+  geom_treemap_subgroup_border() &
+
+  # Añadir texto
+  geom_treemap_text(
+    aes(label = label),
+    place = "center",
+    reflow = TRUE,
+    min.size = 3,
+    color = "white",
+    family = "Times New Roman"
+  ) &
+
+  # Escala de colores
+  scale_fill_manual(values = pal2, name = NULL) &
+
+  # Layout
+  theme(
+    text = element_text(family = "Times New Roman", size = 9),
+    legend.key.size = unit(1, "points")
+  ) &
+  plot_annotation(
+    caption = c(
+      "DM: Diabetes mellitus; ECV: Enf. cardiovasculares; ERC: Enf. respiratorias crónicas; NPL: neoplasias; 
+      ONT: Otras ENT; TR: Accidentes de tránsito; HO: Homicidio; SU: Suicidio; OCE: Otras CE"
+    )
+  ) &
+
+  cowplot::get_legend(g1, legend = "bottom")
+
+### Guardar figura -----
+# ggsave(
+#   fig4,
+#   filename = "figuras/Figura4.png",
+#   width = 15,
+#   height = 20,
+#   units = "cm",
+#   dpi = 300
+# )
