@@ -4,7 +4,7 @@
 ## - Proyecciones poblacionales por sexo y grupo etario quinquenal, 2010-2023 (INDEC)
 ## - Población estándar por sexo y grupo etario, Argentina, Censo 2022 (INDEC)
 ### Autora: Tamara Ricardo
-# Última modificación: 15-05-2026 12:34
+# Última modificación: 21-05-2026 13:20
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -95,9 +95,11 @@ proy_2010_2023 <- map(
     region_deis = case_when(
       str_detect(prov_1, "02|06|14|30|82") ~ "Centro",
       str_detect(prov_1, "18|22|34|54") ~ "NEA",
-      str_detect(prov_1, "38|66|90") ~ "NOA1",
+      str_detect(prov_1, "90") ~ "NOA (Tucumán)",
+      str_detect(prov_1, "38|66") ~ "NOA1",
       str_detect(prov_1, "10|86") ~ "NOA2",
-      str_detect(prov_1, "46|50|70|74") ~ "Cuyo",
+      str_detect(prov_1, "50") ~ "Cuyo (Mendoza)",
+      str_detect(prov_1, "46|70|74") ~ "Cuyo",
       str_detect(prov_1, "42|58|62") ~ "Patagonia Norte",
       str_detect(prov_1, "26|78|94") ~ "Patagonia Sur"
     )

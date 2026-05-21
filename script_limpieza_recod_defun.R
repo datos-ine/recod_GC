@@ -6,7 +6,7 @@
 ### según Teixeira et al. (2021), Soares Filho et al. (2024) y GBD (2019)
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 15-05-2026 13:00
+# Última modificación: 21-05-2026 13:12
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -113,8 +113,11 @@ defun <- defun_raw |>
   # Modificar etiquetas región DEIS
   mutate(
     region_deis = case_when(
-      str_detect(region_deis, "Cuyo") ~ "Cuyo",
-      str_detect(region_deis, "3.NOA1.|4.NOA.") ~ "NOA1",
+      region_deis == "6.Cuyo1" ~ "Cuyo (Mendoza)",
+      region_deis == "7.Cuyo2." ~ "Cuyo",
+      region_deis == "4.NOA." ~ "NOA (Tucumán)",
+      region_deis == "3.NOA1." ~ "NOA1",
+      region_deis == "5.NOA2." ~ "NOA2",
       str_detect(region_deis, "8.Pat.") ~ "Patagonia Norte",
       str_detect(region_deis, "9.Pat.") ~ "Patagonia Sur",
       .default = str_sub(region_deis, 3) |> str_remove("\\.")

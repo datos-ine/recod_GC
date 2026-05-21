@@ -3,7 +3,7 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 20-05-2026 08:46
+# Última modificación: 21-05-2026 14:01
 
 # Cargar paquetes --------------------------------------------------------
 # remotes::install_github("datos-ine/joinpointR") # Instala versión desarrollo
@@ -93,21 +93,6 @@ recod_defun |>
   mutate(pct = percent(n / sum(n), accuracy = .1))
 
 
-## Códigos garbage más frecuentes
-recod_defun |>
-  filter(grupo_causa == "GC1-GC2") |>
-  count(cie10_cod, wt = n) |>
-  mutate(pct = percent(n / sum(n), accuracy = .1)) |>
-  arrange(-n) |>
-  head(n = 15)
-
-
-## Frecuencia defunciones por grupo causa nivel 1
-recod_defun |>
-  count(grupo_edad, grupo_n1, wt = n) |>
-  mutate(pct = percent(n / sum(n), accuracy = .1))
-
-
 ## Tabla S2 --------------------------------------------------------------
 theme_gtsummary_language(
   language = "es",
@@ -115,7 +100,7 @@ theme_gtsummary_language(
   big.mark = "."
 )
 
-### Frecuencia defunciones por grupo etario y grupo de causas
+### Frecuencia defunciones por grupo etario, sexo y grupo de causas
 tabs2 <- recod_defun |>
   # Individualizar filas para calcular frecuencias
   uncount(weights = n) |>
@@ -123,22 +108,75 @@ tabs2 <- recod_defun |>
   # Tabla 2x2
   tbl_summary(
     by = grupo_edad,
-    include = c(grupo_n1, grupo_causa),
+    include = c(sexo, grupo_n1, grupo_causa),
     digits = list(all_categorical() ~ c(0, 1)),
-    label = list(grupo_n1 = "Nivel 1", grupo_causa = "Nivel 2")
+    label = list(
+      sexo = "Sexo",
+      grupo_n1 = "Grupo nivel 1",
+      grupo_causa = "Grupo nivel 2"
+    )
   ) |>
   add_p() |>
 
   # Opciones tabla
   bold_labels() |>
   modify_header(
-    label = "**Grupo causa**",
-    p.value = "**P**",
-    all_stat_cols() ~ "{level} ({style_percent(p, digits = 1)}%)"
+    label = "**Variable**",
+    p.value = "**p**",
+    all_stat_cols() ~ "{level} ({style_percent(p)}%)"
   ) |>
   modify_spanning_header(all_stat_cols() ~ "**Grupo etario**") |>
   remove_footnote_header() |>
   modify_indent(columns = label, indent = 0L)
+
+
+## Tabla S3 --------------------------------------------------------------
+tabs3 <- recod_defun |>
+  # Filtrar GC1-GC2
+  filter(grupo_causa %in% c("GC1-GC2")) |>
+
+  # Reagrupar niveles
+  mutate(
+    cie10_cod = if_else(
+      cie10_cod == "A41.9",
+      cie10_cod,
+      str_sub(cie10_cod, 1, 3)
+    )
+  ) |>
+
+  # Frecuencia muertes
+  count(Código = cie10_cod, wt = n) |>
+  mutate(pct = percent(n / sum(n), accuracy = .1, decimal.mark = ",")) |>
+
+  # Filtrar por frecuencia
+  arrange(-n) |>
+  filter_out(n < 20000) |>
+
+  # Añadir descripción
+  mutate(
+    Causa = c(
+      "Insuficiencia cardíaca",
+      "Otras causas mal definidas y no especificadas de mortalidad",
+      "Insuficiencia respiratoria",
+      "Septicemia no especificada",
+      "Neumonitis por alimentos o vómito",
+      "Insuficiencia renal no especificada",
+      "Otras enfermedades del sistema digestivo",
+      "Hipertensión esencial (primaria)",
+      "Exposición a factor no especificado",
+      "Shock, no clasificado en otra parte",
+      "Edema pulmonar",
+      "Insuficiencia renal aguda",
+      "Otras muertes súbitas de causa desconocida",
+      "Embolia pulmonar",
+      "Peritonitis"
+    ),
+    .after = "Código"
+  ) |>
+
+  ## Mostrar tabla
+  flextable() |>
+  autofit()
 
 
 # Evolución temporal tasas GC --------------------------------------------
@@ -215,13 +253,13 @@ get_aapc(mod_jp$NOA2_GC4)
 get_aapc(mod_jp$`Patagonia Norte_GC4`)
 
 
-## Tabla S3 --------------------------------------------------------------
-tabs3 <- mod_jp |>
-  # Descartar modelos regresión lineal
-  discard(
-    ~ inherits(.x, "lm") &&
-      !inherits(.x, "segmented")
-  ) |>
+## Tabla S4 --------------------------------------------------------------
+tabs4 <- mod_jp |>
+  # # Descartar modelos regresión lineal
+  # discard(
+  #   ~ inherits(.x, "lm") &&
+  #     !inherits(.x, "segmented")
+  # ) |>
 
   # Crear tabla
   summary_jp(
@@ -232,6 +270,7 @@ tabs3 <- mod_jp |>
   ) |>
 
   # Cambiar fuente
+  merge_v(1) |>
   font(fontname = "Times New Roman", part = "all")
 
 
@@ -295,7 +334,8 @@ fig3 <- gg_jpoint(mods = mod_jp, facets = TRUE) +
 
   # Escalas
   scale_x_continuous(n.breaks = 7) +
-  scale_color_manual(values = rep(pal, 8), name = NULL) +
+  scale_y_continuous(n.breaks = 2) +
+  scale_color_manual(values = rep(pal, 10), name = NULL) +
 
   # Layout
   labs(
@@ -304,7 +344,7 @@ fig3 <- gg_jpoint(mods = mod_jp, facets = TRUE) +
   ) +
   theme(
     legend.position = "none",
-    text = element_text(family = "Times New Roman", size = 12),
+    text = element_text(family = "Times New Roman", size = 11),
     axis.text.x = element_text(angle = 90),
     strip.text = element_text(face = "bold")
   )
