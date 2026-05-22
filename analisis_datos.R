@@ -500,3 +500,35 @@ fig4 <- (g1 + theme(legend.position = "none")) /
 #   units = "cm",
 #   dpi = 300
 # )
+
+# Tabla S5 ---------------------------------------------------------------
+tabs5 <- recod_defun |>
+  # Frecuencias por grupo
+  count(grupo_causa, wt = n) |>
+
+  # Añadir frecuencias finales
+  left_join(
+    recod_defun |>
+      # Frecuencias por grupo
+      count(grupo_causa = grupo_n2f, wt = n, name = "n_fin")
+  ) |>
+
+  # Cambio absoluto y relativo
+  mutate(
+    cambio_rel = percent(((n_fin - n) / n), accuracy = .1, decimal.mark = ","),
+    razon_post_pre = number(n_fin / n, accuracy = .1, decimal.mark = ",")
+  ) |>
+
+  # Renombrar columnas
+  rename(
+    "Grupo causa" = 1,
+    "n (inicial)" = 2,
+    "n (final)" = 3,
+    "Cambio relativo" = cambio_rel,
+    "Razón cambio" = razon_post_pre
+  ) |>
+  # Formato tabla
+  flextable() |>
+  bold(part = "header") |>
+  fontsize(size = 16, part = "all") |>
+  autofit()
