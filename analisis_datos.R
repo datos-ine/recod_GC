@@ -3,7 +3,7 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 21-05-2026 14:01
+# Última modificación: 26-05-2026 15:31
 
 # Cargar paquetes --------------------------------------------------------
 # remotes::install_github("datos-ine/joinpointR") # Instala versión desarrollo
@@ -69,9 +69,9 @@ pal2 <- c(scico(n = 10, palette = "managua", direction = -1), "grey60")
 
 
 # Figura 1 ---------------------------------------------------------------
-## Cargar datos -----
-source("script_figura_1.R")
-
+# ## Cargar datos -----
+# source("script_figura_1.R")
+#
 # ## Guardar figura -----
 # export_svg(fig1) |>
 #   charToRaw() |>
@@ -82,53 +82,97 @@ source("script_figura_1.R")
 #   )
 
 # Análisis exploratorio --------------------------------------------------
-## Frecuencia defunciones por sexo
-recod_defun |>
-  count(sexo, wt = n) |>
-  mutate(pct = percent(n / sum(n)))
-
-## Frecuencia defunciones por grupo etario
-recod_defun |>
-  count(grupo_edad, wt = n) |>
-  mutate(pct = percent(n / sum(n), accuracy = .1))
-
-
-## Tabla S2 --------------------------------------------------------------
+## Tema para las tablas
 theme_gtsummary_language(
   language = "es",
   decimal.mark = ",",
   big.mark = "."
 )
 
-### Frecuencia defunciones por grupo etario, sexo y grupo de causas
+## Tabla S2: Defunciones por sexo y grupo etario -----
 tabs2 <- recod_defun |>
-  # Individualizar filas para calcular frecuencias
   uncount(weights = n) |>
+  tbl_cross(
+    col = sexo,
+    row = grupo_edad,
+    digits = c(0, 1),
+    percent = "column",
+    label = list(sexo = "Sexo", grupo_edad = "Grupo etario")
+  ) |>
+  add_p()
 
-  # Tabla 2x2
-  tbl_summary(
-    by = grupo_edad,
-    include = c(sexo, grupo_n1, grupo_causa),
-    digits = list(all_categorical() ~ c(0, 1)),
-    label = list(
-      sexo = "Sexo",
-      grupo_n1 = "Grupo nivel 1",
-      grupo_causa = "Grupo nivel 2"
+
+## Defunciones por sexo y causa nivel 1 -----
+recod_defun |>
+  uncount(weights = n) |>
+  mutate(
+    grupo_n1 = case_when(
+      grupo_causa == "GC1-GC2" ~ "GC1-GC2",
+      grupo_causa == "GC3-GC4" ~ "GC3-GC4",
+      .default = grupo_n1
     )
   ) |>
-  add_p() |>
-
-  # Opciones tabla
-  bold_labels() |>
-  modify_header(
-    label = "**Variable**",
-    p.value = "**p**",
-    all_stat_cols() ~ "{level} ({style_percent(p)}%)"
+  tbl_cross(
+    col = sexo,
+    row = grupo_n1,
+    percent = "column",
+    digits = c(0, 1)
   ) |>
-  modify_spanning_header(all_stat_cols() ~ "**Grupo etario**") |>
-  remove_footnote_header() |>
-  modify_indent(columns = label, indent = 0L)
+  add_p()
 
+
+## Tabla S3: Defunciones por sexo, grupo etario y causa -----
+tabs3 <- recod_defun |>
+  uncount(weights = n) |>
+  mutate(
+    grupo_n1 = case_when(
+      grupo_causa == "GC1-GC2" ~ "GC1-GC2",
+      grupo_causa == "GC3-GC4" ~ "GC3-GC4",
+      .default = grupo_n1
+    )
+  ) |>
+  tbl_strata2(
+    strata = sexo,
+    .combine_with = "tbl_merge",
+    .tbl_fun = ~ .x |>
+      tbl_cross(
+        row = grupo_edad,
+        col = grupo_n1,
+        percent = "row",
+        margin = "row",
+        digits = c(0, 1)
+      ) |>
+      add_p()
+  )
+
+
+# tabs2 <- recod_defun |>
+#   # Individualizar filas para calcular frecuencias
+#   uncount(weights = n) |>
+
+#   # Tabla 2x2
+#   tbl_summary(
+#     by = grupo_edad,
+#     include = c(sexo, grupo_n1, grupo_causa),
+#     digits = list(all_categorical() ~ c(0, 1)),
+#     label = list(
+#       sexo = "Sexo",
+#       grupo_n1 = "Grupo nivel 1",
+#       grupo_causa = "Grupo nivel 2"
+#     )
+#   ) |>
+#   add_p() |>
+
+#   # Opciones tabla
+#   bold_labels() |>
+#   modify_header(
+#     label = "**Variable**",
+#     p.value = "**p**",
+#     all_stat_cols() ~ "{level} ({style_percent(p)}%)"
+#   ) |>
+#   modify_spanning_header(all_stat_cols() ~ "**Grupo etario**") |>
+#   remove_footnote_header() |>
+#   modify_indent(columns = label, indent = 0L)
 
 ## Tabla S3 --------------------------------------------------------------
 tabs3 <- recod_defun |>
