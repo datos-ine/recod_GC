@@ -39,7 +39,7 @@ digraph G {
     t2[label = "Reasignar GC3-GC4"]
     a2[label = "ENT objetivo\n Diabetes\n ECV\n ERC\n Neoplasias\n Redist. 50% neumonías"]
     b2[label = "CE objetivo\n Tránsito\n Suicidio\n Homicidio"]
-    c2[label = "Otras causas\n CMNN + 50% neumonías\n Otras CE\n Otras ENT"]
+    c2[label = "Otras causas\n CMNN + \n 50% neumonías\n Otras CE\n Otras ENT"]
     d2[label = "GC\n GC1\n GC2"]
     
     

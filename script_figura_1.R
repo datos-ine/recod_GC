@@ -25,7 +25,7 @@ digraph G {
       style = filled
       fillcolor = white
       fontsize=22
-      width = 2
+      width = 2.5
       margin = '.1, .1'
       ]
       
@@ -44,9 +44,9 @@ digraph G {
     fillcolor = '#92463AE5'
 
     t2[label = 'Reasignar GC3-GC4', width=5]
-    a2[label = 'ENT objetivo\\n - Diabetes\\n - ECV\\n - ERC\\n - Neoplasias\\n - Redist. 50% neumonías']
+    a2[label = 'ENT objetivo\\n - Diabetes\\n - ECV\\n - ERC\\n - Neoplasias\\n - Redist. 50% \\n neumonías por \\n sexo y edad']
     b2[label = 'CE objetivo\\n - Tránsito\\n - Suicidio\\n - Homicidio']
-    c2[label = 'Otras causas\\n - CMNN + 50% neumonías\\n - Otras CE\\n - Otras ENT']
+    c2[label = 'Otras causas\\n - CMNN + \\n 50% neumonías\\n - Otras CE\\n - Otras ENT']
     d2[label = '- GC1\\n - GC2']
   }
   
