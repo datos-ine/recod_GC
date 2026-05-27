@@ -6,152 +6,89 @@
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
-  scico,
   DiagrammeR,
   DiagrammeRsvg,
   rsvg
 )
 
-# Paletas colorblind-friendly --------------------------------------------
-pal <- scico(n = 4, palette = "managua", alpha = .8)
 
 
 # Plot -------------------------------------------------------------------
-fig1 <- grViz(
-  "
-  digraph{
-    graph [
-    layout = dot,
-    rankdir = TR,
-    bgcolor = white,
-    fontname = 'Times New Roman',
-    ]
+fig1 <- grViz("
+digraph G {
+  graph[
+  fontsize=24
+  style = filled
+  ]
+  node[
+      shape = rectangle
+      style = filled
+      fillcolor = white
+      fontsize=22
+      width = 2
+      margin = '.1, .1'
+      ]
+      
+  subgraph cluster_1 {
+    label = <<b>Paso 1</b>>;
+    fillcolor = '#FFCE66E5'
+    t1[style = invis, width=6]
+    a1[label = 'ENT objetivo\\n - Diabetes\\n - ECV\\n - ERC\\n - Neoplasias']
+    b1[label = 'CE objetivo\\n - Tránsito\\n - Suicidio\\n - Homicidio']
+    c1[label = 'Otras causas\\n - CMNN\\n - Otras CE\\n - Otras ENT']
+    d1[label = '- GC1\\n - GC2\\n - GC3\\n - GC4']
+  }
+
+  subgraph cluster_2 {
+    label = <<b>Paso 2</b>>;
+    fillcolor = '#92463AE5'
+
+    t2[label = 'Reasignar GC3-GC4', width=5]
+    a2[label = 'ENT objetivo\\n - Diabetes\\n - ECV\\n - ERC\\n - Neoplasias\\n - Redist. 50% neumonías']
+    b2[label = 'CE objetivo\\n - Tránsito\\n - Suicidio\\n - Homicidio']
+    c2[label = 'Otras causas\\n - CMNN + 50% neumonías\\n - Otras CE\\n - Otras ENT']
+    d2[label = '- GC1\\n - GC2']
+  }
   
-    node [
-    shape = box,
-    style = filled
-    color = darkgrey,
-    fillcolor = grey95,
-    fontname = 'Times New Roman',
-    fontsize = 18,
-    labeljust = l,
-    margin = 0.25,
-    width = 3
-    ]
+  subgraph cluster_3 {
+    label = <<b>Paso 3</b>>;
+    fillcolor = '#4D5492E5'
+
+    t3[label = 'Redistribuir GC2 inespecíficos', width=5]
+    a3[label = 'ENT objetivo\\n - Diabetes\\n - ECV + GC2-ECV\\n - ERC\\n - Neoplasias']
+    b3[label = 'CE objetivo\\n - Tránsito\\n - Suicidio\\n - Homicidio\\n - Redist. GC2-CE']
+    c3[label = 'Otras causas\\n - CMNN\\n - Otras CE + GC2-CE\\n - Otras ENT']
+    d3[label = '- GC1']
+  }
   
-  #### Paso 1 ####
-  subgraph cluster_1{
-      bgcolor = '#FFCE66'
-      ranksep = 0.1
-      
-      t1[label = <<b>Paso 1</b> >
-      style = normal,
-      color = none,
-      fontsize = 20]
-      
-      a1[label = <<b>ENT objetivo</b><br/><br align='left'/>• Diabetes <br align='left'/>• ECV <br align='left'/>• ERC <br align='left'/>• Neoplasias <br align='left'/>
-      >]
-      
-      b1[label = <<b>CE objetivo</b><br/><br align='left'/>• Accidentes de tránsito <br align='left'/>• Homicidio <br align='left'/>• Suicidio <br align='left'/>
-      >]
-      
-      c1[label = <<b>Otras causas</b><br/><br align='left'/>• CMNN <br align='left'/>• Otras ENT <br align='left'/>• Otras CE <br align='left'/>
-      >]
-
-    d1[label = <<b>Códigos basura</b><br/><br align='left'/>• GC1<br align='left'/>• GC2<br align='left'/>• GC3<br align='left'/>• GC4<br align='left'/>
-      >]
-      
-      ## Ordenar nodos ##
-      t1 -> a1 -> b1 -> c1 -> d1 [style = invis]
-      
-      
-}   
-
-#### Paso 2 ####
-  subgraph cluster_2{
-      bgcolor = '#92463ACC'
-      ranksep = 0.1
-      
-      t2[label = <<b>Paso 2</b> >
-      style = normal,
-      color = none,
-      fontsize = 20]
-      
-      a2[label = <<b>ENT objetivo</b><br/><br align='left'/>• Diabetes <br align='left'/>• ECV <br align='left'/>• ERC <br align='left'/>• Neoplasias <br align='left'/>
-      >]
-      
-      b2[label = <<b>CE objetivo</b><br/><br align='left'/>• Accidentes de tránsito <br align='left'/>• Homicidio <br align='left'/>• Suicidio <br align='left'/>
-      >]
-      
-      c2[label = <<b>Otras causas</b><br/><br align='left'/>• CMNN <br align='left'/>• Otras ENT <br align='left'/>• Otras CE <br align='left'/>
-      >]
-
-    d2[label = <<b>Códigos basura</b><br/><br align='left'/>• GC1<br align='left'/>• GC2<br align='left'/>>]
-    
-   e[label = <• Redistribución GC3-GC4 <br align='left'/>• Redistribución neumonías<br align='left'/>   inespecíficas a CMNN (50%)<br align='left'/>   y proporcional por edad<br align='left'/>   y sexo a ENT<br align='left'/>
-   >]
-      ## Ordenar nodos ##
-      t2 -> a2 -> b2 -> c2 -> e -> d2 [style = invis]
-      
-      
-}   
-
-#### Paso 3 ####
-  subgraph cluster_3{
-      bgcolor = '#4D5492CC'
-      ranksep = 0.1
-      
-      t3[label = <<b>Paso 3</b> >
-      style = normal,
-      color = none,
-      fontsize = 20]
-      
-      a3[label = <<b>ENT objetivo</b><br/><br align='left'/>• Diabetes <br align='left'/>• ECV +<br align='left'/>   Hipertensión (I10, I15) +<br align='left'/>   cor pulmonale (I27) + <br align='left'/>   ateroesclerosis (I70) + <br align='left'/>   embolia arterial (I74) <br align='left'/>• ERC <br align='left'/>• Neoplasias <br align='left'/>
-      >]
-      
-      b3[label = <<b>CE objetivo</b><br/><br align='left'/>• Accidentes de tránsito <br align='left'/>• Homicidio <br align='left'/>• Suicidio <br align='left'/>
-      >]
-      
-      c3[label = <<b>Otras causas</b><br/><br align='left'/>• CMNN <br align='left'/>• Otras ENT <br align='left'/>• Otras CE <br align='left'/>
-      >]
-
-    d3[label = <<b>Códigos basura</b><br/><br align='left'/>• GC1<br align='left'/>
-      >]
-      
-      f[ label = <• Redistribución GC2 de CE<br align='left'/>   por edad y sexo<br align='left'/>• Redistribución GC2<br align='left'/>   inespecíficos por edad<br align='left'/>   y sexo<br align='left'/>
-   >]
-      
-      ## Ordenar nodos ##
-      t3 -> a3 -> b3 -> c3 -> f -> d3 [style = invis]
-      
-}  
-
-#### Paso 4 ####
-  subgraph cluster_4{
-      bgcolor = '#80E6FFCC'
-      ranksep = 0.1
-      
-      t4[label = <<b>Paso 4</b> >
-      style = normal,
-      color = none,
-      fontsize = 20]
-      
-      a4[label = <<b>ENT objetivo</b><br/><br align='left'/>• Diabetes <br align='left'/>• ECV <br align='left'/>• ERC +<br align='left'/>   falla resp. crónica (J96.1)<br align='left'/>• Neoplasias <br align='left'/>
-      >]
-      
-      b4[label = <<b>CE objetivo</b><br/><br align='left'/>• Accidentes de tránsito <br align='left'/>• Homicidio <br align='left'/>• Suicidio <br align='left'/>
-      >]
-      
-      c4[label = <<b>Otras causas</b><br/><br align='left'/>• CMNN <br align='left'/>• Otras ENT <br align='left'/>• Otras CE <br align='left'/>
-      >]
-      
-      
-      g[ label = <• Redistribución GC1 de CE<br align='left'/>   por edad y sexo<br align='left'/>• Redistribución GC1<br align='left'/>   inespecíficos por edad<br align='left'/>   y sexo<br align='left'/>
-   >]
-      ## Ordenar nodos ##
-      t4 -> a4 -> b4 -> c4 -> g [style = invis]
-      
-}   
+  subgraph cluster_4 {
+    label = <<b>Paso 4</b>>;
+    fillcolor = '#80E6FFE5'
+    t4[label = 'Redistribuir GC1 inespecíficos', width=5]
+    a4[label = 'ENT objetivo\\n - Diabetes\\n - ECV\\n - ERC + GC1-ERC\\n - Neoplasias']
+    b4[label = 'CE objetivo\\n - Tránsito\\n - Suicidio\\n - Homicidio\\n - Redist. GC1-CE']
+    c4[label = 'Otras causas\\n - CMNN\\n - Otras CE\\n - Otras ENT']
+  }
+  
+ 
+  t1 -> {a1 b1 c1} -> d1[style = invis]
+  {a2 b2 c2} -> d2[style = invis]
+  t2 -> {a2 b2 c2}
+  d1 -> t3[style = invis]
+  d2 -> t4 [style = invis]
+ {a3 b3 c3} -> d3[style = invis]
+   t3 -> {a3 b3 c3} 
+    t4 -> {a4 b4 c4}
 }
 "
 )
+
+
+
+## Guardar figura -----
+export_svg(fig1) |>
+  charToRaw() |>
+  rsvg_png(
+    file = "figuras/Figura1.png",
+    width = 567
+  )

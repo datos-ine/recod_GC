@@ -1,0 +1,77 @@
+---
+title: "Untitled"
+format: html
+---
+
+
+```{dot}
+digraph G {
+    graph[
+        fontsize=24
+        style = filled
+        center=false
+    ]
+
+    node[
+        shape = rectangle
+        style = filled
+        fillcolor = white
+        fontsize=20
+        width=3
+        margin="0.1,0.1"
+        ]
+  subgraph cluster_1 {
+    label = "Paso 1";
+    fillcolor = "#FFCE66"
+    ancla1 [style=invis, width=4.5]
+    t1[style = invis]
+    a1[label = "ENT objetivo\n Diabetes\n ECV\n ERC\n Neoplasias"]
+    b1[label = "CE objetivo\n Tránsito\n Suicidio\n Homicidio"]
+    c1[label = "Otras causas\n CMNN\n Otras CE\n Otras ENT"]
+    d1[label = "GC\n GC1\n GC2\n GC3\n GC4"]
+    
+  }
+
+  subgraph cluster_2 {
+    label = "Paso 2";
+    fillcolor = "#92463A"
+    
+    t2[label = "Reasignar GC3-GC4"]
+    a2[label = "ENT objetivo\n Diabetes\n ECV\n ERC\n Neoplasias\n Redist. 50% neumonías"]
+    b2[label = "CE objetivo\n Tránsito\n Suicidio\n Homicidio"]
+    c2[label = "Otras causas\n CMNN + 50% neumonías\n Otras CE\n Otras ENT"]
+    d2[label = "GC\n GC1\n GC2"]
+    
+    
+  }
+  
+  subgraph cluster_3 {
+    label = "Paso 3";
+    fillcolor = "#4D5492"
+    
+    t3[label = "Redistribuir GC2 inespecíficos"]
+    a3[label = "ENT objetivo\n Diabetes\n ECV + GC2-ECV\n ERC\n Neoplasias"]
+    b3[label = "CE objetivo\n Tránsito\n Suicidio\n Homicidio\n GC2-CE"]
+    c3[label = "Otras causas\n CMNN\n Otras CE + GC2-CE\n Otras ENT"]
+    d3[label = "GC\n GC1"]
+  }
+  
+  subgraph cluster_4 {
+    label = "Paso 4";
+    fillcolor = "#80E6FF"
+    t4[label = "Redistribuir GC1 inespecíficos"]
+    a4[label = "ENT objetivo\n Diabetes\n ECV\n ERC + GC1-ERC\n Neoplasias"]
+    b4[label = "CE objetivo\n Tránsito\n Suicidio\n Homicidio\n GC1-CE"]
+    c4[label = "Otras causas\n CMNN\n Otras CE\n Otras ENT"]
+  }
+
+  t1 -> {a1 b1 c1} -> d1[style = invis]
+  {a2 b2 c2} -> d2[style = invis]
+  t2 -> {a2 b2 c2}
+  d1 -> t3[style = invis]
+  d2 -> t4 [style = invis]
+ {a3 b3 c3} -> d3[style = invis]
+   t3 -> {a3 b3 c3} 
+    t4 -> {a4 b4 c4}
+}
+```
