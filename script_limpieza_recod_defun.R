@@ -3,10 +3,10 @@
 ### Limpieza del dataset: Defunciones Generales Mensuales ocurridas y registradas en la
 ### República Argentina (MSAL-DEIS, 2010-2023)
 ### Recategorización de causas de muerte, reasignación y redistribución de códigos garbage
-### según Teixeira et al. (2021), Soares Filho et al. (2024) y GBD (2019)
+### según Teixeira et al. (2021), Soares Filho et al. (2024) y GBD-2019
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 21-05-2026 13:12
+# Última modificación: 28-05-2026 16:17
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -63,7 +63,7 @@ defun <- defun_raw |>
     mes = mes_def,
     sexo = sexo_id,
     grupo_edad = grupo_etario,
-    region_deis = region,
+    # region_deis = region,
     cie10_cod = cod_causa_muerte_CIE10
   ) |>
 
@@ -71,7 +71,7 @@ defun <- defun_raw |>
   filter(between(anio, 2010, 2023)) |>
 
   # Filtrar datos ausentes región geográfica
-  filter(region_deis != "10.sin especificar.") |>
+  filter(region != "10.sin especificar.") |>
 
   # Filtrar datos ausentes grupo etario
   filter(grupo_edad != "08.sin especificar") |>
@@ -113,14 +113,12 @@ defun <- defun_raw |>
   # Modificar etiquetas región DEIS
   mutate(
     region_deis = case_when(
-      region_deis == "6.Cuyo1" ~ "Cuyo (Mendoza)",
-      region_deis == "7.Cuyo2." ~ "Cuyo",
-      region_deis == "4.NOA." ~ "NOA (Tucumán)",
-      region_deis == "3.NOA1." ~ "NOA1",
-      region_deis == "5.NOA2." ~ "NOA2",
-      str_detect(region_deis, "8.Pat.") ~ "Patagonia Norte",
-      str_detect(region_deis, "9.Pat.") ~ "Patagonia Sur",
-      .default = str_sub(region_deis, 3) |> str_remove("\\.")
+      str_detect(region, "Cuyo") ~ "Cuyo",
+      str_detect(region, "3.NOA") ~ "NOA1",
+      str_detect(region, "4.NOA") ~ "NOA (Tucumán)",
+      str_detect(region, "5.NOA") ~ "NOA2",
+      str_detect(region, "Pat.") ~ "Patagonia",
+      .default = str_sub(region, 3) |> str_remove("\\.")
     )
   ) |>
 
@@ -130,7 +128,10 @@ defun <- defun_raw |>
       str_detect(jurisdiccion, "6") ~ "Buenos Aires",
       str_detect(jurisdiccion, "14") ~ "Córdoba",
       str_detect(jurisdiccion, "30") ~ "Entre Ríos",
+      str_detect(jurisdiccion, "50") ~ "Mendoza",
       str_detect(jurisdiccion, "90") ~ "Tucumán",
+      str_detect(region, "8.Pat") ~ "Patagonia Norte",
+      str_detect(region, "9.Pat") ~ "Patagonia Sur",
       str_detect(jurisdiccion, "99") ~ region_deis,
       .default = str_remove_all(jurisdiccion, "[0-9[:punct:]]")
     )
@@ -1280,14 +1281,14 @@ recod_defun <- recod_defun |>
 recod_defun <- recod_defun |>
   # Crear variables para grupo y subgrupo causas
   mutate(
-    grupo_n1 = case_when(
+    grupo_gbd1 = case_when(
       str_detect(paso1, "GC") ~ "GC",
       str_detect(paso1, "DM|ECV|ERC|NPL|ONT") ~ "ENT",
       str_detect(paso1, "HO|SU|TRA|OCE") ~ "CE",
       .default = paso1
     ),
 
-    grupo_n2i = case_when(
+    grupo_gbd2i = case_when(
       str_detect(paso1, "GC1") ~ "GC1",
       str_detect(paso1, "GC2") ~ "GC2",
       str_detect(paso1, "GC3") ~ "GC3",
@@ -1300,7 +1301,7 @@ recod_defun <- recod_defun |>
   mutate(
     paso2.1 = case_when(
       ## Reagrupar GC
-      str_detect(paso1, "Neum|GC1|GC2") ~ grupo_n2i,
+      str_detect(paso1, "Neum|GC1|GC2") ~ grupo_gbd2i,
 
       ## Asignar GC3 y GC4 específicos
       str_detect(paso1, "GC3-|GC4-") ~ str_remove(paso1, ".*-"),
@@ -1557,18 +1558,18 @@ recod_defun_f <- recod_defun |>
     sexo,
     grupo_edad,
     cie10_cod,
-    grupo_n1,
-    grupo_n2i,
-    grupo_n2m = paso2.2,
-    grupo_n2f = paso4.2
+    grupo_gbd1,
+    grupo_gbd2i,
+    grupo_gbd2m = paso2.2,
+    grupo_gbd2f = paso4.2
   ) |>
 
   # Ordenar grupo nivel 1
-  mutate(grupo_n1 = fct_relevel(grupo_n1, "ENT", after = Inf)) |>
+  mutate(grupo_gbd1 = fct_relevel(grupo_gbd1, "ENT", after = Inf)) |>
 
   # Ordenar grupo nivel 2
   mutate(across(
-    .cols = contains("n2"),
+    .cols = contains("gbd2"),
     .fns = ~ fct_relevel(
       .x,
       "NPL",

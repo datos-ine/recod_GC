@@ -75,3 +75,132 @@ digraph G {
     t4 -> {a4 b4 c4}
 }
 ```
+
+
+```{mermaid}
+flowchart TD
+ subgraph a["Paso 1"]
+        a1["<b>ENT objetivo</b>
+        - Diabetes
+        - ECV
+        - ERC
+        - Neoplasias"]
+        a2["<b>CE objetivo</b>
+        - Tránsito
+        - Suicidio
+        - Homicidio"]
+        a3["<b>Otras causas</b>
+        - CMNN
+        - Otras CE
+        - Otras ENT"]
+        a4["<b>Códigos poco útiles</b>
+        - GC1
+        - GC2
+        - GC3
+        - GC4"]
+  end
+ subgraph b["Paso 2"]
+        b1["<b>ENT objetivo</b>
+        - Diabetes
+        - ECV
+        - ERC
+        - Neoplasias
+        - Redist. 50% 
+        neumonías"]
+        b2["<b>CE objetivo</b>
+        - Tránsito
+        - Suicidio
+        - Homicidio"]
+        b3["<b>Otras causas</b>
+        - CMNN + 50% 
+        neumonías
+        - Otras CE
+        - Otras ENT"]
+        b4["<b>Códigos poco útiles</b>
+        - GC1
+        - GC2"]
+        b5["Reasignar GC3-GC4"]
+  end
+ subgraph c["Paso 3"]
+        c1["<b>ENT objetivo</b>
+        - Diabetes
+        - ECV + GC2-ECV
+        - ERC
+        - Neoplasias"]
+        c2["<b>CE objetivo</b>
+        - Tránsito
+        - Suicidio
+        - Homicidio
+        - Redist. GC2-CE"]
+        c3["<b>Otras causas</b>
+        - CMNN
+        - Otras CE
+        - Otras ENT"]
+        c4["<b>Códigos poco útiles</b>
+        - GC1"]
+        c5["Redistribuir GC2 inespecíficos"]
+  end
+ subgraph d["Paso 4"]
+        d1["<b>ENT objetivo</b>
+        - Diabetes
+        - ECV
+        - ERC + GC1-ERC
+        - Neoplasias"]
+        d2["<b>CE objetivo</b>
+        - Tránsito
+        - Suicidio
+        - Homicidio
+        - Redist. GC1-CE"]
+        d3["<b>Otras causas</b>
+        - CMNN
+        - Otras CE
+        - Otras ENT"]
+        d4["Redistribuir GC1 inespecíficos"]
+  end
+    a1 & a2 & a3--- a4
+    b5 --> b1 & b2 & b3
+    b1 & b2 & b3 --- b4
+    c5 --> c1 & c2 & c3
+    c1 & c2 & c3--- c4
+    d4 --> d1 & d2 & d3
+    a & b --- c & d
+
+    style a fill:#FFCE66, stroke: black, font-size:30px
+    style b fill:#92463A, stroke: grey50, font-size:30px
+    style c fill:#4D5492, stroke: grey50, font-size:30px
+    style d fill:#80E6FF, stroke: grey50, font-size:30px
+
+    style a1 fill: grey95, stroke: black
+    style a2 fill: grey95, stroke: black
+    style a3 fill: grey95, stroke: black
+    style a4 fill: grey95, stroke: black
+    style b1 fill: grey95, stroke: black
+    style b2 fill: grey95, stroke: black
+    style b3 fill: grey95, stroke: black
+    style b4 fill: grey95, stroke: black
+    style b5 fill: grey95, stroke: black
+    style c1 fill: grey95, stroke: black
+    style c2 fill: grey95, stroke: black
+    style c3 fill: grey95, stroke: black
+    style c4 fill: grey95, stroke: black
+    style c5 fill: grey95, stroke: black
+    style d1 fill: grey95, stroke: black
+    style d2 fill: grey95, stroke: black
+    style d3 fill: grey95, stroke: black
+    style d4 fill: grey95, stroke: black
+
+
+    linkStyle 0 stroke:none,fill:none
+    linkStyle 1 stroke:none,fill:none
+    linkStyle 2 stroke:none,fill:none
+    linkStyle 6 stroke:none,fill:none
+    linkStyle 7 stroke:none,fill:none
+    linkStyle 8 stroke:none,fill:none
+    linkStyle 12 stroke:none,fill:none
+    linkStyle 13 stroke:none,fill:none
+    linkStyle 14 stroke:none,fill:none
+    linkStyle 18 stroke:none,fill:none
+    linkStyle 19 stroke:none,fill:none
+    linkStyle 20 stroke:none,fill:none
+    linkStyle 21 stroke:none,fill:none
+```
