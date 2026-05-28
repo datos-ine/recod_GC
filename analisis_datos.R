@@ -218,7 +218,7 @@ datos_jp <- recod_defun |>
   droplevels() |>
 
   # Agrupar datos por año
-  count(anio, grupo_edad, region_deis, grupo_gbd2i, wt = n) |>
+  count(anio, grupo_edad, region_deis, grupo_causa = grupo_gbd2i, wt = n) |>
 
   # Unir con proyecciones poblacionales
   left_join(
