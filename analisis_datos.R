@@ -75,51 +75,6 @@ pal2 <- c(
 )
 
 # Análisis exploratorio --------------------------------------------------
-## Tema para las tablas
-theme_gtsummary_language(
-  language = "es",
-  decimal.mark = ",",
-  big.mark = "."
-)
-
-
-## Tabla S2 --------------------------------------------------------------
-tabs2 <- recod_defun |>
-  # Individualizar filas
-  uncount(weights = n) |>
-
-  # Modificar niveles grupo causa
-  mutate(
-    grupo_gbd1 = case_when(
-      grupo_causa == "GC1-GC2" ~ "GC1-GC2",
-      grupo_causa == "GC3-GC4" ~ "GC3-GC4",
-      .default = grupo_gbd1
-    )
-  ) |>
-
-  # Generar tabla
-  tbl_summary(
-    by = sexo,
-    include = c(grupo_edad, grupo_gbd1),
-    digits = all_categorical() ~ c(0, 1),
-    label = list(
-      grupo_edad = "Grupo etario",
-      grupo_gbd1 = "Categoría GBD nivel 1"
-    )
-  ) |>
-  add_overall(last = TRUE) |>
-  add_p() |>
-
-  # Formato Tabla
-  modify_header(all_stat_cols() ~ "{level}") |>
-  modify_spanning_header(all_stat_cols() ~ "**Sexo**") |>
-  modify_footnote_header(
-    footnote = "Los porcentajes corresponden al total por sexo",
-    columns = all_stat_cols()
-  ) |>
-  modify_indent(columns = label, indent = 0L)
-
-
 ## Figura 2 --------------------------------------------------------------
 fig2 <- recod_defun |>
   count(grupo_edad, sexo, grupo_causa, wt = n, name = "casos") |>
@@ -211,7 +166,7 @@ tab2 <- recod_defun |>
 
 
 # Evolución temporal tasas GC por región ---------------------------------
-## Tasas estandarizadas por año -----
+## Tasas estandarizadas por año ------------------------------------------
 datos_jp <- recod_defun |>
   # Seleccionar muertes por GC
   filter(str_detect(grupo_gbd1, "GC")) |>
@@ -232,7 +187,7 @@ datos_jp <- recod_defun |>
     bind_rows(
       x,
       x |>
-        group_by(anio, grupo_edad, grupo_gbd2i) |>
+        group_by(anio, grupo_edad, grupo_causa) |>
         summarise(
           region_deis = "Argentina",
           pob = sum(pob, na.rm = TRUE),
@@ -246,7 +201,7 @@ datos_jp <- recod_defun |>
   left_join(pob_est_2022) |>
 
   # Calcular tasa estandarizada
-  group_by(anio, region_deis, grupo_causa = grupo_gbd2i) |>
+  group_by(anio, region_deis, grupo_causa) |>
   calculate_dsr(
     x = n,
     n = pob,
@@ -255,7 +210,7 @@ datos_jp <- recod_defun |>
   )
 
 
-### Regresión joinpoint -----
+## Regresión joinpoint ---------------------------------------------------
 mod_jp <- model_jp(
   data = datos_jp,
   value = "value",
@@ -266,43 +221,40 @@ mod_jp <- model_jp(
   test = TRUE
 )
 
+### AAPC modelos lineales -----
+# Buscar modelos lineales
+mod_jp |>
+  keep(~ !inherits(.x, "segmented")) |>
+  names()
 
-## AAPCs modelos lineales
+# Obtener AAPCs
+get_aapc(mod_jp$NOA1_GC1)
 get_aapc(mod_jp$NOA2_GC1)
-get_aapc(mod_jp$`Patagonia Norte_GC1`)
-
-
-get_aapc(mod_jp$`Patagonia Norte_GC2`)
+get_aapc(mod_jp$Patagonia_GC1)
 
 get_aapc(mod_jp$Argentina_GC3)
 get_aapc(mod_jp$Centro_GC3)
 get_aapc(mod_jp$Cuyo_GC3)
+get_aapc(mod_jp$`NOA (Tucumán)_GC3`)
 get_aapc(mod_jp$NOA1_GC3)
-get_aapc(mod_jp$`Patagonia Norte_GC3`)
 
+get_aapc(mod_jp$NOA1_GC4)
 get_aapc(mod_jp$NOA2_GC4)
-get_aapc(mod_jp$`Patagonia Norte_GC4`)
 
 
 ## Tabla S3 --------------------------------------------------------------
 tabs3 <- mod_jp |>
-  # # Descartar modelos regresión lineal
-  # discard(
-  #   ~ inherits(.x, "lm") &&
-  #     !inherits(.x, "segmented")
-  # ) |>
-
   # Crear tabla
   summary_jp(
     var1 = "Región",
     var2 = "Nivel",
-    lan = "es",
-    ft = TRUE
+    ft = TRUE,
+    lan = "es"
   ) |>
 
-  # Cambiar fuente
-  merge_v(1) |>
-  font(fontname = "Times New Roman", part = "all")
+  # Formato tabla
+  font(fontname = "Times New Roman", part = "all") |>
+  colformat_char(na_str = "—")
 
 
 # Figura 3 ---------------------------------------------------------------
@@ -429,28 +381,6 @@ mod_centro <- model_jp(
   k = 3,
   test = TRUE
 )
-
-
-## Tabla S3 --------------------------------------------------------------
-tabs3 <- mod_jp |>
-  # # Descartar modelos regresión lineal
-  # discard(
-  #   ~ inherits(.x, "lm") &&
-  #     !inherits(.x, "segmented")
-  # ) |>
-
-  # Crear tabla
-  summary_jp(
-    var1 = "Región",
-    var2 = "Nivel",
-    lan = "es",
-    ft = TRUE
-  ) |>
-
-  # Cambiar fuente
-  merge_v(1) |>
-  font(fontname = "Times New Roman", part = "all")
-
 
 # Figura 5 ---------------------------------------------------------------
 ## Paso 1 -----
@@ -603,35 +533,3 @@ fig5 <- (fig5.1 + theme(legend.position = "none")) /
 #   units = "cm",
 #   dpi = 300
 # )
-
-# Tabla S5 ---------------------------------------------------------------
-tabs5 <- recod_defun |>
-  # Frecuencias por grupo
-  count(grupo_causa, wt = n) |>
-
-  # Añadir frecuencias finales
-  left_join(
-    recod_defun |>
-      # Frecuencias por grupo
-      count(grupo_causa = grupo_n2f, wt = n, name = "n_fin")
-  ) |>
-
-  # Cambio absoluto y relativo
-  mutate(
-    cambio_rel = percent(((n_fin - n) / n), accuracy = .1, decimal.mark = ","),
-    razon_post_pre = number(n_fin / n, accuracy = .1, decimal.mark = ",")
-  ) |>
-
-  # Renombrar columnas
-  rename(
-    "Grupo causa" = 1,
-    "n (inicial)" = 2,
-    "n (final)" = 3,
-    "Cambio relativo" = cambio_rel,
-    "Razón cambio" = razon_post_pre
-  ) |>
-  # Formato tabla
-  flextable() |>
-  bold(part = "header") |>
-  fontsize(size = 16, part = "all") |>
-  autofit()

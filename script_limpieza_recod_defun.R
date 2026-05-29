@@ -6,7 +6,7 @@
 ### según Teixeira et al. (2021), Soares Filho et al. (2024) y GBD-2019
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 28-05-2026 16:17
+# Última modificación: 29-05-2026 12:45
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -132,6 +132,7 @@ defun <- defun_raw |>
       str_detect(jurisdiccion, "90") ~ "Tucumán",
       str_detect(region, "8.Pat") ~ "Patagonia Norte",
       str_detect(region, "9.Pat") ~ "Patagonia Sur",
+      str_detect(jurisdiccion, "99") & region_deis == "Cuyo" ~ "Cuyo2",
       str_detect(jurisdiccion, "99") ~ region_deis,
       .default = str_remove_all(jurisdiccion, "[0-9[:punct:]]")
     )
@@ -1581,7 +1582,10 @@ recod_defun_f <- recod_defun |>
       "CMNN",
       after = 3
     )
-  ))
+  )) |>
+
+  # Variables caracter a factor
+  mutate(across(.cols = where(is.character), .fns = ~ factor(.x)))
 
 
 # Exportar datos limpios -------------------------------------------------

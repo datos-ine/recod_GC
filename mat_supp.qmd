@@ -1,0 +1,632 @@
+---
+title: "Material suplementario"
+author: 
+      - name: Tamara Ricardo
+        orcid: 0000-0002-0921-2611
+      - name: Juan I. Irassar
+        orcid: 0000-0003-2215-6682
+      - name: M. Fernanda Aguirre
+        orcid: 0000-0002-3979-865X
+      - name: M. Jimena Marro
+        orcid: 0000-0002-9483-2304
+format: 
+    pdf:
+        papersize: a4
+        geometry:
+            - top=25mm
+            - left=25mm
+            - heightrounded
+        mainfont: Times New Roman
+---
+
+```{r}
+#| id: Configuración inicial
+#| echo: false
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  fig.asp = 1.25
+)
+```
+
+
+```{r}
+#| id: Cargar paquetes
+# Cargar paquetes --------------------------------------------------------
+pacman::p_load(
+  patchwork,
+  # Tablas
+  flextable,
+  gtsummary,
+  # Tasas estandarizadas
+  PHEindicatormethods,
+  # Regresión joinpoint
+  joinpointR,
+  # Manejo de datos
+  scales,
+  here,
+  rio,
+  janitor,
+  tidyverse
+  # ,
+  # update = TRUE
+)
+
+
+# Paletas colorblind-friendly --------------------------------------------
+pal <- scico::scico(n = 4, palette = "managua")
+
+# Tema ggplot -------------------------------------------------------------
+theme_jp <- list(
+  scale_color_manual(values = rep(pal, 7)),
+  labs(
+    caption = "GC1: amarillo; GC2: rojo oscuro; GC3: violeta; GC4: turquesa"
+  ),
+  theme(legend.position = "none")
+)
+
+
+# Tema para las tablas ----------------------------------------------------
+theme_gtsummary_language(
+  language = "es",
+  decimal.mark = ",",
+  big.mark = "."
+)
+
+# Tema flextable -----------------------------------------------------------
+tab_fmt <- function(x) {
+  x |>
+    bold(part = "header") |>
+    font(fontname = "Times New Roman", part = "all") |>
+    fontsize(size = 12, part = "all") |>
+    valign(valign = "top") |>
+    align(align = "left", part = "all") |>
+    merge_v(j = 1)
+}
+```
+
+```{r}
+#| id: Datos para el análisis
+## Defunciones por grupo de causas -----
+recod_defun <- import(here("clean", "arg_defun_mes_2010-2023_recod.rds")) |>
+  # Ordenar grupo nivel 1
+  mutate(
+    grupo_gbd1 = fct_relevel(
+      grupo_gbd1,
+      "ENT",
+      after = 0
+    )
+  )
+
+## Datos para ajustar tasas de mortalidad por GC -----
+datos_jp <- recod_defun |>
+  # Seleccionar muertes por GC
+  filter(str_detect(grupo_gbd1, "GC")) |>
+  droplevels() |>
+
+  # Agrupar datos por año
+  count(
+    anio,
+    grupo_edad,
+    region_deis,
+    jurisdiccion,
+    nivel = grupo_gbd2i,
+    wt = n
+  ) |>
+
+  # Añadir proyecciones poblacionales
+  left_join(
+    import(here("clean", "arg_proy_2010_2023.rds")) |>
+      # Agrupar datos
+      count(
+        anio,
+        region_deis,
+        jurisdiccion,
+        grupo_edad,
+        wt = proy,
+        name = "pob"
+      )
+  ) |>
+
+  # Añadir población estándar Argentina 2022
+  left_join(
+    import(here("clean", "arg_pob_est_2022.rds"))
+  )
+```
+
+
+### **Tabla S1.** Códigos de la Clasificación Internacional de Enfermedades (CIE-10) utilizados para definir los grupos de causas definidas y causas garbage (GC), según estudio de la Carga Global de Enfermedades (GBD) 2019.
+
+```{r}
+#| id: Tabla S1
+# Datos para la tabla
+tabs1 <- tibble(
+  grupo_causa = c(
+    rep("Diabetes mellitus (DM)", 2),
+    rep("Enfermedades cardiovasculares (ECV)", 4),
+    rep("Enfermedades respiratorias crónicas (ERC)", 4),
+    rep("Neoplasias (NPL)", 3),
+    rep("Accidentes de tránsito (TRA)", 2),
+    rep("Suicidio (SU)", 2),
+    rep("Homicidio (HO)", 2),
+    rep("Transmisibles, maternas, neonatales y nutricionales (CMNN)", 6),
+    rep("Otras ENT (ONT)", 3),
+    rep("Otras CE (OCE)", 2),
+    "Neumonías inespecíficas",
+    rep("GC2", 4),
+    rep("GC1", 2)
+  ),
+  subgrupo = c(
+    "DM",
+    "GC4-DM",
+    "ECV",
+    "GC4-ECV",
+    "GC3-ECV",
+    "GC2-ECV",
+    "ERC",
+    "GC4-ERC",
+    "GC3-ERC",
+    "GC1-ERC",
+    "NPL",
+    "GC4-NPL",
+    "GC3-NPL",
+    "TRA",
+    "GC4-TRA",
+    "SU",
+    "GC4-SU",
+    "HO",
+    "GC4-HO",
+    "Trasmisibles",
+    "Maternas",
+    "Neonatales",
+    "Nutricionales",
+    "GC4-CMNN",
+    "GC3-CMNN",
+    "ONT",
+    "GC4-ONT",
+    "GC3-ONT",
+    "OCE",
+    "GC4-OCE",
+    "",
+    "GC2 inespecíficos",
+    "GC2-cualquier CE",
+    "GC2-TRA-SU-HO",
+    "GC2-HO-SU-OCE",
+    "GC1 inespecíficos",
+    "GC1-CE"
+  ),
+  codigos = c(
+    # Diabetes
+    "E10.0-E10.1, E10.3-E11.1, E11.3-E11.9, P70.2",
+    # GC4
+    "E12.0-E12.1, E12.3-E13.1, E13.3-E14.1, E14.3-E14.9, R73.0, R73.9",
+
+    # ECV
+    "B33.2, G45.0-G46.8, I01.0-I02.0, I05.0-I09.9, I11.0-I11.9, I20.0-I25.9, I27.0, I27.2, I28.0-I28.9, I30.0-I31.1, I31.8-I37.8, I38.0-I41.8, I42.1-I42.8, I43.0-I43.8, I47.0-I48.9, I51.0-I51.4, I60.0-I63.9, I65.0-I67.3, I67.5-I67.6, I68.0-I68.2, I69.0-I69.3, I70.2-I70.8, I71.0-I73.9, I77.0-I83.9, I86.0-I89.0, I89.9, I98.0, K75.1",
+    # GC4
+    "I37.9, I42.0, I42.9, I51.5, I64.0, I67.8-I67.9, I68.8, I69.4-I69.8",
+    # GC3
+    "I00.0, I44.0-I45.9, I49.0-I49.9, I51.6-I52.8, I98.8, I99.0",
+    # GC2
+    "I10.0, I15.0–I15.9, I27.2–I27.9, I70.0–I70.9, I74.0–I74.9",
+
+    # ERC
+    "D86.0-D86.2, D86.9, G47.3, J30.0-J35.9, J37.0-J39.9, J41.0-J46.0, J60.0-J63.8, J65.0-J68.9, J70.8-J70.9, J82.0, J84.0-J84.9, J92.0-J92.9",
+    # GC4
+    "J64.0",
+    # GC3
+    "J40.0, J47.0, J65.0, J90.9, J93.6, J98.0, J98.4-J99.8",
+    # GC1
+    "J96.1",
+
+    # Neoplasias
+    "C00.0-C13.9, C15.0-C22.8, C23.0-C25.9, C30.0-C34.9, C37.0-C38.8, C40.0-C41.9, C43.0-C45.9, C47.0-C54.9, C56.0-C57.8, C58.0, C60.0-C63.8, C64.0-C68.8, C69.0-C69.8, C70.0-C73.0, C75.0-C75.8, C81.0-C83.8, C84.0-C85.0, C85.2-C85.7, C86.0-C86.6, C88.0-C91.0, C91.2-C91.3, C91.6, C92.0-C92.6, C93.0-C93.1, C93.3, C94.0-C94.5, C94.7-C96.9, D00.1-D01.3, D02.0-D02.3, D03.0-D06.9, D07.0-D07.2, D07.4-D07.5, D09.0, D09.2-D09.3, D10.0-D10.7, D11.0-D12.9, D13.0-D13.7, D14.0-D14.3, D15.0-D16.9, D22.0-D24.0, D26.0-D27.9, D28.0-D28.1, D28.7, D29.0-D29.8, D30.0-D30.7, D31.0-D35.9, D36.1-D36.7, D37.1-D37.5, D38.0-D38.5, D39.1-D39.2, D40.0-D40.7, D41.0-D41.7, D42.0-D43.9, D44.0-D44.8, D45.0-D47.9, D48.0-D48.6, K62.0-K62.1, K63.5, 60-N60.9, N84.0-N84.1, N87-N87.9",
+    # GC4
+    "C69.9, C91.1, C91.4-C91.5, C91.7-C91.9, C92.7-C92.9, C93.2, C93.5-C93.7, C93.9",
+    # GC3
+    "C14.0-C14.8, C22.9, C26.0-C26.9, C39.0-C39.9, C46.0-C46.9, C55.0, C57.9, C63.9, C68.9, C74.0-C74.9, C75.9-C80.9, C97.0-D00.0, D01.4-D01.9, D02.4, D07.3, D07.6, D09.1, D09.7, D09.9, D10.9, D13.9, D14.4, D17.0-D21.9, D28.9, D29.9, D30.9, D36.0, D36.9-D37.0, D37.6-D37.9, D38.6-D39.0, D39.7, D39.9, D40.9, D41.9, D44.9, D48.7-D48.9",
+
+    # Accidentes de tránsito
+    "V01.0-V04.9, V06.0-V80.9, V82.0-V82.9, V87.2-V87.3",
+    # GC4
+    "V87.0-V87.1, V87.4-V87.9, V89.0-V89.9",
+
+    # Suicidio
+    "X60.0-X64.9, X66.0-X83.9, Y87.0",
+    # GC4
+    "X84.0-X84.9",
+
+    # Homicidio
+    "X85.0-Y08.9, Y87.1",
+    # GC4
+    "Y09.0-Y09.9",
+
+    # CMNN - Trasmisibles
+    "A00.0–A09.9, A15.0–A28.9, A32.0–A39.9, A48.1–A48.2, A48.4, A50.0–A58.0, A60.0–A60.9, A63.0–A63.8, A65.0, A68.0–A70.0, A74.8–A75.9, A77.0–A96.9, A98.0–A98.8, B00.0–B06.9, B15.0–B16.2, B17.0, B17.2, B19.1, B20.0–B27.9, B29.4, B33.0–B33.1, B33.3–B33.8, B47.0–B48.8, B50.0–B54.0, B55.0, B56.0–B57.5, B60.0–B60.8, B65.0–B67.9, B69.0–B72.0, B74.3–B75.0, B77.0–B77.9, B83.0–B83.8, B90.0–B91.0, B94.1, B95.0–B95.5, B97.4–B97.6, F02.1, F02.4, F07.1, G00.0–G00.8, G03.0–G03.8, G04.0–G05.8, G14.0–G14.6, H70.0–H70.9, I02.9, I98.0–I98.1, J00.0–J02.8, J03.0–J03.8, J04.0–J04.2, J05.0–J06.8, J09.0–J15.8, J16.0–J16.9, J20.0–J21.9, J36.0, J91.0, K52.1, K67.0–K67.8, K75.3, K76.3, K77.0, K93.0–K93.1, M03.1, M12.1, M49.0–M49.1, M73.0–M73.1, M89.6, N74.1, R19.7, U04.0–U04.9, U06.0–U07.2, U82.0–U89.0, Z16.0–Z16.3",
+    # CMNN - Maternas
+    "O00.0–O07.9, O10.0–O16.0, O20.0–O26.9, O28.0–O36.9, O40.0–O48.1, O60.0–O77.9, O80.0–O92.7, O96.0-O98.6, O98.8-O99.8",
+    # CMNN - Neonatales
+    "P00.0–P04.2, P04.5–P05.9, P07.0–P15.9, P19.0–P23.4, P24.0–P29.9, P35.0–P37.2, P37.5–P39.9, P50.0–P61.9, P70.0–P70.1, P70.3–P72.9, P74.0–P78.9, P80.0–P81.9, P83.0–P83.9, P90.0–P94.9, P96.3–P96.4, P96.8, W75.0-W75.9, W78.0-W80.9, W83.0-W84.9",
+    # CMNN - Nutricionales
+    "D50.1–D50.8, D51.0–D52.0, D52.8–D53.9, D70.3, D89.3, E00.0–E02.0, E40.0–E46.9, E51.0–E61.9, E63.0–E64.0, E64.2–E64.9",
+    # GC4
+    "B16.9, B64.0, B82.0-B82.9, B83.9, G00.9-G02.8, G03.9, J17.0-J17.9, J22.0, P23.5-P23.9, P37.3-P37.4",
+    # GC3
+    "A31.0-A31.9, A42.0-A44.9, A49.2, A64.0, A99.0, B17.1, B17.8, B17.9, B19.0, B19.2-B19.9, B37.0-B46.9, B49.0, B55.1-B55.9, B58.0-B59.0, B89.0, B94.2, J02.9, J03.9, J04.3, J06.9, O08.0-O08.9, O94.0-O95.0, R00.0-R01.2, R07.1-R07.9, R31.0-R31.9",
+
+    # Otras ENT
+    "A46.0, A66.0-A67.9, B18.0-B18.9, B86.0, D25.0-D25.9, D28.2, D52.1, D55.0-D59.3, D59.5-D59.6, D60.0-D61.9, D64.0, D66.0, D69.8, D70.0-D75.8, D76.0-D77.9, D86.3, D86.8, D89.0-D89.2, E03.0-E07.1, E10.2, E11.2, E16.0-E16.9, E20.0-E32.9, E34.1-E34.8, E65.0-E68.0, E70.0-E85.2, E88.0-E89.9, F00.0-F02.0, F02.2-F02.3, F02.8-F03.0, F10.0-F16.9, F18.0-F18.9, F24.0, F50.0-F50.5, G10.0-G13.8, G20.0-G21.1, G23.0-G26.0, G30.0-G31.9, G35.0-G37.9, G40.0-G41.9, G61.0-G61.9, G62.1, G70.0-G73.7, G90.0-G90.9, G93.7, G95.0-G95.9, G97.0-G97.9, H05.0-H05.1, I12.0-I13.9, I27.1, I67.7, I84.0-I85.9, I89.1-I89.8, I95.2, I97.0-I97.9, I98.2, I98.9, J70.0-J70.5, J95.0-J95.9, K20.0-K20.9, K22.0-K22.6, K22.8-K29.9, K31.0-K31.8, K35.0-K38.9, K40.0-K46.9, K50.0-K52.0, K52.2-K52.9, K55.0-K61.4, K62.2-K62.9, K64.0-K64.9, K66.8, K70.0-K70.3, K71.7, K73.0-K74.6, K75.2, K75.4-K76.2, K76.4-K76.9, K77.8, K80.0-K83.9, K85.0-K86.9, K90.0-K91.9, K92.8, K93.8, K94.0-K95.8, L00.0-L05.9, L08.0-L08.9, L10.0-L14.0, L51.0-L51.9, L88.0-L89.9, L93.0-L93.2, L97.0-L98.4, M00.0-M03.0, M03.2-M03.6, M05.0-M09.8, M30.0-M36.8, M40.0-M43.1, M65.0, M71.0-M71.1, M72.5-M72.6, M80.0-M82.8, M86.3, M86.4, M87.0-M87.1, M88.0-M89.0, M89.5, M89.7-M89.9, N00.0-N01.9, N02.0-N08.8, N10.0-N12.9, N13.6, N15.0, N14.0-N16.8, N18.0-N18.9, N20.0-N23.0, N25.0-N28.1, N29.0-N30.3, N30.8-N32.0, N32.3-N32.4, N34.0-N34.3, N36.0-N36.9, N39.0-N39.2, N41.0-N41.9, N44.0-N45.9, N49.0-N49.9, N65.0-N65.1, N72.0, N75.0-N77.8, N80.0-N81.9, N83.0-N83.9, N99.0-N99.9, P04.3-P04.4, P93.0-P93.8, P96.0-P96.2, P96.5, Q00.0-Q07.9, Q10.4-Q18.9, Q20.0-Q28.9, Q30.0-Q35.9, Q37.0-Q45.9, Q50.0-Q60.9, Q61.0-Q62.8, Q63.0-Q87.8, Q89.0-Q89.8, Q90.0-Q93.9, Q95.0-Q99.8, R50.2, R78.0-R78.5, R95.0-R95.9, X45.0-X45.9, X65.0-X65.9, Y15.0-Y15.9",
+    # GC4
+    "E12.2, E13.2, E14.2, G00.9-G02.8, G03.9",
+    # GC3
+    "D75.9, D80.0-D84.9, D89.8-D89.9, E07.8-E07.9, E34.0, E34.9-E35.8, E87.7, E90.0, F04.0-F06.1, F06.5-F07.0, F07.8-F07.9, F50.8, F50.9, G09.0, G21.2, G21.4-G22.0, G93.8-G93.9, G96.0-G96.9, G98.0, K21.0-K21.9, K22.7, K31.9, K63.0-K63.4, K63.8-K63.9, K70.4-K70.9, K87.0, K87.1, K92.9, N13.0-N13.5, N13.7-N13.9, N28.8-N28.9, N39.9-N40.0, N84.2-N86.0, N88.0-N90.9, N92.0-N95.0, Q10.0-Q10.3, Q36.0-Q36.9, Q89.9, Q99.9",
+
+    # Otras CE
+    "L55.0-L55.8, L56.3, L56.8, L58.0-L58.1, V05.0-V05.9, V81.0-V81.9, V83.0-V86.9, V88.2-V88.3, V90.0-V98.8, W00.0-W46.9, W49.0-W60.9, W64.0-W70.9, W73.0-W74.9, W77.0-W77.9, W81.0-W82.9, W85.0-W94.9, W97.9, W99.0-X06.9, X08.0-X39.9, X46.0-X48.9, X50.0-X54.9, X57.0-X58.9, Y35.0-Y85.9, Y88.0-Y88.3, Y89.0-Y89.1",
+    # GC4
+    "V88.0-V88.1, V88.4-V88.9, V99.0",
+
+    # Neumonías
+    "J15.9, J18.0-J18.9",
+
+    # GC2
+    "A30.0-A30.9, A48.8, A49.3-A49.9, A97.0-A97.9, B08.0-B09.0, B34.0-B34.9, B68.0-B68.9, B73.0-B74.2, B76.0-B76.9, B78.0-B81.8, B92.0, B94.0, B94.8, B94.9, B95.6-B97.3, B97.7-B99.9, D59.4, D59.8, D59.9, F17.0-F17.9, G93.0, G93.3, I50.9, I67.4, J90.0, J94.0-J94.1, J94.8-J94.9, K92.0-K92.2, N70.0-N71.9, N73.0-N74.0, N74.2-N74.8, R03.0, R04.0-R06.9, R09.0-R09.2, R09.8-R10.9, R13.0-R13.9, R23.0, S00.0-T98.3, X59.0-X59.9*, Y20.0-Y24.4, Y24.8-Y25.1, Y25.3-Y26.2, Y26.4-Y27.3, Y27.8-Y28.2, Y28.4, Y28.6, Y28.8-Y29.2, Y34.0-Y34.9, Y86.1, Y86.3-Y86.7, Y86.9-Y87.1, Y87.3-Y89.8, Y92.0-Y94.9, Y98.1-Y99.9",
+    # GC2-CE
+    "G44.3, G91.3, R58.0, Y24.5-Y24.7, Y25.2, Y26.3, Y27.4-Y27.6, Y28.3, Y28.5, Y29.1-Y30.9, Y33.0-Y33.9, Y86.0, Y86.2, Y86.8, Y87.2, Y89.9-Y91.9, Y95.0-Y98.0",
+    # GC2-TRA-HO-SU
+    "Y31.0-Y32.9",
+    # GC2-HO-SU-OCE
+    "W76.0-W76.9",
+
+    # GC1
+    "A40.0-A41.9, A48.0, A48.3, A49.0-A49.1, A59.0-A59.9, A71.0-A71.9, A74.0, B07.0, B30.0-B30.9, B35.0-B36.9, B85.0-B85.4, B87.0-B88.9, B94.0, D50.0, D50.9, D62.0-D63.0, D63.8, D64.1-D65.9, D69.9, E15.0, E50.0-E50.9, E64.1, E85.3-E87.6, E87.8, F06.2-F06.4, F07.2, F09.0, F19.0-F23.9, F25.0-F48.9, F51.0-F99.0, G06.0-G08.0, G32.0-G32.8, G43.0-G44.2, G44.4-G44.8, G47.0-G47.2, G47.4-G47.9, G50.0-G60.9, G62.0, G62.2-G64.0, G80.0-G83.9, G91.0-G91.2, G91.4-G92.0, G93.1-G93.2, G93.4-G93.6, G94.0-G94.8, G99.0-H04.9, H05.2-H69.9, H71.0-H95.9, I26.0-I26.9, I31.2-I31.3, I46.0-I46.9, I50.0-I50.1, I95.0-I95.1, I95.8-I95.9, J69.0-J69.9, J80.0-J81.0, J85.0-J85.3, J86.0-J86.9, J93.0-J93.1, J93.8-J93.9, J94.2, J96.0, J96.9, J98.1-J98.3, K00.0-K14.9, K30.0, K65.0-K66.1, K66.9, K71.0-K71.6, K71.8-K72.9, K75.0, L20.0-L30.9, L40.0-L50.9, L52.0-L54.8, L56.0-L56.2, L56.4-L56.5, L57.0-L57.9, L59.0-L68.9, L70.0-L75.9, L80.0-L87.9, L90.0-L92.9, L94.0-L95.9, L98.5-L99.8, M10.0-M12.0, M12.2-M25.9, M43.2-M48.9, M49.2-M63.9, M65.1-M70.9, M71.2-M72.4, M72.8-M72.9, M73.8-M79.9, M83.0-M86.2, M86.5-M86.9, M87.2-M87.9, M89.1-M89.4, M90.0-M99.9, N17.0-N17.9, N19.0, N32.1-N32.2, N32.8-N33.8, N35.0-N35.9, N37.0-N37.8, N39.3-N39.8, N42.0-N43.4, N44.1-N44.8, N46.0-N48.9, N50.0-N51.8, N61.0-N64.9, N82.0-N82.9, N91.0-N91.5, N95.1-N95.9, N97.0-N97.9, R02.0-R02.9, R03.1, R07.0, R09.3, R11.0-R12.0, R14.0-R19.6, R19.8-R22.9, R23.1-R30.9, R32.0-R50.1, R50.8-R57.9, R58.0-R72.9, R74.0-R77.9, R78.6-R94.8, R96.0-R99.0, U05.0, U08.0-U81.9, X46.0-X46.9, Z00.0-Z13.9, Z20.0-Z99.9",
+    # GC1-CE
+    "X40-X44.9, X49.0-X49.9, Y10.0-Y14.9, Y16.0-Y19.9"
+  )
+)
+
+# Formato tabla
+tabs1 |>
+  rename(Grupo = 1, Subgrupo = 2, "Códigos CIE-10" = 3) |>
+  flextable() |>
+  tab_fmt() |>
+  hline(j = 1:3) |>
+  width(width = c(3, 3, 10), unit = "cm")
+```
+
+\newpage
+### **Tabla S2.** Distribución de las defunciones según sexo, grupo etario y categorías GBD nivel 1 y 2. Argentina, 2010-2023. 
+
+```{r}
+#| id: Tabla S2
+# Datos para la tabla
+tabs2 <- recod_defun |>
+  # Individualizar filas
+  uncount(weights = n) |>
+
+  # Generar tabla
+  tbl_summary(
+    by = sexo,
+    include = c(grupo_edad, grupo_gbd1, grupo_gbd2i),
+    digits = all_categorical() ~ c(0, 1),
+    label = list(
+      grupo_edad = "Grupo etario",
+      grupo_gbd1 = "Cat. GBD nivel 1",
+      grupo_gbd2i = "Cat. GBD nivel 2"
+    )
+  ) |>
+  add_overall(last = TRUE) |>
+  add_p()
+
+# Formato Tabla
+tabs2 |>
+  modify_header(all_stat_cols() ~ "{level}") |>
+  modify_spanning_header(all_stat_cols() ~ "**Sexo**") |>
+  modify_footnote_header(
+    footnote = "Los porcentajes corresponden al total por sexo",
+    columns = all_stat_cols()
+  ) |>
+  as_flex_table() |>
+  tab_fmt() |>
+  hline(i = c(8, 13)) |>
+  width(width = c(3, rep(2.5, 3), 2), unit = "cm")
+```
+
+\newpage
+### **Tabla S3.**Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos poco útiles (GC), clasificadas por nivel de especificidad y región geográfica, Argentina (2010-2023).
+
+
+```{r}
+#| id: Regresiones joinpoint por región
+#| include: false
+mod_jp_reg <- datos_jp |>
+  # Agrupar por región
+  group_by(anio, grupo_edad, region_deis, nivel) |>
+  summarise(
+    n = sum(n, na.rm = TRUE),
+    pob = sum(pob, na.rm = TRUE),
+    pob_est_2022 = mean(pob_est_2022, na.rm = TRUE),
+    .groups = "drop"
+  ) |>
+
+  # Añadir totales Argentina
+  (\(x) {
+    bind_rows(
+      x,
+      x |>
+        group_by(anio, grupo_edad, nivel) |>
+        summarise(
+          region_deis = "Argentina",
+          pob = sum(pob, na.rm = TRUE),
+          n = sum(n, na.rm = TRUE),
+          pob_est_2022 = mean(pob_est_2022, na.rm = TRUE),
+          .groups = "drop"
+        )
+    )
+  })() |>
+
+  # Calcular tasa estandarizada
+  group_by(anio, region_deis, nivel) |>
+  calculate_dsr(
+    x = n,
+    n = pob,
+    stdpop = pob_est_2022,
+    type = "standard"
+  ) |>
+
+  # Ajustar modelos
+  model_jp(
+    value = "value",
+    time = "anio",
+    group = c("region_deis", "nivel"),
+    step = TRUE,
+    k = 3,
+    test = TRUE
+  )
+```
+
+
+```{r}
+#| id: Tabla S3
+tabs3 <- mod_jp_reg |>
+  # Crear tabla
+  summary_jp(
+    var1 = "Región",
+    var2 = "Nivel",
+    ft = TRUE,
+    lan = "es"
+  )
+
+# Formato tabla
+tabs3 |>
+  tab_fmt() |>
+  colformat_char(j = c(4, 6), na_str = "—") |>
+  colformat_double(
+    j = 5,
+    decimal.mark = ",",
+    big.mark = ".",
+    na_str = "—"
+  ) |>
+  hline(i = which(tabs3$body$dataset[[1]] != lag(tabs3$body$dataset[[1]])) - 1)
+```
+
+\newpage
+### **Tabla S4.** Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos poco útiles (GC), clasificadas por nivel de especificidad y jurisdicción, Argentina (2010-2023).
+
+
+```{r}
+#| id: Regresiones joinpoint por jurisdicción
+#| include: false
+mod_jp_prov <- datos_jp |>
+  # Excluir datos NOA
+  filter_out(str_detect(region_deis, "NOA")) |>
+  droplevels() |>
+  # Ordenar niveles de jurisdicción
+  mutate(
+    jurisdiccion = fct_reorder(
+      jurisdiccion,
+      as.numeric(region_deis),
+      .fun = min
+    )
+  ) |>
+
+  # Calcular tasa estandarizada
+  group_by(anio, jurisdiccion, nivel) |>
+  calculate_dsr(
+    x = n,
+    n = pob,
+    stdpop = pob_est_2022,
+    type = "standard"
+  ) |>
+
+  # Ajustar modelos
+  model_jp(
+    value = "value",
+    time = "anio",
+    group = c("jurisdiccion", "nivel"),
+    step = TRUE,
+    k = 3,
+    test = TRUE
+  )
+```
+
+
+```{r}
+#| id: Tabla S4
+tabs4 <- mod_jp_prov |>
+  # Crear tabla
+  summary_jp(
+    var1 = "Jurisdicción",
+    var2 = "Nivel",
+    ft = TRUE,
+    lan = "es"
+  )
+
+
+# Formato tabla
+tabs4 |>
+  add_footer_row(
+    values = "Se excluyen datos de las regiones NOA (Tucumán), NOA1 y NOA2 para evitar repeticiones",
+    colwidths = 7
+  ) |>
+  tab_fmt() |>
+  colformat_char(j = c(4, 6), na_str = "—") |>
+  colformat_double(
+    j = 5,
+    decimal.mark = ",",
+    big.mark = ".",
+    na_str = "—"
+  ) |>
+  hline(i = which(tabs4$body$dataset[[1]] != lag(tabs4$body$dataset[[1]])) - 1)
+```
+
+\newpage
+### **Figura S5.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según región, Región Centro por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
+
+```{r}
+#| id: Figura S5
+gg_jpoint(mods = c(mod_jp_reg[5:8], mod_jp_prov[1:20]), facets = TRUE) +
+  facet_wrap(
+    ~ fct_relevel(
+      group,
+      str_subset(levels(factor(group)), "^Centro")
+    ),
+    ncol = 4,
+    labeller = as_labeller(
+      ~ str_remove(.x, "_.*")
+    )
+  ) +
+  theme_jp
+```
+
+\newpage
+### **Figura S6.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según región, Región Cuyo por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
+
+```{r}
+#| id: Figura S6
+gg_jpoint(mods = c(mod_jp_reg[9:12], mod_jp_prov[21:28]), facets = TRUE) +
+  facet_wrap(
+    ~ fct_relevel(
+      group,
+      # Selecciona únicamente los niveles que EMPIEZAN con "Cuyo"
+      str_subset(levels(factor(group)), "^Cuyo")
+    ),
+    ,
+    ncol = 4,
+    labeller = as_labeller(
+      ~ str_remove(.x, "_.*")
+    )
+  ) +
+  theme_jp
+```
+
+\newpage
+### **Figura S7.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según región, Región NEA por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
+
+```{r}
+#| id: Figura S7
+gg_jpoint(mods = c(mod_jp_reg[13:16], mod_jp_prov[29:44]), facets = TRUE) +
+  facet_wrap(
+    ~ fct_relevel(
+      group,
+      # Selecciona únicamente los niveles que EMPIEZAN con "NEA"
+      str_subset(levels(factor(group)), "^NEA")
+    ),
+    ncol = 4,
+    labeller = as_labeller(
+      ~ str_remove(.x, "_.*")
+    )
+  ) +
+  theme_jp
+```
+
+\newpage
+### **Figura S8.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según región, Región NOA por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
+
+```{r}
+#| id: Figura S8
+gg_jpoint(mods = mod_jp_reg[17:28], facets = TRUE) +
+  facet_wrap(
+    ~group,
+    ncol = 4,
+    labeller = as_labeller(
+      ~ str_remove(.x, "_.*")
+    )
+  ) +
+  theme_jp
+```
+
+\newpage
+### **Figura S9.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según región, Región Patagonia por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
+
+```{r}
+#| id: Figura S9
+gg_jpoint(mods = c(mod_jp_reg[29:32], mod_jp_prov[45:52]), facets = TRUE) +
+  # Layout
+  facet_wrap(
+    ~ fct_relevel(
+      group,
+      # Ordena niveles
+      str_subset(levels(factor(group)), "^Patagonia_")
+    ),
+    ncol = 4,
+    labeller = as_labeller(
+      ~ str_remove(.x, "_.*")
+    )
+  ) +
+  theme_jp
+```
+
+\newpage
+### Tabla S10. Cambios en las frecuencias para causas definidas luego de completado el proceso de redistribución de códigos poco útiles (GC), Argentina (2010-2023).
+
+```{r}
+#| id: Tabla S10
+tabs10 <- recod_defun |>
+  # Crear grupo causa
+  mutate(
+    grupo_causa = case_when(
+      grupo_gbd2i %in% c("DM", "ECV", "ERC", "NPL") ~ "ENT objetivo",
+      grupo_gbd2i %in% c("TRA", "SU", "HO") ~ "CE objetivo",
+      grupo_gbd2i %in% c("CMNN", "OCE", "ONT") ~ "Otras causas",
+      .default = "GC"
+    ) |>
+      fct_relevel("GC", after = Inf)
+  ) |>
+
+  # Frecuencias por grupo
+  count(grupo_causa, causa = grupo_gbd2i, wt = n) |>
+
+  # Añadir frecuencias finales
+  left_join(
+    recod_defun |>
+      # Frecuencias por grupo
+      count(causa = grupo_gbd2f, wt = n, name = "n_fin")
+  ) |>
+
+  # Cambio absoluto y relativo
+  mutate(
+    cambio_rel = percent(((n_fin - n) / n), accuracy = .1, decimal.mark = ","),
+    razon_post_pre = number(n_fin / n, accuracy = .1, decimal.mark = ",")
+  ) |>
+
+  # Renombrar columnas
+  rename(
+    "Grupo causa" = 1,
+    "Causa" = 2,
+    "Frec. \n inicial" = 3,
+    "Frec. \n final" = 4,
+    "Cambio relativo" = cambio_rel,
+    "Razón cambio" = razon_post_pre
+  ) |>
+
+  flextable()
+
+# Formato tabla
+tabs10 |>
+  tab_fmt() |>
+  colformat_char(na_str = "—") |>
+  colformat_int(na_str = "—")
+```
