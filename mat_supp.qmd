@@ -31,33 +31,14 @@ knitr::opts_chunk$set(
 )
 ```
 
+```{r}
+#| id: Cargar script análisis
+#| include: false
+source("analisis_datos.R")
+```
 
 ```{r}
-#| id: Cargar paquetes
-# Cargar paquetes --------------------------------------------------------
-pacman::p_load(
-  patchwork,
-  # Tablas
-  flextable,
-  gtsummary,
-  # Tasas estandarizadas
-  PHEindicatormethods,
-  # Regresión joinpoint
-  joinpointR,
-  # Manejo de datos
-  scales,
-  here,
-  rio,
-  janitor,
-  tidyverse
-  # ,
-  # update = TRUE
-)
-
-
-# Paletas colorblind-friendly --------------------------------------------
-pal <- scico::scico(n = 4, palette = "managua")
-
+#| id: Funciones auxiliares
 # Tema ggplot -------------------------------------------------------------
 theme_jp <- list(
   scale_color_manual(values = rep(pal, 7)),
@@ -85,55 +66,6 @@ tab_fmt <- function(x) {
     align(align = "left", part = "all") |>
     merge_v(j = 1)
 }
-```
-
-```{r}
-#| id: Datos para el análisis
-## Defunciones por grupo de causas -----
-recod_defun <- import(here("clean", "arg_defun_mes_2010-2023_recod.rds")) |>
-  # Ordenar grupo nivel 1
-  mutate(
-    grupo_gbd1 = fct_relevel(
-      grupo_gbd1,
-      "ENT",
-      after = 0
-    )
-  )
-
-## Datos para ajustar tasas de mortalidad por GC -----
-datos_jp <- recod_defun |>
-  # Seleccionar muertes por GC
-  filter(str_detect(grupo_gbd1, "GC")) |>
-  droplevels() |>
-
-  # Agrupar datos por año
-  count(
-    anio,
-    grupo_edad,
-    region_deis,
-    jurisdiccion,
-    nivel = grupo_gbd2i,
-    wt = n
-  ) |>
-
-  # Añadir proyecciones poblacionales
-  left_join(
-    import(here("clean", "arg_proy_2010_2023.rds")) |>
-      # Agrupar datos
-      count(
-        anio,
-        region_deis,
-        jurisdiccion,
-        grupo_edad,
-        wt = proy,
-        name = "pob"
-      )
-  ) |>
-
-  # Añadir población estándar Argentina 2022
-  left_join(
-    import(here("clean", "arg_pob_est_2022.rds"))
-  )
 ```
 
 
@@ -297,24 +229,25 @@ tabs1 |>
 ```
 
 \newpage
-### **Tabla S2.** Distribución de las defunciones según sexo, grupo etario y categorías GBD nivel 1 y 2. Argentina, 2010-2023. 
+### **Tabla S2.** Distribución de las defunciones por códigos poco útiles (GC) según sexo y grupo etario, Argentina (2010-2023).
 
 ```{r}
 #| id: Tabla S2
 # Datos para la tabla
 tabs2 <- recod_defun |>
+  filter(grupo_gbd1 == "GC") |>
+  droplevels() |>
   # Individualizar filas
   uncount(weights = n) |>
 
-  # Generar tabla
+  # Crear tabla
   tbl_summary(
-    by = sexo,
-    include = c(grupo_edad, grupo_gbd1, grupo_gbd2i),
+    by = grupo_gbd2i,
+    include = c(sexo, grupo_edad),
     digits = all_categorical() ~ c(0, 1),
     label = list(
-      grupo_edad = "Grupo etario",
-      grupo_gbd1 = "Cat. GBD nivel 1",
-      grupo_gbd2i = "Cat. GBD nivel 2"
+      sexo = "Sexo",
+      grupo_edad = "Grupo etario"
     )
   ) |>
   add_overall(last = TRUE) |>
@@ -323,85 +256,37 @@ tabs2 <- recod_defun |>
 # Formato Tabla
 tabs2 |>
   modify_header(all_stat_cols() ~ "{level}") |>
-  modify_spanning_header(all_stat_cols() ~ "**Sexo**") |>
-  modify_footnote_header(
-    footnote = "Los porcentajes corresponden al total por sexo",
-    columns = all_stat_cols()
-  ) |>
   as_flex_table() |>
   tab_fmt() |>
-  hline(i = c(8, 13)) |>
-  width(width = c(3, rep(2.5, 3), 2), unit = "cm")
+  hline(i = 3) |>
+  width(width = 2, unit = "cm")
 ```
+
 
 \newpage
-### **Tabla S3.**Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos poco útiles (GC), clasificadas por nivel de especificidad y región geográfica, Argentina (2010-2023).
-
+### **Tabla S3.**Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos poco útiles nivel 1 (GC1) por jurisdicción, Argentina (2010-2023).
 
 ```{r}
-#| id: Regresiones joinpoint por región
-#| include: false
-mod_jp_reg <- datos_jp |>
-  # Agrupar por región
-  group_by(anio, grupo_edad, region_deis, nivel) |>
-  summarise(
-    n = sum(n, na.rm = TRUE),
-    pob = sum(pob, na.rm = TRUE),
-    pob_est_2022 = mean(pob_est_2022, na.rm = TRUE),
-    .groups = "drop"
+#| id: Dataset para las tablas
+tabs3 <- mod_jp |>
+  summary_jp(
+    var1 = "Jurisdicción",
+    var2 = "Nivel",
+    ft = FALSE,
+    lan = "es"
   ) |>
 
-  # Añadir totales Argentina
-  (\(x) {
-    bind_rows(
-      x,
-      x |>
-        group_by(anio, grupo_edad, nivel) |>
-        summarise(
-          region_deis = "Argentina",
-          pob = sum(pob, na.rm = TRUE),
-          n = sum(n, na.rm = TRUE),
-          pob_est_2022 = mean(pob_est_2022, na.rm = TRUE),
-          .groups = "drop"
-        )
-    )
-  })() |>
+  arrange(Nivel) |>
+  select(Nivel, everything()) |>
 
-  # Calcular tasa estandarizada
-  group_by(anio, region_deis, nivel) |>
-  calculate_dsr(
-    x = n,
-    n = pob,
-    stdpop = pob_est_2022,
-    type = "standard"
-  ) |>
-
-  # Ajustar modelos
-  model_jp(
-    value = "value",
-    time = "anio",
-    group = c("region_deis", "nivel"),
-    step = TRUE,
-    k = 3,
-    test = TRUE
-  )
+  flextable()
 ```
-
 
 ```{r}
 #| id: Tabla S3
-tabs3 <- mod_jp_reg |>
-  # Crear tabla
-  summary_jp(
-    var1 = "Región",
-    var2 = "Nivel",
-    ft = TRUE,
-    lan = "es"
-  )
-
-# Formato tabla
 tabs3 |>
   tab_fmt() |>
+  merge_v(j = 1:2) |>
   colformat_char(j = c(4, 6), na_str = "—") |>
   colformat_double(
     j = 5,
@@ -413,141 +298,11 @@ tabs3 |>
 ```
 
 \newpage
-### **Tabla S4.** Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos poco útiles (GC), clasificadas por nivel de especificidad y jurisdicción, Argentina (2010-2023).
-
-
-```{r}
-#| id: Regresiones joinpoint por jurisdicción
-#| include: false
-mod_jp_prov <- datos_jp |>
-  # Excluir datos NOA
-  filter_out(str_detect(region_deis, "NOA")) |>
-  droplevels() |>
-  # Ordenar niveles de jurisdicción
-  mutate(
-    jurisdiccion = fct_reorder(
-      jurisdiccion,
-      as.numeric(region_deis),
-      .fun = min
-    )
-  ) |>
-
-  # Calcular tasa estandarizada
-  group_by(anio, jurisdiccion, nivel) |>
-  calculate_dsr(
-    x = n,
-    n = pob,
-    stdpop = pob_est_2022,
-    type = "standard"
-  ) |>
-
-  # Ajustar modelos
-  model_jp(
-    value = "value",
-    time = "anio",
-    group = c("jurisdiccion", "nivel"),
-    step = TRUE,
-    k = 3,
-    test = TRUE
-  )
-```
-
+### **Figura S4.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región Centro, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
 
 ```{r}
-#| id: Tabla S4
-tabs4 <- mod_jp_prov |>
-  # Crear tabla
-  summary_jp(
-    var1 = "Jurisdicción",
-    var2 = "Nivel",
-    ft = TRUE,
-    lan = "es"
-  )
-
-
-# Formato tabla
-tabs4 |>
-  add_footer_row(
-    values = "Se excluyen datos de las regiones NOA (Tucumán), NOA1 y NOA2 para evitar repeticiones",
-    colwidths = 7
-  ) |>
-  tab_fmt() |>
-  colformat_char(j = c(4, 6), na_str = "—") |>
-  colformat_double(
-    j = 5,
-    decimal.mark = ",",
-    big.mark = ".",
-    na_str = "—"
-  ) |>
-  hline(i = which(tabs4$body$dataset[[1]] != lag(tabs4$body$dataset[[1]])) - 1)
-```
-
-\newpage
-### **Figura S5.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según región, Región Centro por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
-
-```{r}
-#| id: Figura S5
-gg_jpoint(mods = c(mod_jp_reg[5:8], mod_jp_prov[1:20]), facets = TRUE) +
-  facet_wrap(
-    ~ fct_relevel(
-      group,
-      str_subset(levels(factor(group)), "^Centro")
-    ),
-    ncol = 4,
-    labeller = as_labeller(
-      ~ str_remove(.x, "_.*")
-    )
-  ) +
-  theme_jp
-```
-
-\newpage
-### **Figura S6.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según región, Región Cuyo por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
-
-```{r}
-#| id: Figura S6
-gg_jpoint(mods = c(mod_jp_reg[9:12], mod_jp_prov[21:28]), facets = TRUE) +
-  facet_wrap(
-    ~ fct_relevel(
-      group,
-      # Selecciona únicamente los niveles que EMPIEZAN con "Cuyo"
-      str_subset(levels(factor(group)), "^Cuyo")
-    ),
-    ,
-    ncol = 4,
-    labeller = as_labeller(
-      ~ str_remove(.x, "_.*")
-    )
-  ) +
-  theme_jp
-```
-
-\newpage
-### **Figura S7.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según región, Región NEA por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
-
-```{r}
-#| id: Figura S7
-gg_jpoint(mods = c(mod_jp_reg[13:16], mod_jp_prov[29:44]), facets = TRUE) +
-  facet_wrap(
-    ~ fct_relevel(
-      group,
-      # Selecciona únicamente los niveles que EMPIEZAN con "NEA"
-      str_subset(levels(factor(group)), "^NEA")
-    ),
-    ncol = 4,
-    labeller = as_labeller(
-      ~ str_remove(.x, "_.*")
-    )
-  ) +
-  theme_jp
-```
-
-\newpage
-### **Figura S8.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según región, Región NOA por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
-
-```{r}
-#| id: Figura S8
-gg_jpoint(mods = mod_jp_reg[17:28], facets = TRUE) +
+#| id: Figura S4
+gg_jpoint(mods = mod_jp[5:24], facets = TRUE) +
   facet_wrap(
     ~group,
     ncol = 4,
@@ -559,18 +314,13 @@ gg_jpoint(mods = mod_jp_reg[17:28], facets = TRUE) +
 ```
 
 \newpage
-### **Figura S9.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según región, Región Patagonia por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
+### **Figura S5.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región Cuyo, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
 
 ```{r}
-#| id: Figura S9
-gg_jpoint(mods = c(mod_jp_reg[29:32], mod_jp_prov[45:52]), facets = TRUE) +
-  # Layout
+#| id: Figura S5
+gg_jpoint(mods = mod_jp[25:32], facets = TRUE) +
   facet_wrap(
-    ~ fct_relevel(
-      group,
-      # Ordena niveles
-      str_subset(levels(factor(group)), "^Patagonia_")
-    ),
+    ~group,
     ncol = 4,
     labeller = as_labeller(
       ~ str_remove(.x, "_.*")
@@ -580,46 +330,98 @@ gg_jpoint(mods = c(mod_jp_reg[29:32], mod_jp_prov[45:52]), facets = TRUE) +
 ```
 
 \newpage
-### Tabla S10. Cambios en las frecuencias para causas definidas luego de completado el proceso de redistribución de códigos poco útiles (GC), Argentina (2010-2023).
+### **Figura S6.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región NEA, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
 
 ```{r}
-#| id: Tabla S10
+#| id: Figura S6
+gg_jpoint(mods = mod_jp[33:48], facets = TRUE) +
+  facet_wrap(
+    ~group,
+    ncol = 4,
+    labeller = as_labeller(
+      ~ str_remove(.x, "_.*")
+    )
+  ) +
+  theme_jp
+```
+
+\newpage
+### **Figura S7.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región NOA, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
+
+```{r}
+#| id: Figura S7
+gg_jpoint(mods = mod_jp[49:60], facets = TRUE) +
+  facet_wrap(
+    ~group,
+    ncol = 4,
+    labeller = as_labeller(
+      ~ str_remove(.x, "_.*")
+    )
+  ) +
+  theme_jp
+```
+
+\newpage
+### **Figura S8.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región Patagonia, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
+
+```{r}
+#| id: Figura S8
+gg_jpoint(mods = mod_jp[61:68], facets = TRUE) +
+  facet_wrap(
+    ~group,
+    ncol = 4,
+    labeller = as_labeller(
+      ~ str_remove(.x, "_.*")
+    )
+  ) +
+  theme_jp
+```
+
+\newpage
+### Tabla S9. Cambios en las frecuencias para causas definidas luego de completado el proceso de redistribución de códigos poco útiles (GC), Argentina (2010-2023).
+
+```{r}
+#| id: Tabla S9
 tabs10 <- recod_defun |>
   # Crear grupo causa
   mutate(
-    grupo_causa = case_when(
-      grupo_gbd2i %in% c("DM", "ECV", "ERC", "NPL") ~ "ENT objetivo",
-      grupo_gbd2i %in% c("TRA", "SU", "HO") ~ "CE objetivo",
-      grupo_gbd2i %in% c("CMNN", "OCE", "ONT") ~ "Otras causas",
-      .default = "GC"
-    ) |>
-      fct_relevel("GC", after = Inf)
+    grupo_causa = fct_collapse(grupo_causa, "GC" = c("GC1-GC2", "GC3-GC4"))
   ) |>
 
-  # Frecuencias por grupo
-  count(grupo_causa, causa = grupo_gbd2i, wt = n) |>
+  # Frecuencias iniciales
+  count(grupo_causa, causa = grupo_gbd2i, wt = n, name = "n") |>
 
-  # Añadir frecuencias finales
+  # Añadir frecuencias paso 2
   left_join(
     recod_defun |>
       # Frecuencias por grupo
-      count(causa = grupo_gbd2f, wt = n, name = "n_fin")
+      count(causa = grupo_gbd2m, wt = n, name = "n2")
   ) |>
 
-  # Cambio absoluto y relativo
+  # Añadir frecuencias pasos 3 y 4
+  left_join(
+    recod_defun |>
+      # Frecuencias por grupo
+      count(causa = grupo_gbd2f, wt = n, name = "n3.4")
+  ) |>
+
+  # Cambios absolutos y relativos
   mutate(
-    cambio_rel = percent(((n_fin - n) / n), accuracy = .1, decimal.mark = ","),
-    razon_post_pre = number(n_fin / n, accuracy = .1, decimal.mark = ",")
+    cambio_rel_1 = percent(((n2 - n) / n), accuracy = .1, decimal.mark = ","),
+    cambio_rel_2 = percent(((n3.4 - n) / n), accuracy = .1, decimal.mark = ","),
+    razon = number(n3.4 / n, accuracy = .1, decimal.mark = ",")
   ) |>
 
-  # Renombrar columnas
-  rename(
-    "Grupo causa" = 1,
-    "Causa" = 2,
-    "Frec. \n inicial" = 3,
-    "Frec. \n final" = 4,
-    "Cambio relativo" = cambio_rel,
-    "Razón cambio" = razon_post_pre
+  # Ordenar columnas
+  select(
+    "Grupo causa" = grupo_causa,
+    "Causa" = causa,
+    "Fr. inicial" = n,
+    "Fr. paso 2" = n2,
+    "Cambio % " = cambio_rel_1,
+    "Fr. pasos 3-4" = n3.4,
+    "Cambio % total" = cambio_rel_2,
+    "Razón cambio" = razon
   ) |>
 
   flextable()

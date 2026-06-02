@@ -4,7 +4,7 @@
 ## - Proyecciones poblacionales por sexo y grupo etario quinquenal, 2010-2023 (INDEC)
 ## - Población estándar por sexo y grupo etario, Argentina, Censo 2022 (INDEC)
 ### Autora: Tamara Ricardo
-# Última modificación: 29-05-2026 13:07
+# Última modificación: 01-06-2026 11:31
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -94,20 +94,21 @@ proy_2010_2023 <- map(
   mutate(
     region_deis = case_when(
       str_detect(prov_1, "02|06|14|30|82") ~ "Centro",
-      str_detect(prov_1, "46|50|70|74") ~ "Cuyo",
+      str_detect(prov_1, "50") ~ "Cuyo1",
+      str_detect(prov_1, "46|70|74") ~ "Cuyo2",
       str_detect(prov_1, "18|22|34|54") ~ "NEA",
-      str_detect(prov_1, "90") ~ "NOA (Tucumán)",
+      str_detect(prov_1, "90") ~ "NOA",
       str_detect(prov_1, "38|66") ~ "NOA1",
       str_detect(prov_1, "10|86") ~ "NOA2",
-      str_detect(prov_1, "42|58|62|26|78|94") ~ "Patagonia"
+      str_detect(prov_1, "42|58|62") ~ "Patagonia Norte",
+      str_detect(prov_1, "26|78|94") ~ "Patagonia Sur",
     )
   ) |>
 
   # Crear jurisdicción DEIS
   mutate(
     jurisdiccion = case_when(
-      str_detect(region_deis, "NOA1|NOA2") ~ region_deis,
-      str_detect(region_deis, "Cuyo") & prov_1 != "50-MENDOZA" ~ "Cuyo2",
+      str_detect(region_deis, "Cuyo2|NOA1|NOA2") ~ region_deis,
       str_detect(prov_1, "42|58|62") ~ "Patagonia Norte",
       str_detect(prov_1, "26|78|94") ~ "Patagonia Sur",
       prov_1 == "02-CABA" ~ "CABA",
@@ -194,14 +195,14 @@ proy_mes_2010_2023 <- proy_2010_2023 |>
 
 
 # Exportar datos limpios -------------------------------------------------
-## Proyecciones poblacionales anuales
-export(proy_2010_2023, file = "clean/arg_proy_2010_2023.rds")
-
 ## Proyecciones poblacionales mensuales
 export(
   proy_mes_2010_2023,
   file = "../EM_ENT_CE/clean/arg_proy_mensual_2010_2023.rds"
 )
+
+## Proyecciones poblacionales anuales
+export(proy_2010_2023, file = "clean/arg_proy_2010_2023.rds")
 
 ## Población estándar 2022
 export(pob_est_2022, file = "clean/arg_pob_est_2022.rds")

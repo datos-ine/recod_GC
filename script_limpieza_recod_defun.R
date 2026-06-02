@@ -6,7 +6,7 @@
 ### según Teixeira et al. (2021), Soares Filho et al. (2024) y GBD-2019
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 29-05-2026 12:45
+# Última modificación: 01-06-2026 11:04
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -113,32 +113,27 @@ defun <- defun_raw |>
   # Modificar etiquetas región DEIS
   mutate(
     region_deis = case_when(
-      str_detect(region, "Cuyo") ~ "Cuyo",
-      str_detect(region, "3.NOA") ~ "NOA1",
-      str_detect(region, "4.NOA") ~ "NOA (Tucumán)",
-      str_detect(region, "5.NOA") ~ "NOA2",
-      str_detect(region, "Pat.") ~ "Patagonia",
-      .default = str_sub(region, 3) |> str_remove("\\.")
+      region == "8.Pat. Norte." ~ "Patagonia Norte",
+      region == "9.Pat.Sur." ~ "Patagonia Sur",
+      .default = str_remove(region, "^\\d+\\.") |>
+        str_remove("\\.$")
     )
   ) |>
 
   # Modificar etiquetas jurisdicción
   mutate(
     jurisdiccion = case_when(
-      str_detect(jurisdiccion, "6") ~ "Buenos Aires",
-      str_detect(jurisdiccion, "14") ~ "Córdoba",
-      str_detect(jurisdiccion, "30") ~ "Entre Ríos",
-      str_detect(jurisdiccion, "50") ~ "Mendoza",
-      str_detect(jurisdiccion, "90") ~ "Tucumán",
-      str_detect(region, "8.Pat") ~ "Patagonia Norte",
-      str_detect(region, "9.Pat") ~ "Patagonia Sur",
+      jurisdiccion == "6.Prov. Bs.As." ~ "Buenos Aires",
+      jurisdiccion == "14.Cordoba." ~ "Córdoba",
+      jurisdiccion == "30.Entre Rios." ~ "Entre Ríos",
+      jurisdiccion == "90.Tucuman." ~ "Tucumán",
       str_detect(jurisdiccion, "99") & region_deis == "Cuyo" ~ "Cuyo2",
       str_detect(jurisdiccion, "99") ~ region_deis,
       .default = str_remove_all(jurisdiccion, "[0-9[:punct:]]")
     )
   ) |>
 
-  # Reordenar columnas
+  # Seleccionar columnas relevantes
   select(anio, mes, region_deis, jurisdiccion, sexo, grupo_edad, cie10_cod)
 
 
@@ -1549,11 +1544,26 @@ recod_defun <- recod_defun |>
   )
 
 
-# Reagrupar datos --------------------------------------------------------
-recod_defun_f <- recod_defun |>
+# Crear dataset para análisis EM -----------------------------------------
+datos_em <- recod_defun |>
   count(
     anio,
     mes,
+    region_deis,
+    jurisdiccion,
+    sexo,
+    grupo_edad,
+    grupo_causa = paso4.2
+  ) |>
+
+  # Columnas caracter a factor
+  mutate(across(.cols = where(is.character), .fns = ~ factor(.x)))
+
+
+# Crear dataset para análisis GC -----------------------------------------
+recod_defun_f <- recod_defun |>
+  count(
+    anio,
     region_deis,
     jurisdiccion,
     sexo,
@@ -1589,7 +1599,11 @@ recod_defun_f <- recod_defun |>
 
 
 # Exportar datos limpios -------------------------------------------------
-export(recod_defun_f, file = "clean/arg_defun_mes_2010-2023_recod.rds")
+## Análisis EM
+export(datos_em, file = "../EM_ENT_CE/clean/arg_defun_mes_2010_2023.rds")
+
+## Análisis GC
+export(recod_defun_f, file = "clean/arg_defun_recod_2010_2023.rds")
 
 ## Limpiar environment ----
 rm(list = ls())

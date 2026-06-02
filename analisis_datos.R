@@ -3,6 +3,7 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
+# Última modificación: 01-06-2026 12:07
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -36,13 +37,11 @@ pacman::p_load(
 pob_est_2022 <- import(here("clean", "arg_pob_est_2022.rds"))
 
 ## Proyecciones poblacionales Argentina (2010-2023) -----
-proy_2010_2023 <- import(here("clean", "arg_proy_mensual_2010_2023.rds")) |>
-  # Seleccionar primer mes del año
-  filter(mes == 1)
+proy_2010_2023 <- import(here("clean", "arg_proy_2010_2023.rds"))
 
 
 ## Defunciones por grupo de causas -----
-recod_defun <- import(here("clean", "arg_defun_mes_2010-2023_recod.rds")) |>
+recod_defun <- import(here("clean", "arg_defun_recod_2010_2023.rds")) |>
   # Ordenar grupo nivel 1
   mutate(
     grupo_gbd1 = fct_relevel(
@@ -57,11 +56,11 @@ recod_defun <- import(here("clean", "arg_defun_mes_2010-2023_recod.rds")) |>
     grupo_causa = case_when(
       grupo_gbd2i %in% c("DM", "ECV", "ERC", "NPL") ~ "ENT objetivo",
       grupo_gbd2i %in% c("TRA", "SU", "HO") ~ "CE objetivo",
-      grupo_gbd2i %in% c("CMNN", "OCE", "ONT") ~ "Otras causas",
+      grupo_gbd2i %in% c("CMNN", "OCE", "ONT") ~ "Causas no objetivo",
       grupo_gbd2i %in% c("GC1", "GC2") ~ "GC1-GC2",
       grupo_gbd2i %in% c("GC3", "GC4") ~ "GC3-GC4"
     ) |>
-      fct_relevel("ENT objetivo", "CE objetivo", "Otras causas")
+      fct_relevel("ENT objetivo", "CE objetivo", "Causas no objetivo")
   )
 
 
@@ -165,21 +164,35 @@ tab2 <- recod_defun |>
   autofit()
 
 
-# Evolución temporal tasas GC por región ---------------------------------
-## Tasas estandarizadas por año ------------------------------------------
+# Evolución tasas GC por jurisdicción ------------------------------------
+## Tasas estandarizadas --------------------------------------------------
 datos_jp <- recod_defun |>
   # Seleccionar muertes por GC
   filter(str_detect(grupo_gbd1, "GC")) |>
   droplevels() |>
 
   # Agrupar datos por año
-  count(anio, grupo_edad, region_deis, grupo_causa = grupo_gbd2i, wt = n) |>
+  count(
+    anio,
+    grupo_edad,
+    region_deis,
+    jurisdiccion,
+    nivel = grupo_gbd2i,
+    wt = n
+  ) |>
 
   # Unir con proyecciones poblacionales
   left_join(
     proy_2010_2023 |>
       # Agrupar por año
-      count(anio, region_deis, grupo_edad, wt = proy_pob, name = "pob")
+      count(
+        anio,
+        region_deis,
+        jurisdiccion,
+        grupo_edad,
+        wt = proy,
+        name = "pob"
+      )
   ) |>
 
   # Añadir totales Argentina
@@ -187,9 +200,8 @@ datos_jp <- recod_defun |>
     bind_rows(
       x,
       x |>
-        group_by(anio, grupo_edad, grupo_causa) |>
+        group_by(anio, grupo_edad, nivel) |>
         summarise(
-          region_deis = "Argentina",
           pob = sum(pob, na.rm = TRUE),
           n = sum(n, na.rm = TRUE),
           .groups = "drop"
@@ -200,8 +212,17 @@ datos_jp <- recod_defun |>
   # Añadir población estándar 2022
   left_join(pob_est_2022) |>
 
+  # Modificar niveles jurisdicción
+  mutate(
+    jurisdiccion = case_when(
+      is.na(jurisdiccion) ~ "Argentina",
+      as.character(jurisdiccion) == as.character(region_deis) ~ jurisdiccion,
+      .default = paste(region_deis, jurisdiccion, sep = ":")
+    )
+  ) |>
+
   # Calcular tasa estandarizada
-  group_by(anio, region_deis, grupo_causa) |>
+  group_by(anio, jurisdiccion, nivel) |>
   calculate_dsr(
     x = n,
     n = pob,
@@ -210,80 +231,32 @@ datos_jp <- recod_defun |>
   )
 
 
-## Regresión joinpoint ---------------------------------------------------
-mod_jp <- model_jp(
-  data = datos_jp,
-  value = "value",
-  time = "anio",
-  group = c("region_deis", "grupo_causa"),
-  step = TRUE,
-  k = 3,
-  test = TRUE
-)
-
-### AAPC modelos lineales -----
-# Buscar modelos lineales
-mod_jp |>
-  keep(~ !inherits(.x, "segmented")) |>
-  names()
-
-# Obtener AAPCs
-get_aapc(mod_jp$NOA1_GC1)
-get_aapc(mod_jp$NOA2_GC1)
-get_aapc(mod_jp$Patagonia_GC1)
-
-get_aapc(mod_jp$Argentina_GC3)
-get_aapc(mod_jp$Centro_GC3)
-get_aapc(mod_jp$Cuyo_GC3)
-get_aapc(mod_jp$`NOA (Tucumán)_GC3`)
-get_aapc(mod_jp$NOA1_GC3)
-
-get_aapc(mod_jp$NOA1_GC4)
-get_aapc(mod_jp$NOA2_GC4)
-
-
-## Tabla S3 --------------------------------------------------------------
-tabs3 <- mod_jp |>
-  # Crear tabla
-  summary_jp(
-    var1 = "Región",
-    var2 = "Nivel",
-    ft = TRUE,
-    lan = "es"
-  ) |>
-
-  # Formato tabla
-  font(fontname = "Times New Roman", part = "all") |>
-  colformat_char(na_str = "—")
-
-
-# Figura 3 ---------------------------------------------------------------
+## Figura 3 --------------------------------------------------------------
 fig3 <- datos_jp |>
-
   # Gráfico
-  ggplot(aes(x = value, y = grupo_causa, fill = grupo_causa)) +
-  facet_wrap(~region_deis, ncol = 2) +
+  ggplot(aes(x = value, y = nivel, fill = nivel)) +
+  facet_wrap(~jurisdiccion, ncol = 3) +
 
   # Geometrías
   geom_density_ridges(
     jittered_points = TRUE,
     position = "raincloud",
     color = NA,
-    alpha = 0.75,
+    alpha = .75,
     point_color = "grey40",
-    point_alpha = 0.5,
-    scale = 5
+    point_alpha = .35,
+    # point_size = .75,
+    scale = 3
   ) +
 
   # Escalas
-  scale_x_continuous(limits = c(0, 150)) +
   scale_fill_manual(values = pal, name = NULL) +
 
   # Layout
   labs(
     x = "Tasa est. (100.000 hab.)",
     y = NULL,
-    caption = c("GC1: amarillo; GC2: rojo; GC3: violeta; CG4: cian")
+    caption = c("GC1: amarillo; GC2: rojo oscuro; GC3: violeta; CG4: cian")
   ) +
 
   theme_minimal() +
@@ -303,88 +276,21 @@ fig3 <- datos_jp |>
 #   dpi = 300
 # )
 
-# Figura 4 ---------------------------------------------------------------
-fig4 <- gg_jpoint(mods = mod_jp, facets = TRUE) +
-  # Facets
-  facet_wrap(
-    ~group,
-    ncol = 4,
-    labeller = as_labeller(
-      ~ str_remove(.x, "_.*") |> str_replace("Patagonia", "P.")
-    )
-  ) +
-
-  # Escalas
-  scale_x_continuous(n.breaks = 7) +
-  scale_y_continuous(n.breaks = 2) +
-  scale_color_manual(values = rep(pal, 10), name = NULL) +
-
-  # Layout
-  labs(
-    y = "log-tasa",
-    caption = c("GC1: amarillo; GC2: rojo; GC3: violeta; CG4: cian")
-  ) +
-  theme(
-    legend.position = "none",
-    text = element_text(family = "Times New Roman", size = 11),
-    axis.text.x = element_text(angle = 90),
-    strip.text = element_text(face = "bold")
-  )
-
-### Guardar figura -----
-# ggsave(
-#   fig4,
-#   filename = "figuras/Figura4.png",
-#   width = 15,
-#   height = 19,
-#   units = "cm",
-#   dpi = 300
-# )
-
-# Evolución temporal tasas GC por jurisdicción ---------------------------
-## Tasas estandarizadas por año (Centro y NEA) -----
-datos_centro <- recod_defun |>
-  # Seleccionar muertes por GC
-  filter(str_detect(grupo_gbd1, "GC") & region_deis == "Centro") |>
-  droplevels() |>
-
-  # Agrupar datos por año
-  count(anio, grupo_edad, jurisdiccion, grupo_gbd2i, wt = n) |>
-
-  # Unir con proyecciones poblacionales
-  left_join(
-    proy_2010_2023 |>
-      # Agrupar por año
-      count(anio, jurisdiccion, grupo_edad, wt = proy_pob, name = "pob")
-  ) |>
-
-  # Añadir población estándar 2022
-  left_join(pob_est_2022) |>
-
-  # Calcular tasa estandarizada
-  group_by(anio, jurisdiccion, grupo_causa = grupo_gbd2i) |>
-  calculate_dsr(
-    x = n,
-    n = pob,
-    stdpop = pob_est_2022,
-    type = "standard"
-  )
-
-
-### Regresión joinpoint -----
-mod_centro <- model_jp(
-  data = datos_centro,
+## Regresión joinpoint ---------------------------------------------------
+mod_jp <- model_jp(
+  data = datos_jp,
   value = "value",
   time = "anio",
-  group = c("jurisdiccion", "grupo_causa"),
+  group = c("jurisdiccion", "nivel"),
   step = TRUE,
   k = 3,
   test = TRUE
 )
 
-# Figura 5 ---------------------------------------------------------------
+
+# Figura 4 ---------------------------------------------------------------
 ## Paso 1 -----
-fig5.1 <- recod_defun |>
+fig4.1 <- recod_defun |>
   # Modificar grupo causa
   mutate(
     grupo_causa = fct_collapse(grupo_causa, "GC" = c("GC1-GC2", "GC3-GC4")),
@@ -429,14 +335,14 @@ fig5.1 <- recod_defun |>
   )
 
 ## Paso 2 -----
-fig5.2 <- recod_defun |>
+fig4.2 <- recod_defun |>
   rename(causa = grupo_gbd2m) |>
   # Modificar grupo causa
   mutate(
     grupo_causa = case_when(
       causa %in% c("DM", "ECV", "ERC", "NPL") ~ "ENT objetivo",
       causa %in% c("TRA", "SU", "HO") ~ "CE objetivo",
-      causa %in% c("CMNN", "OCE", "ONT") ~ "Otras causas",
+      causa %in% c("CMNN", "OCE", "ONT") ~ "Causas no objetivo",
       .default = grupo_causa
     ),
   ) |>
@@ -470,14 +376,14 @@ fig5.2 <- recod_defun |>
 
 
 ## Pasos 3-4 -----
-fig5.3 <- recod_defun |>
+fig4.3 <- recod_defun |>
   rename(causa = grupo_gbd2f) |>
   # Modificar grupo causa
   mutate(
     grupo_causa = case_when(
       causa %in% c("DM", "ECV", "ERC", "NPL") ~ "ENT objetivo",
       causa %in% c("TRA", "SU", "HO") ~ "CE objetivo",
-      causa %in% c("CMNN", "OCE", "ONT") ~ "Otras causas",
+      causa %in% c("CMNN", "OCE", "ONT") ~ "Causas no objetivo",
       .default = grupo_causa
     ),
   ) |>
@@ -509,11 +415,12 @@ fig5.3 <- recod_defun |>
   scale_fill_manual(values = pal2, name = NULL) +
   theme(legend.position = "none")
 
+
 ## Crear gráfico
-fig5 <- (fig5.1 + theme(legend.position = "none")) /
-  fig5.2 /
-  fig5.3 +
-  cowplot::get_legend(fig5.1) &
+fig4 <- (fig4.1 + theme(legend.position = "none")) /
+  fig4.2 /
+  fig4.3 +
+  cowplot::get_legend(fig4.1) &
 
   # Geometrías
   geom_treemap_subgroup_border() &
@@ -527,8 +434,8 @@ fig5 <- (fig5.1 + theme(legend.position = "none")) /
 
 ### Guardar figura -----
 # ggsave(
-#   fig5,
-#   filename = "figuras/Figura5.png",
+#   fig4,
+#   filename = "figuras/Figura4.png",
 #   width = 15,
 #   units = "cm",
 #   dpi = 300
