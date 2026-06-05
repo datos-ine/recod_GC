@@ -69,7 +69,7 @@ tab_fmt <- function(x) {
 ```
 
 
-### **Tabla S1.** Códigos de la Clasificación Internacional de Enfermedades (CIE-10) utilizados para definir los grupos de causas definidas y causas garbage (GC), según estudio de la Carga Global de Enfermedades (GBD) 2019.
+## Tabla S1. Códigos de la Clasificación Internacional de Enfermedades (CIE-10) utilizados para definir los grupos de causas definidas y causas garbage (GC), según estudio de la Carga Global de Enfermedades (GBD) 2019.
 
 ```{r}
 #| id: Tabla S1
@@ -229,7 +229,7 @@ tabs1 |>
 ```
 
 \newpage
-### **Tabla S2.** Distribución de las defunciones por códigos poco útiles (GC) según sexo y grupo etario, Argentina (2010-2023).
+## Tabla S2. Distribución de las defunciones por códigos poco útiles (GC) según sexo y grupo etario, Argentina (2010-2023).
 
 ```{r}
 #| id: Tabla S2
@@ -264,7 +264,7 @@ tabs2 |>
 
 
 \newpage
-### **Tabla S3.**Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos poco útiles nivel 1 (GC1) por jurisdicción, Argentina (2010-2023).
+## Tabla S3. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos poco útiles nivel 1 (GC1) por jurisdicción, Argentina (2010-2023).
 
 ```{r}
 #| id: Dataset para las tablas
@@ -298,7 +298,7 @@ tabs3 |>
 ```
 
 \newpage
-### **Figura S4.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región Centro, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
+## Figura S4. Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región Centro, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
 
 ```{r}
 #| id: Figura S4
@@ -314,7 +314,7 @@ gg_jpoint(mods = mod_jp[5:24], facets = TRUE) +
 ```
 
 \newpage
-### **Figura S5.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región Cuyo, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
+## Figura S5. Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región Cuyo, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
 
 ```{r}
 #| id: Figura S5
@@ -330,7 +330,7 @@ gg_jpoint(mods = mod_jp[25:32], facets = TRUE) +
 ```
 
 \newpage
-### **Figura S6.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región NEA, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
+## Figura S6. Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región NEA, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
 
 ```{r}
 #| id: Figura S6
@@ -346,7 +346,7 @@ gg_jpoint(mods = mod_jp[33:48], facets = TRUE) +
 ```
 
 \newpage
-### **Figura S7.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región NOA, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
+## Figura S7. Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región NOA, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
 
 ```{r}
 #| id: Figura S7
@@ -362,7 +362,7 @@ gg_jpoint(mods = mod_jp[49:60], facets = TRUE) +
 ```
 
 \newpage
-### **Figura S8.** Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región Patagonia, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
+## Figura S8. Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región Patagonia, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
 
 ```{r}
 #| id: Figura S8
@@ -378,7 +378,7 @@ gg_jpoint(mods = mod_jp[61:68], facets = TRUE) +
 ```
 
 \newpage
-### Tabla S9. Cambios en las frecuencias para causas definidas luego de completado el proceso de redistribución de códigos poco útiles (GC), Argentina (2010-2023).
+## Tabla S9. Cambios en las frecuencias para causas definidas luego de completado el proceso de redistribución de códigos poco útiles (GC), Argentina (2010-2023).
 
 ```{r}
 #| id: Tabla S9
