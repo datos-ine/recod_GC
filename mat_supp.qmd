@@ -40,14 +40,13 @@ source("analisis_datos.R")
 ```{r}
 #| id: Funciones auxiliares
 # Tema ggplot -------------------------------------------------------------
-theme_jp <- list(
-  scale_color_manual(values = rep(pal, 7)),
-  labs(
-    caption = "GC1: amarillo; GC2: rojo oscuro; GC3: violeta; GC4: turquesa"
-  ),
-  theme(legend.position = "none")
-)
-
+# theme_jp <- list(
+#   scale_color_manual(values = rep(pal, 7)),
+#   labs(
+#     caption = "GC1: amarillo; GC2: rojo oscuro; GC3: violeta; GC4: turquesa"
+#   ),
+#   theme(legend.position = "none")
+# )
 
 # Tema para las tablas ----------------------------------------------------
 theme_gtsummary_language(
@@ -269,31 +268,17 @@ tabs2 |>
 ```{r}
 #| id: Dataset para las tablas
 tabs3 <- mod_jp |>
-  summary_jp(
-    var1 = "Jurisdicción",
-    var2 = "Nivel",
-    ft = FALSE,
-    lan = "es"
-  ) |>
+  summary_jp(dec = ",") |>
+  arrange(subgroup) |>
+  select(subgroup, everything()) |>
 
-  arrange(Nivel) |>
-  select(Nivel, everything()) |>
-
-  flextable()
+  jp_to_ft(lan = "es")
 ```
 
 ```{r}
 #| id: Tabla S3
 tabs3 |>
   tab_fmt() |>
-  merge_v(j = 1:2) |>
-  colformat_char(j = c(4, 6), na_str = "—") |>
-  colformat_double(
-    j = 5,
-    decimal.mark = ",",
-    big.mark = ".",
-    na_str = "—"
-  ) |>
   hline(i = which(tabs3$body$dataset[[1]] != lag(tabs3$body$dataset[[1]])) - 1)
 ```
 
@@ -302,15 +287,8 @@ tabs3 |>
 
 ```{r}
 #| id: Figura S4
-gg_jpoint(mods = mod_jp[5:24], facets = TRUE) +
-  facet_wrap(
-    ~group,
-    ncol = 4,
-    labeller = as_labeller(
-      ~ str_remove(.x, "_.*")
-    )
-  ) +
-  theme_jp
+gg_jpoint(mods = mod_jp[5:24], facets = "grid", cbpal = "managua") +
+  guides(color = guide_legend(ncol = 3))
 ```
 
 \newpage
@@ -318,15 +296,8 @@ gg_jpoint(mods = mod_jp[5:24], facets = TRUE) +
 
 ```{r}
 #| id: Figura S5
-gg_jpoint(mods = mod_jp[25:32], facets = TRUE) +
-  facet_wrap(
-    ~group,
-    ncol = 4,
-    labeller = as_labeller(
-      ~ str_remove(.x, "_.*")
-    )
-  ) +
-  theme_jp
+gg_jpoint(mods = mod_jp[25:32], facets = "grid", cbpal = "managua") +
+  guides(color = guide_legend(ncol = 3))
 ```
 
 \newpage
@@ -334,15 +305,8 @@ gg_jpoint(mods = mod_jp[25:32], facets = TRUE) +
 
 ```{r}
 #| id: Figura S6
-gg_jpoint(mods = mod_jp[33:48], facets = TRUE) +
-  facet_wrap(
-    ~group,
-    ncol = 4,
-    labeller = as_labeller(
-      ~ str_remove(.x, "_.*")
-    )
-  ) +
-  theme_jp
+gg_jpoint(mods = mod_jp[33:48], facets = "grid", cbpal = "managua") +
+  guides(color = guide_legend(ncol = 3))
 ```
 
 \newpage
@@ -350,15 +314,8 @@ gg_jpoint(mods = mod_jp[33:48], facets = TRUE) +
 
 ```{r}
 #| id: Figura S7
-gg_jpoint(mods = mod_jp[49:60], facets = TRUE) +
-  facet_wrap(
-    ~group,
-    ncol = 4,
-    labeller = as_labeller(
-      ~ str_remove(.x, "_.*")
-    )
-  ) +
-  theme_jp
+gg_jpoint(mods = mod_jp[49:60], facets = "grid", cbpal = "managua") +
+  guides(color = guide_legend(ncol = 3))
 ```
 
 \newpage
@@ -366,15 +323,8 @@ gg_jpoint(mods = mod_jp[49:60], facets = TRUE) +
 
 ```{r}
 #| id: Figura S8
-gg_jpoint(mods = mod_jp[61:68], facets = TRUE) +
-  facet_wrap(
-    ~group,
-    ncol = 4,
-    labeller = as_labeller(
-      ~ str_remove(.x, "_.*")
-    )
-  ) +
-  theme_jp
+gg_jpoint(mods = mod_jp[61:68], facets = "grid", cbpal = "managua") +
+  guides(color = guide_legend(ncol = 3))
 ```
 
 \newpage

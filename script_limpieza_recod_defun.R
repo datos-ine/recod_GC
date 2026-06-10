@@ -6,7 +6,7 @@
 ### según Teixeira et al. (2021), Soares Filho et al. (2024) y GBD-2019
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 01-06-2026 11:04
+# Última modificación: 05-06-2026 10:44
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -1546,6 +1546,12 @@ recod_defun <- recod_defun |>
 
 # Crear dataset para análisis EM -----------------------------------------
 datos_em <- recod_defun |>
+  # Identificar muertes por COVID-19
+  mutate(
+    grupo_causa = if_else(str_detect(cie10_cod, "U07"), "COVID-19", paso4.2)
+  ) |>
+
+  # Agrupar datos
   count(
     anio,
     mes,
@@ -1553,7 +1559,7 @@ datos_em <- recod_defun |>
     jurisdiccion,
     sexo,
     grupo_edad,
-    grupo_causa = paso4.2
+    grupo_causa
   ) |>
 
   # Columnas caracter a factor

@@ -6,6 +6,7 @@
 # Última modificación: 01-06-2026 12:07
 
 # Cargar paquetes --------------------------------------------------------
+# remotes::install_github("https://github.com/datos-ine/joinpointR")
 pacman::p_load(
   # Gráficos
   scico,
@@ -279,8 +280,8 @@ fig3 <- datos_jp |>
 ## Regresión joinpoint ---------------------------------------------------
 mod_jp <- model_jp(
   data = datos_jp,
-  value = "value",
-  time = "anio",
+  value = value,
+  time = anio,
   group = c("jurisdiccion", "nivel"),
   step = TRUE,
   k = 3,
