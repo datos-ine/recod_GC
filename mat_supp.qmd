@@ -34,45 +34,15 @@ knitr::opts_chunk$set(
 ```{r}
 #| id: Cargar script análisis
 #| include: false
-source("analisis_datos.R")
-```
-
-```{r}
-#| id: Funciones auxiliares
-# Tema ggplot -------------------------------------------------------------
-# theme_jp <- list(
-#   scale_color_manual(values = rep(pal, 7)),
-#   labs(
-#     caption = "GC1: amarillo; GC2: rojo oscuro; GC3: violeta; GC4: turquesa"
-#   ),
-#   theme(legend.position = "none")
-# )
-
-# Tema para las tablas ----------------------------------------------------
-theme_gtsummary_language(
-  language = "es",
-  decimal.mark = ",",
-  big.mark = "."
-)
-
-# Tema flextable -----------------------------------------------------------
-tab_fmt <- function(x) {
-  x |>
-    bold(part = "header") |>
-    font(fontname = "Times New Roman", part = "all") |>
-    fontsize(size = 12, part = "all") |>
-    valign(valign = "top") |>
-    align(align = "left", part = "all") |>
-    merge_v(j = 1)
-}
+source("script_analisis_datos.R")
 ```
 
 
-## Tabla S1. Códigos de la Clasificación Internacional de Enfermedades (CIE-10) utilizados para definir los grupos de causas definidas y causas garbage (GC), según estudio de la Carga Global de Enfermedades (GBD) 2019.
+## Tabla S1. Códigos de la Décima Clasificación Internacional de Enfermedades (CIE-10) utilizados para definir los grupos de causas definidas y códigos garbage (GC), según estudio de la Carga Global de Enfermedades (GBD) 2019.
 
 ```{r}
 #| id: Tabla S1
-# Datos para la tabla
+# Datos para la tabla -----
 tabs1 <- tibble(
   grupo_causa = c(
     rep("Diabetes mellitus (DM)", 2),
@@ -82,10 +52,9 @@ tabs1 <- tibble(
     rep("Accidentes de tránsito (TRA)", 2),
     rep("Suicidio (SU)", 2),
     rep("Homicidio (HO)", 2),
-    rep("Transmisibles, maternas, neonatales y nutricionales (CMNN)", 6),
+    rep("Transmisibles, maternas, neonatales y nutricionales (CMNN)", 7),
     rep("Otras ENT (ONT)", 3),
     rep("Otras CE (OCE)", 2),
-    "Neumonías inespecíficas",
     rep("GC2", 4),
     rep("GC1", 2)
   ),
@@ -114,15 +83,15 @@ tabs1 <- tibble(
     "Neonatales",
     "Nutricionales",
     "GC4-CMNN",
+    "GC4-NNE",
     "GC3-CMNN",
     "ONT",
     "GC4-ONT",
     "GC3-ONT",
     "OCE",
     "GC4-OCE",
-    "",
     "GC2 inespecíficos",
-    "GC2-cualquier CE",
+    "GC2-CE",
     "GC2-TRA-SU-HO",
     "GC2-HO-SU-OCE",
     "GC1 inespecíficos",
@@ -184,6 +153,10 @@ tabs1 <- tibble(
     "D50.1–D50.8, D51.0–D52.0, D52.8–D53.9, D70.3, D89.3, E00.0–E02.0, E40.0–E46.9, E51.0–E61.9, E63.0–E64.0, E64.2–E64.9",
     # GC4
     "B16.9, B64.0, B82.0-B82.9, B83.9, G00.9-G02.8, G03.9, J17.0-J17.9, J22.0, P23.5-P23.9, P37.3-P37.4",
+
+    # Neumonías
+    "J15.9, J18.0-J18.9",
+
     # GC3
     "A31.0-A31.9, A42.0-A44.9, A49.2, A64.0, A99.0, B17.1, B17.8, B17.9, B19.0, B19.2-B19.9, B37.0-B46.9, B49.0, B55.1-B55.9, B58.0-B59.0, B89.0, B94.2, J02.9, J03.9, J04.3, J06.9, O08.0-O08.9, O94.0-O95.0, R00.0-R01.2, R07.1-R07.9, R31.0-R31.9",
 
@@ -198,9 +171,6 @@ tabs1 <- tibble(
     "L55.0-L55.8, L56.3, L56.8, L58.0-L58.1, V05.0-V05.9, V81.0-V81.9, V83.0-V86.9, V88.2-V88.3, V90.0-V98.8, W00.0-W46.9, W49.0-W60.9, W64.0-W70.9, W73.0-W74.9, W77.0-W77.9, W81.0-W82.9, W85.0-W94.9, W97.9, W99.0-X06.9, X08.0-X39.9, X46.0-X48.9, X50.0-X54.9, X57.0-X58.9, Y35.0-Y85.9, Y88.0-Y88.3, Y89.0-Y89.1",
     # GC4
     "V88.0-V88.1, V88.4-V88.9, V99.0",
-
-    # Neumonías
-    "J15.9, J18.0-J18.9",
 
     # GC2
     "A30.0-A30.9, A48.8, A49.3-A49.9, A97.0-A97.9, B08.0-B09.0, B34.0-B34.9, B68.0-B68.9, B73.0-B74.2, B76.0-B76.9, B78.0-B81.8, B92.0, B94.0, B94.8, B94.9, B95.6-B97.3, B97.7-B99.9, D59.4, D59.8, D59.9, F17.0-F17.9, G93.0, G93.3, I50.9, I67.4, J90.0, J94.0-J94.1, J94.8-J94.9, K92.0-K92.2, N70.0-N71.9, N73.0-N74.0, N74.2-N74.8, R03.0, R04.0-R06.9, R09.0-R09.2, R09.8-R10.9, R13.0-R13.9, R23.0, S00.0-T98.3, X59.0-X59.9*, Y20.0-Y24.4, Y24.8-Y25.1, Y25.3-Y26.2, Y26.4-Y27.3, Y27.8-Y28.2, Y28.4, Y28.6, Y28.8-Y29.2, Y34.0-Y34.9, Y86.1, Y86.3-Y86.7, Y86.9-Y87.1, Y87.3-Y89.8, Y92.0-Y94.9, Y98.1-Y99.9",
@@ -218,7 +188,7 @@ tabs1 <- tibble(
   )
 )
 
-# Formato tabla
+# Tabla -----
 tabs1 |>
   rename(Grupo = 1, Subgrupo = 2, "Códigos CIE-10" = 3) |>
   flextable() |>
@@ -228,157 +198,212 @@ tabs1 |>
 ```
 
 \newpage
-## Tabla S2. Distribución de las defunciones por códigos poco útiles (GC) según sexo y grupo etario, Argentina (2010-2023).
+## Tabla S2. Cambios en las frecuencias de muertes por causas definidas durante los distintos pasos de redistribución de códigos garbage (GC), Argentina (2010-2023).
 
 ```{r}
 #| id: Tabla S2
-# Datos para la tabla
-tabs2 <- recod_defun |>
-  filter(grupo_gbd1 == "GC") |>
-  droplevels() |>
-  # Individualizar filas
-  uncount(weights = n) |>
+# Datos para la tabla -----
+tabs2 <- datos_gc |>
 
-  # Crear tabla
-  tbl_summary(
-    by = grupo_gbd2i,
-    include = c(sexo, grupo_edad),
-    digits = all_categorical() ~ c(0, 1),
-    label = list(
-      sexo = "Sexo",
-      grupo_edad = "Grupo etario"
+  # Modificar grupo causa
+  mutate(
+    grupo_causa = case_when(
+      paso1 %in% c("DM", "ECV", "ERC", "NPL", "OENT") ~ "ENT",
+      paso1 %in% c("TRA", "SU", "HO", "OCE") ~ "CE",
+      str_detect(paso1, "GC") ~ "GC",
+      .default = paso1
+    ) |>
+      fct_relevel("ENT")
+  ) |>
+
+  # Frecuencias iniciales
+  count(grupo_causa, causa = paso1, wt = n, name = "n1") |>
+
+  # Añadir frecuencias paso 2
+  left_join(
+    datos_gc |>
+      # Frecuencias por grupo
+      count(causa = paso2b, wt = n, name = "n2")
+  ) |>
+
+  # Añadir frecuencias paso 3
+  left_join(
+    datos_gc |>
+      # Frecuencias por grupo
+      count(causa = paso3, wt = n, name = "n3")
+  ) |>
+
+  # Añadir frecuencias paso 4
+  left_join(
+    datos_gc |>
+      # Frecuencias por grupo
+      count(causa = paso4, wt = n, name = "n4")
+  ) |>
+
+  # Cambio absoluto
+  mutate(razon = number(n4 / n1, accuracy = .1, decimal.mark = ","))
+
+
+# Tabla -----
+tabs2 |>
+  flextable() |>
+  set_header_labels(
+    grupo_causa = "Grupo causa",
+    causa = "Causa",
+    n1 = "N",
+    n2 = "Paso 2",
+    n3 = "Paso 3",
+    n4 = "Paso 4",
+    razon = "Razón cambio"
+  ) |>
+
+  # Cambio relativo paso 2
+  mk_par(
+    j = 4,
+    value = as_paragraph(
+      minibar(
+        value = (n2 - n1) / n1,
+        width = .5,
+        height = .15,
+        barcol = pal[4]
+      ),
+      # linerange(value = (n2 - n1) / n1),
+      " ",
+      as_chunk(percent((n2 - n1) / n1, accuracy = .1, decimal.mark = ","))
     )
   ) |>
-  add_overall(last = TRUE) |>
-  add_p()
 
-# Formato Tabla
-tabs2 |>
-  modify_header(all_stat_cols() ~ "{level}") |>
-  as_flex_table() |>
+  # Cambio relativo paso 3
+  mk_par(
+    j = 5,
+    value = as_paragraph(
+      minibar(
+        value = (n3 - n2) / n2,
+        width = .5,
+        height = .15,
+        barcol = pal[4]
+      ),
+      " ",
+      as_chunk(percent((n3 - n2) / n2, accuracy = .1, decimal.mark = ","))
+    )
+  ) |>
+
+  # Cambio relativo paso 4
+  mk_par(
+    j = 6,
+    value = as_paragraph(
+      minibar(
+        value = (n4 - n3) / n3,
+        width = .5,
+        height = .15,
+        barcol = pal[4]
+      ),
+      " ",
+      as_chunk(percent((n4 - n3) / n3, accuracy = .1, decimal.mark = ","))
+    )
+  ) |>
+
   tab_fmt() |>
-  hline(i = 3) |>
-  width(width = 2, unit = "cm")
+  colformat_int(j = 3, big.mark = ".") |>
+  width(width = c(1.5, 1.5, 1.5, 3, 3, 3, 2), unit = "cm")
 ```
-
 
 \newpage
-## Tabla S3. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos poco útiles nivel 1 (GC1) por jurisdicción, Argentina (2010-2023).
-
-```{r}
-#| id: Dataset para las tablas
-tabs3 <- mod_jp |>
-  summary_jp(dec = ",") |>
-  arrange(subgroup) |>
-  select(subgroup, everything()) |>
-
-  jp_to_ft(lan = "es")
-```
+## Tabla S3. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 1 (GC1) por jurisdicción, Argentina (2010-2023).
 
 ```{r}
 #| id: Tabla S3
 tabs3 |>
-  tab_fmt() |>
-  hline(i = which(tabs3$body$dataset[[1]] != lag(tabs3$body$dataset[[1]])) - 1)
-```
-
-\newpage
-## Figura S4. Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región Centro, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
-
-```{r}
-#| id: Figura S4
-gg_jpoint(mods = mod_jp[5:24], facets = "grid", cbpal = "managua") +
-  guides(color = guide_legend(ncol = 3))
-```
-
-\newpage
-## Figura S5. Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región Cuyo, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
-
-```{r}
-#| id: Figura S5
-gg_jpoint(mods = mod_jp[25:32], facets = "grid", cbpal = "managua") +
-  guides(color = guide_legend(ncol = 3))
-```
-
-\newpage
-## Figura S6. Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región NEA, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
-
-```{r}
-#| id: Figura S6
-gg_jpoint(mods = mod_jp[33:48], facets = "grid", cbpal = "managua") +
-  guides(color = guide_legend(ncol = 3))
-```
-
-\newpage
-## Figura S7. Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región NOA, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
-
-```{r}
-#| id: Figura S7
-gg_jpoint(mods = mod_jp[49:60], facets = "grid", cbpal = "managua") +
-  guides(color = guide_legend(ncol = 3))
-```
-
-\newpage
-## Figura S8. Evolución temporal de las tasas de mortalidad por GC estandarizadas por edad según jurisdicción, región Patagonia, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica, las líneas de color corresponden a los valores ajustados mediante modelos de regresión joinpoint y las líneas verticales indican los puntos de cambio en la pendiente.
-
-```{r}
-#| id: Figura S8
-gg_jpoint(mods = mod_jp[61:68], facets = "grid", cbpal = "managua") +
-  guides(color = guide_legend(ncol = 3))
-```
-
-\newpage
-## Tabla S9. Cambios en las frecuencias para causas definidas luego de completado el proceso de redistribución de códigos poco útiles (GC), Argentina (2010-2023).
-
-```{r}
-#| id: Tabla S9
-tabs10 <- recod_defun |>
-  # Crear grupo causa
-  mutate(
-    grupo_causa = fct_collapse(grupo_causa, "GC" = c("GC1-GC2", "GC3-GC4"))
+  # Nombres columnas
+  set_header_labels(
+    group = "Región",
+    subgroup = "Jurisdicción",
+    jp = "JP",
+    CI_low = "IC inf",
+    CI_upp = "IC sup",
+    period = "Período"
   ) |>
 
-  # Frecuencias iniciales
-  count(grupo_causa, causa = grupo_gbd2i, wt = n, name = "n") |>
+  # Unir filas
+  merge_h() |>
 
-  # Añadir frecuencias paso 2
-  left_join(
-    recod_defun |>
-      # Frecuencias por grupo
-      count(causa = grupo_gbd2m, wt = n, name = "n2")
+  # Líneas horizontales
+  hline(
+    i = which(tabs3$body$dataset[[1]] != lag(tabs3$body$dataset[[1]])) - 1
+  )
+```
+
+\newpage
+## Tabla S4. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 2 (GC2) por jurisdicción, Argentina (2010-2023).
+
+```{r}
+#| id: Tabla S4
+tabs4 |>
+  # Nombres columnas
+  set_header_labels(
+    group = "Región",
+    subgroup = "Jurisdicción",
+    jp = "JP",
+    CI_low = "IC inf",
+    CI_upp = "IC sup",
+    period = "Período"
   ) |>
 
-  # Añadir frecuencias pasos 3 y 4
-  left_join(
-    recod_defun |>
-      # Frecuencias por grupo
-      count(causa = grupo_gbd2f, wt = n, name = "n3.4")
+  # Unir filas
+  merge_h() |>
+
+  # Líneas horizontales
+  hline(
+    i = which(tabs4$body$dataset[[1]] != lag(tabs4$body$dataset[[1]])) - 1
+  )
+```
+
+\newpage
+## Tabla S5. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 3 (GC3) por jurisdicción, Argentina (2010-2023).
+
+```{r}
+#| id: Tabla S5
+tabs5 |>
+  # Nombres columnas
+  set_header_labels(
+    group = "Región",
+    subgroup = "Jurisdicción",
+    jp = "JP",
+    CI_low = "IC inf",
+    CI_upp = "IC sup",
+    period = "Período"
   ) |>
 
-  # Cambios absolutos y relativos
-  mutate(
-    cambio_rel_1 = percent(((n2 - n) / n), accuracy = .1, decimal.mark = ","),
-    cambio_rel_2 = percent(((n3.4 - n) / n), accuracy = .1, decimal.mark = ","),
-    razon = number(n3.4 / n, accuracy = .1, decimal.mark = ",")
+  # Unir filas
+  merge_h() |>
+
+  # Líneas horizontales
+  hline(
+    i = which(tabs5$body$dataset[[1]] != lag(tabs5$body$dataset[[1]])) - 1
+  )
+```
+
+\newpage
+## Tabla S6. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 4 (GC4) por jurisdicción, Argentina (2010-2023).
+
+```{r}
+#| id: Tabla S6
+tabs6 |>
+  # Nombres columnas
+  set_header_labels(
+    group = "Región",
+    subgroup = "Jurisdicción",
+    jp = "JP",
+    CI_low = "IC inf",
+    CI_upp = "IC sup",
+    period = "Período"
   ) |>
 
-  # Ordenar columnas
-  select(
-    "Grupo causa" = grupo_causa,
-    "Causa" = causa,
-    "Fr. inicial" = n,
-    "Fr. paso 2" = n2,
-    "Cambio % " = cambio_rel_1,
-    "Fr. pasos 3-4" = n3.4,
-    "Cambio % total" = cambio_rel_2,
-    "Razón cambio" = razon
-  ) |>
+  # Unir filas
+  merge_h() |>
 
-  flextable()
-
-# Formato tabla
-tabs10 |>
-  tab_fmt() |>
-  colformat_char(na_str = "—") |>
-  colformat_int(na_str = "—")
+  # Líneas horizontales
+  hline(
+    i = which(tabs6$body$dataset[[1]] != lag(tabs6$body$dataset[[1]])) - 1
+  )
 ```

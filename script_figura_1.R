@@ -2,7 +2,7 @@
 ### redistribución hacia causas específicas
 ### Código para generar la Figura 1
 ### Autora: Tamara Ricardo
-# Última modificación: 19-05-2026 13:53
+# Última modificación: 14-07-2026 11:20
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -26,7 +26,7 @@ fig1 <- grViz(
         style = filled
         fillcolor = white
         fontsize=12
-        width = 3
+        width = 4
         margin = '.1, .1'
         ]
         
@@ -43,7 +43,7 @@ fig1 <- grViz(
       b1[label = 'CE objetivo\n - Tránsito\n - Suicidio\n - Homicidio']
       c1[label = 'Causas no objetivo\n - CMNN\n - Otras CE\n - Otras ENT']
       }
-      d1[label = '- GC1\n - GC2\n - GC3\n - GC4']
+      d1[label = '- GC1\n - GC2\n - GC3\n - GC4 \n - GC4-NNE']
     }
   
     subgraph cluster_2 {
@@ -51,13 +51,13 @@ fig1 <- grViz(
       fillcolor = '#92463AE5'
   
       subgraph cluster_2a{
-      label = <Reasignar GC3-GC4>;
+      label = <Recategorizar GC3-GC4>;
       fillcolor = '#ffffff50'
   
       t2[style=invis]
-      a2[label = 'ENT objetivo\n - Diabetes\n - ECV\n - ERC\n - Neoplasias\n - Redist. 50% neumonías \n por sexo y edad']
+      a2[label = 'ENT objetivo\n - Diabetes\n - ECV\n - ERC\n - Neoplasias\n - 50% NNE → ENT (sexo y edad)']
       b2[label = 'CE objetivo\n - Tránsito\n - Suicidio\n - Homicidio']
-      c2[label = 'Causas no objetivo\n - CMNN + 50%\n neumonías\n - Otras CE\n - Otras ENT']
+      c2[label = 'Causas no objetivo\n - CMNN + 50% NNE\n - Otras CE\n - Otras ENT']
   }
       d2[label = '\n - GC1\n - GC2 \n ']
     }
@@ -67,12 +67,12 @@ fig1 <- grViz(
       fillcolor = '#4D5492E5'
   
       subgraph cluster_3a{
-      label = 'Redistribuir GC2 \n inespecíficos';
+      label = 'Recategorizar y redistribuir GC2';
       fillcolor = '#ffffff50'
   
       t3[style=invis]
       a3[label = 'ENT objetivo\n - Diabetes\n - ECV + GC2-ECV\n - ERC\n - Neoplasias']
-      b3[label = 'CE objetivo\n - Tránsito\n - Suicidio\n - Homicidio\n - Redist. GC2-CE']
+      b3[label = 'CE objetivo\n - Tránsito\n - Suicidio\n - Homicidio\n + Redistribución GC2']
       c3[label = 'Causas no objetivo\n - CMNN\n - Otras CE + GC2-CE\n - Otras ENT']
       }
       d3[label = '- GC1']
@@ -83,12 +83,12 @@ fig1 <- grViz(
       fillcolor = '#80E6FFE5'
       
       subgraph cluster_4a{
-      label = 'Redistribuir GC1 \n inespecíficos';
+      label = 'Recategorizar y redistribuir GC1';
       fillcolor = '#ffffff50'
   
       t4[style=invis]
       a4[label = 'ENT objetivo\n - Diabetes\n - ECV\n - ERC + GC1-ERC\n - Neoplasias']
-      b4[label = 'CE objetivo\n - Tránsito\n - Suicidio\n - Homicidio\n - Redist. GC1-CE']
+      b4[label = 'CE objetivo\n - Tránsito\n - Suicidio\n - Homicidio\n + Redistribución GC1']
       c4[label = 'Causas no objetivo\n - CMNN\n - Otras CE\n - Otras ENT']
       }
       d4[style='invis']
