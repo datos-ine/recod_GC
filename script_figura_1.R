@@ -110,6 +110,5 @@ export_svg(fig1) |>
   charToRaw() |>
   rsvg_png(
     file = "figuras/Figura1.png",
-    width = 1772,
-    height = 2126
+    width = 2007.9
   )

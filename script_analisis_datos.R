@@ -34,7 +34,8 @@ tab_fmt <- function(x) {
   x |>
     bold(part = "header") |>
     font(fontname = "Times New Roman", part = "all") |>
-    fontsize(size = 12, part = "all") |>
+    fontsize(size = 9, part = "all") |>
+    line_spacing(space = 1.5, part = "all") |>
     valign(valign = "top") |>
     align(align = "left", part = "all") |>
     merge_v(j = 1) |>
@@ -280,7 +281,7 @@ fig2 <- g1 /
 # ggsave(
 #   fig2,
 #   filename = "figuras/Figura2.png",
-#   width = 15,
+#   width = 17,
 #   units = "cm",
 #   dpi = 300
 # )
@@ -398,7 +399,7 @@ fig3 <- datos_jp |>
 # ggsave(
 #   fig3,
 #   filename = "figuras/Figura3.png",
-#   width = 15,
+#   width = 17,
 #   units = "cm",
 #   dpi = 300
 # )
@@ -593,7 +594,7 @@ fig4 <- mod_jp_reg |>
 # ggsave(
 #   fig4,
 #   filename = "figuras/Figura4.png",
-#   width = 15,
+#   width = 17,
 #   units = "cm",
 #   dpi = 300
 # )
