@@ -309,48 +309,70 @@ tabs2 |>
 ```
 
 \newpage
-## Tabla S3. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 1 (GC1) por jurisdicción, Argentina (2010-2023).
+## Figura S3. Distribución regional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
 
 ```{r}
-#| id: Tabla S3
-tabs3 |>
-  # Nombres columnas
-  set_header_labels(
-    group = "Región",
-    subgroup = "Jurisdicción",
-    jp = "JP",
-    CI_low = "IC inf",
-    CI_upp = "IC sup",
-    period = "Período"
-  ) |>
+#| id: Figura S3
+figs3 <- datos_jp_reg |>
+  # Gráfico
+  ggplot(aes(x = value, y = nivel, fill = nivel)) +
+  facet_wrap(~region_deis, ncol = 2) +
 
-  # Unir filas
-  merge_h() |>
+  # Geometrías
+  geom_density_ridges(
+    jittered_points = TRUE,
+    position = "raincloud",
+    color = NA,
+    alpha = .7,
+    point_color = "grey40",
+    point_alpha = .35,
+    scale = 3
+  ) +
 
-  # Líneas horizontales
-  hline(
-    i = which(tabs3$body$dataset[[1]] != lag(tabs3$body$dataset[[1]])) - 1
+  # Escalas
+  scale_fill_manual(
+    values = c4a(palette = "managua", n = 4),
+    name = NULL
+  ) +
+
+  # Layout
+  labs(
+    x = "Tasa est. (100.000 hab.)",
+    y = NULL
+  ) +
+
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    text = element_text(family = "Times New Roman", size = 12),
+    strip.text = element_text(face = "bold")
   )
+
+## Mostrar figura
+figs3
 ```
 
 \newpage
-## Tabla S4. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 2 (GC2) por jurisdicción, Argentina (2010-2023).
+## Tabla S4. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage (GC) por región, Argentina (2010-2023).
 
 ```{r}
 #| id: Tabla S4
+tabs4 <- mod_jp_reg |>
+  summary_jp() |>
+  jp_to_ft(lan = "es")
+
+
 tabs4 |>
-  # Nombres columnas
+  tab_fmt() |>
+
+  # Cambiar nombres columnas
   set_header_labels(
-    group = "Región",
-    subgroup = "Jurisdicción",
-    jp = "JP",
-    CI_low = "IC inf",
-    CI_upp = "IC sup",
-    period = "Período"
+    Grupo = "Nivel",
+    Subgrupo = "Región"
   ) |>
 
   # Unir filas
-  merge_h() |>
+  merge_h(i = nrow_part(tabs4, part = "body") - 1) |>
 
   # Líneas horizontales
   hline(
@@ -359,51 +381,154 @@ tabs4 |>
 ```
 
 \newpage
-## Tabla S5. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 3 (GC3) por jurisdicción, Argentina (2010-2023).
+## Figura S5. Distribución jurisdiccional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
 
 ```{r}
-#| id: Tabla S5
-tabs5 |>
-  # Nombres columnas
-  set_header_labels(
-    group = "Región",
-    subgroup = "Jurisdicción",
-    jp = "JP",
-    CI_low = "IC inf",
-    CI_upp = "IC sup",
-    period = "Período"
-  ) |>
+#| id: Figura S5
+figs5 <- datos_jp |>
+  # Gráfico
+  ggplot(aes(x = value, y = nivel, fill = nivel)) +
+  facet_wrap(~reg_jur, ncol = 3) +
 
-  # Unir filas
-  merge_h() |>
+  # Geometrías
+  geom_density_ridges(
+    jittered_points = TRUE,
+    position = "raincloud",
+    color = NA,
+    alpha = .7,
+    point_color = "grey40",
+    point_alpha = .35,
+    scale = 3
+  ) +
 
-  # Líneas horizontales
-  hline(
-    i = which(tabs5$body$dataset[[1]] != lag(tabs5$body$dataset[[1]])) - 1
+  # Escalas
+  scale_fill_manual(
+    values = c4a(palette = "managua", n = 4),
+    name = NULL
+  ) +
+
+  # Layout
+  labs(
+    x = "Tasa est. (100.000 hab.)",
+    y = NULL
+  ) +
+
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    text = element_text(family = "Times New Roman", size = 12),
+    strip.text = element_text(face = "bold")
   )
+
+## Mostrar figura
+figs5
 ```
 
 \newpage
-## Tabla S6. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 4 (GC4) por jurisdicción, Argentina (2010-2023).
+
+## Tabla S6. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage (GC1) por región, Argentina (2010-2023).
 
 ```{r}
 #| id: Tabla S6
+tabs6 <- mod_jp1 |>
+  summary_jp() |>
+  jp_to_ft()
+
+## Formato de tabla
 tabs6 |>
-  # Nombres columnas
+  tab_fmt() |>
+  # Cambiar nombres columnas
   set_header_labels(
-    group = "Región",
-    subgroup = "Jurisdicción",
-    jp = "JP",
-    CI_low = "IC inf",
-    CI_upp = "IC sup",
-    period = "Período"
+    Grupo = "Región",
+    Subgrupo = "Jurisdicción"
   ) |>
 
   # Unir filas
-  merge_h() |>
+  merge_h(i = nrow_part(tabs6, part = "body") - 1) |>
 
   # Líneas horizontales
   hline(
     i = which(tabs6$body$dataset[[1]] != lag(tabs6$body$dataset[[1]])) - 1
+  )
+```
+
+\newpage
+## Tabla S7. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 2 (GC2) por jurisdicción, Argentina (2010-2023).
+
+```{r}
+#| id: Tabla S7
+tabs7 <- mod_jp2 |>
+  summary_jp() |>
+  jp_to_ft()
+
+## Formato de tabla
+tabs7 |>
+  tab_fmt() |>
+  # Cambiar nombres columnas
+  set_header_labels(
+    Grupo = "Región",
+    Subgrupo = "Jurisdicción"
+  ) |>
+
+  # Unir filas
+  merge_h(i = nrow_part(tabs7, part = "body") - 1) |>
+
+  # Líneas horizontales
+  hline(
+    i = which(tabs7$body$dataset[[1]] != lag(tabs7$body$dataset[[1]])) - 1
+  )
+```
+
+\newpage
+## Tabla S8. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 3 (GC3) por jurisdicción, Argentina (2010-2023).
+
+```{r}
+#| id: Tabla S8
+tabs8 <- mod_jp3 |>
+  summary_jp() |>
+  jp_to_ft()
+
+## Formato de tabla
+tabs8 |>
+  tab_fmt() |>
+  # Cambiar nombres columnas
+  set_header_labels(
+    Grupo = "Región",
+    Subgrupo = "Jurisdicción"
+  ) |>
+
+  # Unir filas
+  merge_h(i = nrow_part(tabs8, part = "body") - 1) |>
+
+  # Líneas horizontales
+  hline(
+    i = which(tabs8$body$dataset[[1]] != lag(tabs8$body$dataset[[1]])) - 1
+  )
+```
+
+\newpage
+## Tabla S9. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 4 (GC4) por jurisdicción, Argentina (2010-2023).
+
+```{r}
+#| id: Tabla S9
+tabs9 <- mod_jp4 |>
+  summary_jp() |>
+  jp_to_ft()
+
+## Formato de tabla
+tabs9 |>
+  tab_fmt() |>
+  # Cambiar nombres columnas
+  set_header_labels(
+    Grupo = "Región",
+    Subgrupo = "Jurisdicción"
+  ) |>
+
+  # Unir filas
+  merge_h(i = nrow_part(tabs9, part = "body") - 1) |>
+
+  # Líneas horizontales
+  hline(
+    i = which(tabs9$body$dataset[[1]] != lag(tabs9$body$dataset[[1]])) - 1
   )
 ```

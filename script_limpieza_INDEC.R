@@ -4,7 +4,7 @@
 ## - Proyecciones poblacionales por sexo y grupo etario quinquenal, 2010-2023 (INDEC)
 ## - Población estándar por sexo y grupo etario, Argentina, Censo 2022 (INDEC)
 ### Autora: Tamara Ricardo
-# Última modificación: 15-07-2026 12:40
+# Última modificación: 20-07-2026 13:26
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -97,18 +97,24 @@ proy_2010_2023 <- map(
       str_detect(prov_1, "50|46|70|74") ~ "Cuyo",
       str_detect(prov_1, "18|22|34|54") ~ "NEA",
       str_detect(prov_1, "90|38|66|10|86") ~ "NOA",
-      str_detect(prov_1, "42|58|62") ~ "Patagonia Norte",
-      str_detect(prov_1, "26|78|94") ~ "Patagonia Sur",
+      str_detect(prov_1, "42|58|62|26|78|94") ~ "Patagonia",
     )
   ) |>
 
   # Crear jurisdicción DEIS
   mutate(
     jurisdiccion = case_when(
-      str_detect(prov_1, "42|58|62|26|78|94") ~ region_deis,
-      str_detect(prov_1, "46|70|74") ~ "Cuyo2",
-      str_detect(prov_1, "38|66") ~ "NOA1",
-      str_detect(prov_1, "10|86") ~ "NOA2",
+      str_detect(prov_1, "46|70|74") ~ "Cuyo2 (La Rioja, San Juan, San Luis)",
+      str_detect(prov_1, "38|66") ~ "NOA1 (Jujuy, Salta)",
+      str_detect(prov_1, "10|86") ~ "NOA2 (Catamarca, Santiago del Estero)",
+      str_detect(
+        prov_1,
+        "42|58|62"
+      ) ~ "Pat. Norte (La Pampa, Neuquén, Río Negro)",
+      str_detect(
+        prov_1,
+        "26|78|94"
+      ) ~ "Pat. Sur (Chubut, Santa Cruz, Tierra del Fuego)",
       prov_1 == "02-CABA" ~ "CABA",
       .default = str_sub(prov_1, 4) |>
         str_to_title()

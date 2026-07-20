@@ -6,7 +6,7 @@
 ### según Teixeira et al. (2021), Soares Filho et al. (2024) y GBD-2019
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 15-07-2026 12:34
+# Última modificación: 20-07-2026 11:08
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -112,8 +112,7 @@ defun <- defun_raw |>
   # Modificar etiquetas región DEIS
   mutate(
     region_deis = case_when(
-      region == "8.Pat. Norte." ~ "Patagonia Norte",
-      region == "9.Pat.Sur." ~ "Patagonia Sur",
+      region %in% c("8.Pat. Norte.", "9.Pat.Sur.") ~ "Patagonia",
       str_detect(region, "NOA") ~ "NOA",
       str_detect(region, "Cuyo") ~ "Cuyo",
       .default = str_remove(region, "^\\d+\\.") |>
@@ -128,10 +127,12 @@ defun <- defun_raw |>
       jurisdiccion == "14.Cordoba." ~ "Córdoba",
       jurisdiccion == "30.Entre Rios." ~ "Entre Ríos",
       jurisdiccion == "90.Tucuman." ~ "Tucumán",
-      region == "3.NOA1." ~ "NOA1",
-      region == "5.NOA2." ~ "NOA2",
-      region == "7.Cuyo2." ~ "Cuyo2",
-      str_detect(region, "Pat.") ~ region_deis,
+      region == "3.NOA1." ~ "NOA1 (Jujuy, Salta)",
+      region == "5.NOA2." ~ "NOA2 (Catamarca, Santiago del Estero)",
+      region == "7.Cuyo2." ~ "Cuyo2 (La Rioja, San Juan, San Luis)",
+      region == "8.Pat. Norte." ~ "Pat. Norte (La Pampa, Neuquén, Río Negro)",
+      region ==
+        "9.Pat.Sur." ~ "Pat. Sur (Chubut, Santa Cruz, Tierra del Fuego)",
       .default = str_remove_all(jurisdiccion, "[0-9[:punct:]]")
     )
   ) |>

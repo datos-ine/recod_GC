@@ -3,9 +3,10 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 15-07-2026 13:10
 
 # Cargar paquetes --------------------------------------------------------
+# remotes::install_github("https://github.com/datos-ine/joinpointR")
+
 pacman::p_load(
   # Gráficos
   cols4all,
@@ -13,6 +14,7 @@ pacman::p_load(
   ggridges,
   treemapify,
   # Tablas
+  officer,
   flextable,
   # Tasas estandarizadas
   PHEindicatormethods,
@@ -32,6 +34,7 @@ pacman::p_load(
 # Tema flextable -----------------------------------------------------------
 tab_fmt <- function(x) {
   x |>
+    # flextable() |>
     bold(part = "header") |>
     font(fontname = "Times New Roman", part = "all") |>
     fontsize(size = 9, part = "all") |>
@@ -43,10 +46,8 @@ tab_fmt <- function(x) {
 }
 
 
-# Paleta colorblind-friendly ---------------------------------------------
-pal <-
-  # c4a(palette = "cassatt1", n = 10, reverse = TRUE) |>
-  c4a(palette = "managua", n = 10, reverse = TRUE) |>
+# Paletas colorblind-friendly ----------------------------------------------
+pal <- c4a(palette = "managua", n = 10, reverse = TRUE) |>
   set_names(c(
     "DM",
     "ECV",
@@ -72,6 +73,25 @@ proy_2010_2023 <- import(here("clean", "arg_proy_2010_2023.rds"))
 ## Defunciones por grupo de causas -----
 datos_gc <- import(here("clean", "arg_defun_recod_2010_2023.rds")) |>
 
+  # Ordenar datos
+  mutate(
+    jurisdiccion = fct_relevel(
+      jurisdiccion,
+      "Buenos Aires",
+      "CABA",
+      "Córdoba",
+      "Entre Ríos",
+      "Santa Fe",
+      "Mendoza",
+      "Cuyo2 (La Rioja, San Juan, San Luis)",
+      "Chaco",
+      "Corrientes",
+      "Formosa",
+      "Misiones",
+      "Tucumán"
+    )
+  ) |>
+
   # Modificar niveles paso1
   mutate(
     paso1 = if_else(
@@ -82,7 +102,78 @@ datos_gc <- import(here("clean", "arg_defun_recod_2010_2023.rds")) |>
   )
 
 
-## Tabla 2 ---------------------------------------------------------------
+# Tabla 1 ----------------------------------------------------------------
+tab1 <- tibble(
+  Variable = c(
+    "Año",
+    "Región",
+    "Jurisdicción",
+    "Sexo",
+    "Grupo etario",
+    "Causa básica de muerte",
+    "Grupo de causas",
+    "Subgrupo de causas",
+    "Número de muertes"
+  ),
+  Descripción = c(
+    "Año de ocurrencia de la defunción",
+    "Agrupación territorial definida por la DEIS para resguardar la confidencialidad de los datos",
+    "Nivel de agregación jurisdiccional definido por la DEIS para resguardar la confidencialidad de los datos",
+    "Sexo consignado en el acta de defunción",
+    "Categorías de edad agrupadas según criterios de la DEIS",
+    "Causa básica de muerte codificada según la CIE-10",
+    "Clasificación de causas según grandes grupos del GBD-2019",
+    "Clasificación de causas según grupos nivel 2 del GBD-2019",
+    "Cantidad anual de defunciones según región, jurisdicción, sexo, grupo etario y causa básica de muerte"
+  ),
+  Valores = c(
+    "2010-2023",
+    paste(levels(datos_gc$region_deis), collapse = "; "),
+    paste(levels(datos_gc$jurisdiccion), collapse = "; "),
+    "Masculino; Femenino",
+    paste(levels(datos_gc$grupo_edad), collapse = "; "),
+    "A00.0-Z99.9",
+    "CMNN; ENT; CE; GC",
+    "CMNN; DM; ECV; ERC; NPL; OENT; TRA; SU; HO; OCE; GC1; GC2; GC3; GC4; NNE",
+    "Conteo de defunciones"
+  )
+) |>
+
+  # Formato tabla
+  flextable() |>
+  tab_fmt() |>
+  width(width = c(3, 7, 7), unit = "cm") |>
+  set_caption(
+    autonum = FALSE,
+    fp_p = fp_par(line_spacing = 1.5),
+    caption = as_paragraph(
+      as_chunk(
+        "Tabla 1. Variables incluidas en el estudio y categorías de análisis.",
+        props = fp_text(
+          font.size = 12,
+          font.family = "Times New Roman",
+          bold = TRUE
+        )
+      )
+    )
+  )
+
+
+# ## Guardar tabla -----
+# save_as_docx(
+#   tab1,
+#   path = "tablas/Tabla1.docx",
+#   pr_section = prop_section(
+#     page_margins = page_mar(
+#       bottom = 0.7874,
+#       top = 0.7874,
+#       left = 0.7874,
+#       right = 0.7874
+#     )
+#   )
+# )
+
+# Tabla 2 ----------------------------------------------------------------
 tab2 <- datos_gc |>
   # Filtrar GC1-GC2
   filter(paso1 %in% c("GC1", "GC2")) |>
@@ -96,40 +187,68 @@ tab2 <- datos_gc |>
     )
   ) |>
 
+  # Añadir descripción códigos DEIS
+  left_join(
+    import(here("raw", "descdef1.xlsx"), sheet = 4),
+    by = join_by(cie10_cod == CODIGO)
+  ) |>
+
+  # Completar NAs
+  mutate(
+    VALOR = if_else(
+      cie10_cod == "A41.9",
+      "Septicemia no especificada",
+      VALOR
+    )
+  ) |>
+
   # Frecuencia muertes
-  count(Código = cie10_cod, wt = n) |>
+  count(cie10_cod, causa = VALOR, wt = n) |>
   mutate(pct = percent(n / sum(n), accuracy = .1, decimal.mark = ",")) |>
 
   # Filtrar por frecuencia
   arrange(-n) |>
-  filter_out(n < 20000) |>
+  filter_out(n < 10000) |>
 
-  # Añadir descripción
-  mutate(
-    Causa = c(
-      "Insuficiencia cardíaca",
-      "Otras causas mal definidas y no especificadas de mortalidad",
-      "Insuficiencia respiratoria",
-      "Septicemia no especificada",
-      "Neumonitis por alimentos o vómito",
-      "Insuficiencia renal no especificada",
-      "Otras enfermedades del sistema digestivo",
-      "Hipertensión esencial (primaria)",
-      "Exposición a factor no especificado",
-      "Shock, no clasificado en otra parte",
-      "Edema pulmonar",
-      "Insuficiencia renal aguda",
-      "Otras muertes súbitas de causa desconocida",
-      "Embolia pulmonar",
-      "Peritonitis"
-    ),
-    .after = "Código"
-  ) |>
-
-  ## Mostrar tabla
+  ## Formato tabla
   flextable() |>
-  tab_fmt()
+  tab_fmt() |>
+  set_header_labels(
+    cie10_cod = "Código",
+    causa = "Causa",
+    n = "Frecuencia",
+    pct = "%"
+  ) |>
+  autofit() |>
+  set_caption(
+    autonum = FALSE,
+    fp_p = fp_par(line_spacing = 1.5),
+    caption = as_paragraph(
+      as_chunk(
+        "Tabla 2. Principales códigos garbage de nivel 1 y 2 (GC1-GC2) registrados como causa básica de defunción en Argentina (2010-2023).",
+        props = fp_text(
+          font.size = 12,
+          font.family = "Times New Roman",
+          bold = TRUE
+        )
+      )
+    )
+  )
 
+
+# ## Guardar tabla -----
+# save_as_docx(
+#   tab2,
+#   path = "tablas/Tabla2.docx",
+#   pr_section = prop_section(
+#     page_margins = page_mar(
+#       bottom = 0.7874,
+#       top = 0.7874,
+#       left = 0.7874,
+#       right = 0.7874
+#     )
+#   )
+# )
 
 # Figura 2 ---------------------------------------------------------------
 ## Función auxiliar -----
@@ -286,6 +405,101 @@ fig2 <- g1 /
 #   dpi = 300
 # )
 
+# Evolución tasas GC por región ------------------------------------------
+## Tasas estandarizadas -----
+datos_jp_reg <- datos_gc |>
+  # Seleccionar muertes por GC
+  filter(grupo_causa == "GC") |>
+  droplevels() |>
+
+  # Modificar niveles paso 1
+  mutate(paso1 = str_remove(paso1, "-.*")) |>
+
+  # Agrupar datos por año
+  count(
+    anio,
+    grupo_edad,
+    region_deis,
+    nivel = paso1,
+    wt = n
+  ) |>
+
+  # Unir con proyecciones poblacionales
+  left_join(
+    proy_2010_2023 |>
+      # Agrupar por año
+      count(
+        anio,
+        region_deis,
+        grupo_edad,
+        wt = proy,
+        name = "pob"
+      )
+  ) |>
+
+  # Añadir totales Argentina
+  (\(x) {
+    bind_rows(
+      x,
+      x |>
+        group_by(anio, grupo_edad, nivel) |>
+        summarise(
+          pob = sum(pob, na.rm = TRUE),
+          n = sum(n, na.rm = TRUE),
+          region_deis = "Argentina",
+          .groups = "drop"
+        )
+    )
+  })() |>
+
+  # Añadir población estándar 2022
+  left_join(pob_est_2022) |>
+
+  # Calcular tasa estandarizada
+  group_by(anio, region_deis, nivel) |>
+  calculate_dsr(
+    x = n,
+    n = pob,
+    stdpop = pob_est_2022,
+    type = "standard"
+  )
+
+
+## Regresión joinpoint -----
+mod_jp_reg <- model_jp(
+  datos_jp_reg,
+  value = value,
+  time = anio,
+  group = c("nivel", "region_deis"),
+  step = TRUE,
+  k = 3,
+  min_dist = 2,
+  test = TRUE
+)
+
+
+## Figura 3 --------------------------------------------------------------
+fig3 <- mod_jp_reg |>
+  gg_jpoint(
+    facets = "grid",
+    psize = 1.5,
+    cbpal = "managua"
+  ) +
+  labs(y = "log-tasa") +
+  theme(
+    legend.position = "none",
+    text = element_text(family = "Times New Roman", size = 12)
+  )
+
+# ### Guardar figura ----
+# ggsave(
+#   fig3,
+#   filename = "figuras/Figura3.png",
+#   width = 17,
+#   units = "cm",
+#   dpi = 300
+# )
+
 # Evolución tasas GC por jurisdicción ------------------------------------
 ## Tasas estandarizadas -----
 datos_jp <- datos_gc |>
@@ -351,250 +565,76 @@ datos_jp <- datos_gc |>
   # Crear etiquetas para el gráfico
   mutate(
     reg_jur = if_else(
-      as.character(jurisdiccion) == as.character(region_deis),
+      jurisdiccion == "Argentina",
       jurisdiccion,
-      paste0(region_deis, ": ", jurisdiccion)
-    )
-  )
-
-
-## Figura 3 --------------------------------------------------------------
-fig3 <- datos_jp |>
-  # Gráfico
-  ggplot(aes(x = value, y = nivel, fill = nivel)) +
-  facet_wrap(~reg_jur, ncol = 3) +
-
-  # Geometrías
-  geom_density_ridges(
-    jittered_points = TRUE,
-    position = "raincloud",
-    color = NA,
-    alpha = .75,
-    point_color = "grey40",
-    point_alpha = .35,
-    scale = 3
-  ) +
-
-  # Escalas
-  scale_fill_manual(
-    values = c4a(palette = "managua", n = 4),
-    name = NULL
-  ) +
-
-  # Layout
-  labs(
-    x = "Tasa est. (100.000 hab.)",
-    y = NULL
-  ) +
-
-  theme_minimal() +
-  theme(
-    legend.position = "none",
-    text = element_text(family = "Times New Roman", size = 12),
-    strip.text = element_text(face = "bold")
-  )
-
-
-# ### Guardar figura ----
-# ggsave(
-#   fig3,
-#   filename = "figuras/Figura3.png",
-#   width = 17,
-#   units = "cm",
-#   dpi = 300
-# )
-
-## Regresión joinpoint ---------------------------------------------------
-## GC1 -----
-mod_jp1 <- datos_jp |>
-  filter(nivel == "GC1") |>
-  model_jp(
-    value = value,
-    time = anio,
-    group = c("region_deis", "jurisdiccion"),
-    step = TRUE,
-    k = 3,
-    test = TRUE
-  )
-
-## AAPC
-get_aapc(mods = mod_jp1, digits = 2)
-
-
-## GC2 -----
-mod_jp2 <- datos_jp |>
-  filter(nivel == "GC2") |>
-  model_jp(
-    value = value,
-    time = anio,
-    group = c("region_deis", "jurisdiccion"),
-    step = TRUE,
-    k = 3,
-    test = TRUE
-  )
-
-
-## AAPC
-get_aapc(mods = mod_jp2)
-
-
-## GC3 -----
-mod_jp3 <- datos_jp |>
-  filter(nivel == "GC3") |>
-  model_jp(
-    value = value,
-    time = anio,
-    group = c("region_deis", "jurisdiccion"),
-    step = TRUE,
-    k = 3,
-    test = TRUE
-  )
-
-
-## AAPC
-get_aapc(mods = mod_jp3)
-
-
-## GC4 -----
-mod_jp4 <- datos_jp |>
-  filter(nivel == "GC4") |>
-  model_jp(
-    value = value,
-    time = anio,
-    group = c("region_deis", "jurisdiccion"),
-    step = TRUE,
-    k = 3,
-    test = TRUE
-  )
-
-
-## AAPC
-get_aapc(mods = mod_jp4)
-
-
-# Tablas suplementarias --------------------------------------------------
-## Tabla S3 -----
-tabs3 <- mod_jp1 |>
-  summary_jp(dec = ",") |>
-  flextable() |>
-  tab_fmt()
-
-
-## Tabla S4 -----
-tabs4 <- mod_jp2 |>
-  summary_jp(dec = ",") |>
-  flextable() |>
-  tab_fmt()
-
-
-## Tabla S5 -----
-tabs5 <- mod_jp3 |>
-  summary_jp(dec = ",") |>
-  flextable() |>
-  tab_fmt()
-
-
-## Tabla S6 -----
-tabs6 <- mod_jp4 |>
-  summary_jp(dec = ",") |>
-  flextable() |>
-  tab_fmt()
-
-
-# Evolución tasas GC por región ------------------------------------------
-## Tasas estandarizadas -----
-datos_jp_reg <- datos_gc |>
-  # Seleccionar muertes por GC
-  filter(grupo_causa == "GC") |>
-  droplevels() |>
-
-  # Modificar niveles paso 1
-  mutate(paso1 = str_remove(paso1, "-.*")) |>
-
-  # Agrupar datos por año
-  count(
-    anio,
-    grupo_edad,
-    region_deis,
-    nivel = paso1,
-    wt = n
-  ) |>
-
-  # Unir con proyecciones poblacionales
-  left_join(
-    proy_2010_2023 |>
-      # Agrupar por año
-      count(
-        anio,
+      paste0(
         region_deis,
-        grupo_edad,
-        wt = proy,
-        name = "pob"
+        ": ",
+        str_remove(jurisdiccion, " \\(.*")
       )
-  ) |>
-
-  # Añadir totales Argentina
-  (\(x) {
-    bind_rows(
-      x,
-      x |>
-        group_by(anio, grupo_edad, nivel) |>
-        summarise(
-          pob = sum(pob, na.rm = TRUE),
-          n = sum(n, na.rm = TRUE),
-          region_deis = "Argentina",
-          jurisdiccion = "Argentina",
-          .groups = "drop"
-        )
     )
-  })() |>
-
-  # Añadir población estándar 2022
-  left_join(pob_est_2022) |>
-
-  # Calcular tasa estandarizada
-  group_by(anio, region_deis, nivel) |>
-  calculate_dsr(
-    x = n,
-    n = pob,
-    stdpop = pob_est_2022,
-    type = "standard"
   )
-
 
 ## Regresión joinpoint -----
-mod_jp_reg <- model_jp(
-  datos_jp_reg,
+### GC1 -----
+mod_jp1 <- model_jp(
+  datos_jp |> filter(nivel == "GC1"),
   value = value,
   time = anio,
-  group = c("nivel", "region_deis"),
+  group = c("region_deis", "jurisdiccion"),
   step = TRUE,
   k = 3,
+  min_dist = 2,
   test = TRUE
 )
 
-names(mod_jp_reg) <- str_replace(names(mod_jp_reg), "Patagonia", "Pat.")
+## AAPC
+get_aapc(mod_jp1)
 
 
-## Figura 4 --------------------------------------------------------------
-fig4 <- mod_jp_reg |>
-  gg_jpoint(
-    facets = "grid",
-    cbpal = "managua",
-    psize = 1.5
-  ) +
+### GC2 -----
+mod_jp2 <- model_jp(
+  datos_jp |> filter(nivel == "GC2"),
+  value = value,
+  time = anio,
+  group = c("region_deis", "jurisdiccion"),
+  step = TRUE,
+  k = 3,
+  min_dist = 2,
+  test = TRUE
+)
 
-  labs(y = "log-tasa") +
-  theme(
-    legend.position = "none",
-    text = element_text(family = "Times New Roman", size = 12)
-  )
+## AAPC
+get_aapc(mod_jp2)
 
-# ### Guardar figura ----
-# ggsave(
-#   fig4,
-#   filename = "figuras/Figura4.png",
-#   width = 17,
-#   units = "cm",
-#   dpi = 300
-# )
+
+### GC3 -----
+mod_jp3 <- model_jp(
+  datos_jp |> filter(nivel == "GC3"),
+  value = value,
+  time = anio,
+  group = c("region_deis", "jurisdiccion"),
+  step = TRUE,
+  k = 3,
+  min_dist = 2,
+  test = TRUE
+)
+
+## AAPC
+get_aapc(mod_jp3)
+
+
+### GC4 -----
+mod_jp4 <- model_jp(
+  datos_jp |> filter(nivel == "GC4"),
+  value = value,
+  time = anio,
+  group = c("region_deis", "jurisdiccion"),
+  step = TRUE,
+  k = 3,
+  min_dist = 2,
+  test = TRUE
+)
+
+## AAPC
+get_aapc(mod_jp4)
