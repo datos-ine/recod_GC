@@ -13,8 +13,8 @@ format:
     pdf:
         papersize: a4
         geometry:
-            - top=25mm
-            - left=25mm
+            - top=20mm
+            - left=20mm
             - heightrounded
         mainfont: Times New Roman
 ---
@@ -344,7 +344,7 @@ figs3 <- datos_jp_reg |>
   theme_minimal() +
   theme(
     legend.position = "bottom",
-    text = element_text(family = "Times New Roman", size = 12),
+    # text = element_text(family = "Times New Roman", size = 12),
     strip.text = element_text(face = "bold")
   )
 
@@ -353,39 +353,11 @@ figs3
 ```
 
 \newpage
-## Tabla S4. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage (GC) por región, Argentina (2010-2023).
+## Figura S4. Distribución jurisdiccional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
 
 ```{r}
-#| id: Tabla S4
-tabs4 <- mod_jp_reg |>
-  summary_jp() |>
-  jp_to_ft(lan = "es")
-
-
-tabs4 |>
-  tab_fmt() |>
-
-  # Cambiar nombres columnas
-  set_header_labels(
-    Grupo = "Nivel",
-    Subgrupo = "Región"
-  ) |>
-
-  # Unir filas
-  merge_h(i = nrow_part(tabs4, part = "body") - 1) |>
-
-  # Líneas horizontales
-  hline(
-    i = which(tabs4$body$dataset[[1]] != lag(tabs4$body$dataset[[1]])) - 1
-  )
-```
-
-\newpage
-## Figura S5. Distribución jurisdiccional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
-
-```{r}
-#| id: Figura S5
-figs5 <- datos_jp |>
+#| id: Figura S4
+figs4 <- datos_jp |>
   # Gráfico
   ggplot(aes(x = value, y = nivel, fill = nivel)) +
   facet_wrap(~reg_jur, ncol = 3) +
@@ -416,12 +388,41 @@ figs5 <- datos_jp |>
   theme_minimal() +
   theme(
     legend.position = "bottom",
-    text = element_text(family = "Times New Roman", size = 12),
+    # text = element_text(family = "Times New Roman", size = 12),
     strip.text = element_text(face = "bold")
   )
 
 ## Mostrar figura
-figs5
+figs4
+```
+
+
+\newpage
+## Tabla S5. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage (GC) por región, Argentina (2010-2023).
+
+```{r}
+#| id: Tabla S5
+tabs5 <- mod_jp_reg |>
+  summary_jp() |>
+  jp_to_ft(lan = "es")
+
+
+tabs5 |>
+  tab_fmt() |>
+
+  # Cambiar nombres columnas
+  set_header_labels(
+    Grupo = "Nivel",
+    Subgrupo = "Región"
+  ) |>
+
+  # Unir filas
+  merge_h(i = nrow_part(tabs5, part = "body") - 1) |>
+
+  # Líneas horizontales
+  hline(
+    i = which(tabs5$body$dataset[[2]] != lag(tabs5$body$dataset[[2]])) - 1
+  )
 ```
 
 \newpage
@@ -430,9 +431,11 @@ figs5
 
 ```{r}
 #| id: Tabla S6
-tabs6 <- mod_jp1 |>
+tabs6 <- mod_jp[str_detect(names(mod_jp), "GC1")] |>
   summary_jp() |>
-  jp_to_ft()
+  select(-group) |>
+  separate(subgroup, into = c("group", "subgroup"), sep = ": ") |>
+  jp_to_ft(lan = "es")
 
 ## Formato de tabla
 tabs6 |>
@@ -448,7 +451,7 @@ tabs6 |>
 
   # Líneas horizontales
   hline(
-    i = which(tabs6$body$dataset[[1]] != lag(tabs6$body$dataset[[1]])) - 1
+    i = which(tabs6$body$dataset[[2]] != lag(tabs6$body$dataset[[2]])) - 1
   )
 ```
 
@@ -457,9 +460,11 @@ tabs6 |>
 
 ```{r}
 #| id: Tabla S7
-tabs7 <- mod_jp2 |>
+tabs7 <- mod_jp[str_detect(names(mod_jp), "GC2")] |>
   summary_jp() |>
-  jp_to_ft()
+  select(-group) |>
+  separate(subgroup, into = c("group", "subgroup"), sep = ": ") |>
+  jp_to_ft(lan = "es")
 
 ## Formato de tabla
 tabs7 |>
@@ -475,7 +480,7 @@ tabs7 |>
 
   # Líneas horizontales
   hline(
-    i = which(tabs7$body$dataset[[1]] != lag(tabs7$body$dataset[[1]])) - 1
+    i = which(tabs7$body$dataset[[2]] != lag(tabs7$body$dataset[[2]])) - 1
   )
 ```
 
@@ -484,9 +489,11 @@ tabs7 |>
 
 ```{r}
 #| id: Tabla S8
-tabs8 <- mod_jp3 |>
+tabs8 <- mod_jp[str_detect(names(mod_jp), "GC3")] |>
   summary_jp() |>
-  jp_to_ft()
+  select(-group) |>
+  separate(subgroup, into = c("group", "subgroup"), sep = ": ") |>
+  jp_to_ft(lan = "es")
 
 ## Formato de tabla
 tabs8 |>
@@ -502,7 +509,7 @@ tabs8 |>
 
   # Líneas horizontales
   hline(
-    i = which(tabs8$body$dataset[[1]] != lag(tabs8$body$dataset[[1]])) - 1
+    i = which(tabs8$body$dataset[[2]] != lag(tabs8$body$dataset[[2]])) - 1
   )
 ```
 
@@ -511,9 +518,11 @@ tabs8 |>
 
 ```{r}
 #| id: Tabla S9
-tabs9 <- mod_jp4 |>
+tabs9 <- mod_jp[str_detect(names(mod_jp), "GC4")] |>
   summary_jp() |>
-  jp_to_ft()
+  select(-group) |>
+  separate(subgroup, into = c("group", "subgroup"), sep = ": ") |>
+  jp_to_ft(lan = "es")
 
 ## Formato de tabla
 tabs9 |>
@@ -529,6 +538,6 @@ tabs9 |>
 
   # Líneas horizontales
   hline(
-    i = which(tabs9$body$dataset[[1]] != lag(tabs9$body$dataset[[1]])) - 1
+    i = which(tabs9$body$dataset[[2]] != lag(tabs9$body$dataset[[2]])) - 1
   )
 ```

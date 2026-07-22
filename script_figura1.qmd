@@ -1,0 +1,139 @@
+---
+title: "Figura 1"
+format: html
+---
+
+```{dot}
+//| id: Figura S1
+digraph G {
+ graph[
+  fontsize = 14
+  fontname="Times-Roman"
+  style = filled
+  nodesep=.5
+  ranksep=.05
+ ]
+
+ node[
+  shape = record
+  style = filled
+  fillcolor="white"
+  fontsize = 12
+  fontname="Times-Roman"
+  width=3.5
+  height=1.25
+ ]
+ subgraph cluster_paso1{
+  label = <<b>Paso 1<br/> Categorizar grupos de causas</b>>
+  fillcolor="#FFCE66BF" 
+
+  ent1[label = <{<b>ENT objetivo</b>|DM|ECV|ERC|NPL}>]
+  ce1[label = <{<b>CE objetivo</b>|TRA|SU|HO}>]
+  otras1[label = <{<b>Otras causas</b>|CMNN|Otras ENT|Otras CE}>]
+  gc1 [
+  shape=plain
+label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+  <TR>
+    <TD WIDTH="250"><B>Códigos garbage</B></TD>
+  </TR>
+  <TR>
+    <TD>GC1</TD>
+  </TR>
+  <TR>
+    <TD>GC2</TD>
+  </TR>
+  <TR>
+    <TD>GC3-GC4</TD>
+  </TR>
+  <TR>
+    <TD PORT="nne">NNE</TD>
+  </TR>
+</TABLE>
+>
+]
+ }
+
+ subgraph cluster_paso2{
+  label = <<b>Paso 2<br/>Recategorizar GC3-GC4</b>>
+  fillcolor="#92463ABF"
+  labelloc=b
+  ranksep=.1
+
+  ent2[label = <{<b>ENT objetivo</b>|DM|ECV|ERC|NPL}>]
+  ce2[label = <{<b>CE objetivo</b>|TRA|SU|HO}>]
+  otras2 [
+  shape=plain
+label=<
+<TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0">
+  <TR>
+    <TD WIDTH="250"><B>Otras causas</B></TD>
+  </TR>
+  <TR>
+    <TD PORT="cmnn">CMNN</TD>
+  </TR>
+  <TR>
+    <TD>Otras ENT</TD>
+  </TR>
+  <TR>
+    <TD>Otras CE</TD>
+  </TR>
+</TABLE>
+>
+]
+
+  gc2[label=<{<b>Códigos garbage</b>|GC1|GC2}>]
+
+ }
+
+  subgraph cluster_paso3{
+  label = <<b>Paso 3<br/>Redistribuir GC2</b>>
+  fillcolor="#4D5492BF"
+
+  ent3[label = <{<b>ENT objetivo</b>|DM|ECV (+ GC2-ECV)|ERC|NPL}>]
+
+  ce3[label = <{<b>CE objetivo</b>  (+ GC2-CE)|TRA|SU|HO}>]
+
+  otras3[label = <{<b>Otras causas</b>|CMNN|Otras ENT|Otras CE (+ GC2-CE)}>]
+
+  gc3[label=<{<b>Códigos garbage</b>|GC1}>]
+
+ }
+
+  subgraph cluster_paso4{
+  label = <<b>Paso 4<br/>Redistribuir GC1</b>>
+  fillcolor= "#80E6FFBF"
+  labelloc=b
+  
+  ent4[label = <{<b>ENT objetivo</b>|DM|ECV|ERC (+ GC1-ERC)|NPL}>]
+
+  ce4[label = <{<b>CE objetivo</b>  (+ GC1-CE)|TRA|SU|HO}>]
+
+  otras4[label = <{<b>Otras causas</b>|CMNN|Otras ENT|Otras CE (+ GC1-CE*)}>]
+
+ }
+
+  t1[
+        label=<* Redistribución proporcional por sexo y edad <br/>
+            DM: diabetes mellitus; ECV: enf. cardiovasculares; ERC: enf. respiratorias crónicas; NPL: neoplasias; TRA: accidentes de tránsito; SU: suicidio; <br/> 
+            HO: homicidio; CMNN: transmisibles, maternas y neonatales, nutricionales>
+        shape=plaintext
+    fontsize=10
+  nojustify=true
+    width=10
+        ]
+
+         ent1 ->ce1 -> otras1 -> gc1  -> ent2 -> ce2 -> otras2 -> gc2 -> t1[style=invis weight=100]
+
+         ent3 -> ce3 -> otras3 -> gc3 -> ent4 -> ce4 -> otras4 -> t1 [style=invis weight=100]
+
+         gc1:nne -> ent2 [
+         taillabel="50%*"
+         labelangle=-50 
+         labeldistance=2
+         ]
+
+         gc1:nne -> otras2:cmnn [label="50%"]
+ }
+```
+
