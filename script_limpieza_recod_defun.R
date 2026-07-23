@@ -6,7 +6,7 @@
 ### según Teixeira et al. (2021), Soares Filho et al. (2024) y GBD-2019
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 20-07-2026 11:08
+# Última modificación: 23-07-2026 11:41
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -1491,22 +1491,20 @@ datos_em <- recod_defun |>
   # Filtrar datos con mes 0
   filter_out(mes == 0) |>
 
+  # Filtrar datos de 2023
+  filter_out(anio == 2023) |>
+
+  # Filtrar menore de 20 años
+  filter_out(grupo_edad == "<20 años") |>
+
+  droplevels() |>
+
   # Crear grupo de causas
   mutate(
-    grupo_causa = case_when(
-      paso4 %in% c("DM", "ECV", "ERC", "NPL") ~ "ENT objetivo",
-      paso4 %in% c("TRA", "HO", "SU") ~ "CE objetivo",
-      .default = "Otras causas",
-    )
-  ) |>
-
-  # Crear subgrupo de causas
-  mutate(
-    causa = case_when(
-      grupo_causa == "ENT objetivo" ~ paso4,
-      grupo_causa == "CE objetivo" ~ paso4,
-      cie10_cod %in% c("U07.1", "U07.2") ~ "COVID-19",
-      .default = grupo_causa
+    grupo_causa = if_else(
+      cie10_cod %in% c("U07.1", "U07.2"),
+      "COVID-19",
+      paso4
     )
   ) |>
 
@@ -1515,15 +1513,26 @@ datos_em <- recod_defun |>
     anio,
     mes,
     region_deis,
-    jurisdiccion,
+    # jurisdiccion,
     sexo,
     grupo_edad,
     grupo_causa,
-    causa
+    .drop = FALSE
   ) |>
 
+  # Completar filas con 0 muertes (n = 102960)
+  complete(
+    anio,
+    mes,
+    nesting(region_deis, sexo, grupo_edad, grupo_causa),
+    fill = list(n = 0)
+  ) |>
+
+  # Filtrar COVID previo a 2020
+  filter_out(grupo_causa == "COVID-19" & anio < 2020) |>
+
   # Columnas caracter a factor
-  mutate(across(.cols = where(is.character), .fns = ~ factor(.x)))
+  mutate(across(.cols = where(is.character) | anio | mes, .fns = ~ factor(.x)))
 
 
 # Crear dataset para análisis GC -----------------------------------------
@@ -1576,7 +1585,7 @@ datos_gc <- recod_defun |>
 
 # Exportar datos limpios -------------------------------------------------
 ## Análisis EM
-export(datos_em, file = "../EM_ENT_CE/clean/arg_defun_mes_2010_2023.rds")
+export(datos_em, file = "../EM_ENT_CE/clean/arg_defun_mes_2010_2022.rds")
 
 ## Análisis GC
 export(datos_gc, file = "clean/arg_defun_recod_2010_2023.rds")
