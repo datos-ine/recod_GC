@@ -1532,7 +1532,7 @@ datos_em <- recod_defun |>
   filter_out(grupo_causa == "COVID-19" & anio < 2020) |>
 
   # Columnas caracter a factor
-  mutate(across(.cols = where(is.character) | anio | mes, .fns = ~ factor(.x)))
+  mutate(across(.cols = where(is.character), .fns = ~ factor(.x)))
 
 
 # Crear dataset para análisis GC -----------------------------------------
