@@ -3,7 +3,6 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 27-07-2026 12:02
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -104,6 +103,15 @@ datos_gc <- import(here("clean", "arg_defun_recod_2010_2023.rds")) |>
       str_detect(paso1, "GC3|GC4") & paso1 != "GC4-NNE",
       str_remove(paso1, "-.*"),
       paso1
+    )
+  ) |>
+
+  # Crear variable nivel
+  mutate(
+    nivel = case_when(
+      str_detect(paso1, "GC1|GC2") ~ "GC1-GC2",
+      str_detect(paso1, "GC3|GC4") ~ "GC3-GC4",
+      .default = NA
     )
   )
 
@@ -456,6 +464,16 @@ fig1 <- grViz(
  '
 )
 
+## Guardar figura -----
+# export_svg(fig1) |>
+#   charToRaw() |>
+#     # rsvg_svg(
+#     # file = "figuras/Figura1.svg",
+#   rsvg_png(
+#     file = "figuras/Figura1.png",
+#     width = 560
+#   )
+
 # Tabla 1 ----------------------------------------------------------------
 tab1 <- tibble(
   Variable = c(
@@ -535,6 +553,20 @@ tab1 <- tibble(
     )
   )
 
+
+# # Guardar tabla -----
+# save_as_docx(
+#   tab1,
+#   path = "tablas/Tabla1.docx",
+#   pr_section = prop_section(
+#     page_margins = page_mar(
+#       bottom = 0.7874,
+#       top = 0.7874,
+#       left = 0.7874,
+#       right = 0.7874
+#     )
+#   )
+# )
 
 # Figura 2 ---------------------------------------------------------------
 ## Función auxiliar -----
@@ -687,6 +719,16 @@ fig2 <- g1 /
   scale_fill_manual(name = NULL, values = pal, na.value = "grey65")
 
 
+## Guardar figura -----
+# ggsave(
+#   fig2,
+#   filename = "figuras/Figura2.png",
+#   width = 17,
+#   height = 20,
+#   units = "cm",
+#   dpi = 300
+# )
+
 # Tasas estandarizadas mortalidad x GC -----------------------------------
 ## Total país -----
 tasa_gc_arg <- datos_gc |>
@@ -694,14 +736,11 @@ tasa_gc_arg <- datos_gc |>
   filter(grupo_causa == "GC") |>
   droplevels() |>
 
-  # Modificar niveles paso 1
-  mutate(paso1 = str_remove(paso1, "-.*")) |>
-
   # Agrupar datos por año
   count(
     anio,
     grupo_edad,
-    nivel = paso1,
+    nivel,
     wt = n
   ) |>
 
@@ -739,15 +778,12 @@ tasa_gc_reg <- datos_gc |>
   filter(grupo_causa == "GC") |>
   droplevels() |>
 
-  # Modificar niveles paso 1
-  mutate(paso1 = str_remove(paso1, "-.*")) |>
-
   # Agrupar datos por año
   count(
     anio,
     grupo_edad,
     region_deis,
-    nivel = paso1,
+    nivel,
     wt = n
   ) |>
 
@@ -792,7 +828,7 @@ tasa_gc_jur <- datos_gc |>
     grupo_edad,
     region_deis,
     jurisd_deis,
-    nivel = paso1,
+    nivel,
     wt = n
   ) |>
 
@@ -847,7 +883,6 @@ mod_jp_reg <- model_jp(
   datos_jp,
   value = value,
   time = anio,
-  # group = c("nivel", "grupo"),
   group = c("nivel", "grupo"),
   step = TRUE,
   k = 2,
@@ -861,7 +896,6 @@ get_aapc(mod_jp_reg, digits = 2) |> print(n = Inf)
 # Tabla 2 ----------------------------------------------------------------
 tab2 <- mod_jp_reg |>
   summary_jp(dec = ",") |>
-  filter(group %in% c("GC1", "GC2")) |>
   separate_wider_delim(
     cols = subgroup,
     names = c("subgroup", "jurisd"),
@@ -883,7 +917,7 @@ tab2 <- mod_jp_reg |>
     fp_p = fp_par(line_spacing = 1.5),
     caption = as_paragraph(
       as_chunk(
-        "Tabla 2. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 1 y 2 (GC1-GC2) por región y jurisdicción, Argentina (2010-2023).",
+        "Tabla 2. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage (GC) por región y jurisdicción, Argentina (2010-2023).",
         props = fp_text(
           font.size = 12,
           font.family = "Times New Roman",
@@ -892,122 +926,3 @@ tab2 <- mod_jp_reg |>
       )
     )
   )
-
-
-# Tabla 3 ----------------------------------------------------------------
-tab3 <- mod_jp_reg |>
-  summary_jp(dec = ",") |>
-  filter(group %in% c("GC3", "GC4")) |>
-  separate_wider_delim(
-    cols = subgroup,
-    names = c("subgroup", "jurisd"),
-    delim = ": ",
-    too_few = "align_start"
-  ) |>
-
-  jp_to_ft(lan = "es") |>
-  set_header_labels(
-    Subgrupo = "Región",
-    jurisd = "Jurisdicción"
-  ) |>
-  tab_fmt() |>
-  merge_v(j = 2:4, combine = TRUE) |>
-  merge_v(j = 2) |>
-  autofit() |>
-  set_caption(
-    autonum = FALSE,
-    fp_p = fp_par(line_spacing = 1.5),
-    caption = as_paragraph(
-      as_chunk(
-        "Tabla 3. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 3 y 4 (GC3-GC4) por región y jurisdicción, Argentina (2010-2023).",
-        props = fp_text(
-          font.size = 12,
-          font.family = "Times New Roman",
-          bold = TRUE
-        )
-      )
-    )
-  )
-
-# # Guardar tablas y figuras -----------------------------------------------
-# ## Figura 1 -----
-# # PNG
-# export_svg(fig1) |>
-#   charToRaw() |>
-#   # rsvg_svg(
-#   # file = "figuras/Figura1.svg",
-#   rsvg_png(
-#     file = "figs_tablas/Figura1.png",
-#     width = 560
-#   )
-
-# # SVG
-# export_svg(fig1) |>
-#   charToRaw() |>
-#   rsvg_svg(
-#   file = "figs_tablas/Figura1.svg",
-#     width = 560
-#   )
-
-# ## Tabla 1 -----
-# save_as_docx(
-#   tab1,
-#   path = "figs_tablas/Tabla1.docx",
-#   pr_section = prop_section(
-#     page_margins = page_mar(
-#       bottom = 0.7874,
-#       top = 0.7874,
-#       left = 0.7874,
-#       right = 0.7874
-#     )
-#   )
-# )
-
-# ## Figura 2 -----
-# # PNG
-# ggsave(
-#   fig2,
-#   filename = "figs_tablas/Figura2.png",
-#   width = 17,
-#   height = 20,
-#   units = "cm",
-#   dpi = 300
-# )
-
-# # SVG
-# ggsave(
-#   fig2,
-#   filename = "figs_tablas/Figura2.svg",
-#   width = 17,
-#   height = 20,
-#   units = "cm",
-#   dpi = 300
-# )
-
-# ## Tabla 2 -----
-# save_as_docx(
-#   tab2,
-#   path = "figs_tablas/Tabla2.docx",
-#   pr_section = prop_section(
-#     page_margins = page_mar(
-#       bottom = 0.7874,
-#       top = 0.7874,
-#       left = 0.7874,
-#       right = 0.7874
-#     )
-#   )
-# )
-
-# ## Tabla 3 -----
-# save_as_docx(
-#   tab3,
-#   path = "figs_tablas/Tabla3.docx",
-#   pr_section = prop_section(
-#     page_margins = page_mar(
-#       bottom = 0.7874,
-#       top = 0.7874,
-#       left = 0.7874,
-#       right = 0.7874
-#     )
-#   )
-# )

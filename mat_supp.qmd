@@ -198,12 +198,67 @@ tabs1 |>
 ```
 
 \newpage
-## Tabla S2. Cambios en las frecuencias de muertes por causas definidas durante los distintos pasos de redistribución de códigos garbage (GC), Argentina (2010-2023).
+## Tabla S2. Principales códigos garbage de nivel 1 y 2 (GC1-GC2) registrados como causa básica de defunción en Argentina (2010-2023).
 
 ```{r}
 #| id: Tabla S2
-# Datos para la tabla -----
 tabs2 <- datos_gc |>
+  # Filtrar GC1-GC2
+  filter(paso1 %in% c("GC1", "GC2")) |>
+
+  # Reagrupar niveles
+  mutate(
+    cie10_cod = if_else(
+      cie10_cod == "A41.9",
+      cie10_cod,
+      str_sub(cie10_cod, 1, 3)
+    )
+  ) |>
+
+  # Añadir descripción códigos DEIS
+  left_join(
+    import(here("raw", "descdef1.xlsx"), sheet = 4),
+    by = join_by(cie10_cod == CODIGO)
+  ) |>
+
+  # Completar NAs
+  mutate(
+    VALOR = if_else(
+      cie10_cod == "A41.9",
+      "Septicemia no especificada",
+      VALOR
+    )
+  ) |>
+
+  # Frecuencia muertes
+  count(cie10_cod, causa = VALOR, wt = n) |>
+  mutate(pct = percent(n / sum(n), accuracy = .1, decimal.mark = ",")) |>
+
+  # Filtrar por frecuencia
+  arrange(-n) |>
+  filter_out(n < 10000)
+
+## Formato tabla ----
+tabs2 |>
+  flextable() |>
+  tab_fmt() |>
+  set_header_labels(
+    cie10_cod = "Código",
+    causa = "Causa",
+    n = "Frecuencia",
+    pct = "%"
+  ) |>
+  width(width = c(2, 10, 2, 2), unit = "cm") |>
+  theme_booktabs()
+```
+
+\newpage
+## Tabla S3. Cambios en las frecuencias de muertes por causas definidas durante los distintos pasos de redistribución de códigos garbage (GC), Argentina (2010-2023).
+
+```{r}
+#| id: Tabla S3
+# Datos para la tabla -----
+tabs3 <- datos_gc |>
 
   # Modificar grupo causa
   mutate(
@@ -245,7 +300,7 @@ tabs2 <- datos_gc |>
 
 
 # Tabla -----
-tabs2 |>
+tabs3 |>
   flextable() |>
   set_header_labels(
     grupo_causa = "Grupo causa",
@@ -309,11 +364,11 @@ tabs2 |>
 ```
 
 \newpage
-## Figura S3. Distribución regional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
+## Figura S4. Distribución regional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
 
 ```{r}
-#| id: Figura S3
-figs3 <- datos_jp_reg |>
+#| id: Figura S4
+figs4 <- bind_rows(tasa_gc_arg, tasa_gc_reg) |>
   # Gráfico
   ggplot(aes(x = value, y = nivel, fill = nivel)) +
   facet_wrap(~region_deis, ncol = 2) +
@@ -344,23 +399,23 @@ figs3 <- datos_jp_reg |>
   theme_minimal() +
   theme(
     legend.position = "bottom",
-    # text = element_text(family = "Times New Roman", size = 12),
     strip.text = element_text(face = "bold")
   )
 
 ## Mostrar figura
-figs3
+figs4
 ```
 
+
 \newpage
-## Figura S4. Distribución jurisdiccional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
+## Figura S5. Distribución jurisdiccional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
 
 ```{r}
-#| id: Figura S4
-figs4 <- datos_jp |>
+#| id: Figura S5
+figs5 <- tasa_gc_jur |>
   # Gráfico
   ggplot(aes(x = value, y = nivel, fill = nivel)) +
-  facet_wrap(~reg_jur, ncol = 3) +
+  facet_wrap(~jurisd_deis, ncol = 3) +
 
   # Geometrías
   geom_density_ridges(
@@ -388,156 +443,175 @@ figs4 <- datos_jp |>
   theme_minimal() +
   theme(
     legend.position = "bottom",
-    # text = element_text(family = "Times New Roman", size = 12),
     strip.text = element_text(face = "bold")
   )
 
 ## Mostrar figura
-figs4
-```
-
-
-\newpage
-## Tabla S5. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage (GC) por región, Argentina (2010-2023).
-
-```{r}
-#| id: Tabla S5
-tabs5 <- mod_jp_reg |>
-  summary_jp() |>
-  jp_to_ft(lan = "es")
-
-
-tabs5 |>
-  tab_fmt() |>
-
-  # Cambiar nombres columnas
-  set_header_labels(
-    Grupo = "Nivel",
-    Subgrupo = "Región"
-  ) |>
-
-  # Unir filas
-  merge_h(i = nrow_part(tabs5, part = "body") - 1) |>
-
-  # Líneas horizontales
-  hline(
-    i = which(tabs5$body$dataset[[2]] != lag(tabs5$body$dataset[[2]])) - 1
-  )
+figs5
 ```
 
 \newpage
-
-## Tabla S6. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage (GC1) por región, Argentina (2010-2023).
+## Figura S6. Evolución temporal de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad según región, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
 
 ```{r}
-#| id: Tabla S6
-tabs6 <- mod_jp[str_detect(names(mod_jp), "GC1")] |>
-  summary_jp() |>
-  select(-group) |>
-  separate(subgroup, into = c("group", "subgroup"), sep = ": ") |>
-  jp_to_ft(lan = "es")
-
-## Formato de tabla
-tabs6 |>
-  tab_fmt() |>
-  # Cambiar nombres columnas
-  set_header_labels(
-    Grupo = "Región",
-    Subgrupo = "Jurisdicción"
-  ) |>
-
-  # Unir filas
-  merge_h(i = nrow_part(tabs6, part = "body") - 1) |>
-
-  # Líneas horizontales
-  hline(
-    i = which(tabs6$body$dataset[[2]] != lag(tabs6$body$dataset[[2]])) - 1
+#| id: Figura S6
+# Datos para el gráfico -----
+mod_gc <- datos_jp |>
+  filter(is.na(jurisd_deis)) |>
+  model_jp(
+    value = value,
+    time = anio,
+    group = c("nivel", "region_deis"),
+    step = TRUE,
+    k = 2,
+    min_dist = 2,
+    test = TRUE
   )
+
+# Gráfico -----
+figs6 <- mod_gc |>
+  gg_jpoint(
+    facets = "grid",
+    psize = 1.5,
+    cbpal = "managua"
+  ) +
+  scale_y_continuous(name = "log-tasa", n.breaks = 4) +
+  theme(
+    legend.position = "none",
+    panel.spacing.y = unit(.75, "lines")
+  )
+
+figs6
+```
+
+## Figura S7. Evolución temporal de las tasas de mortalidad por códigos garbage nivel 1 (GC1) estandarizadas por edad según jurisdicción, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
+```{r}
+#| id: Figura S7
+# Datos para el gráfico -----
+mod_gc1 <- datos_jp |>
+  filter(!is.na(jurisd_deis) & nivel == "GC1") |>
+  model_jp(
+    value = value,
+    time = anio,
+    group = "grupo",
+    step = TRUE,
+    k = 2,
+    min_dist = 2,
+    test = TRUE
+  )
+
+# Gráfico -----
+figs7 <- mod_gc1 |>
+  gg_jpoint(
+    facets = "wrap",
+    psize = 1.5,
+    cbpal = "managua"
+  ) +
+  scale_y_continuous(name = "log-tasa", n.breaks = 4) +
+  theme(
+    legend.position = "none",
+    panel.spacing.y = unit(.75, "lines")
+  )
+
+figs7
 ```
 
 \newpage
-## Tabla S7. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 2 (GC2) por jurisdicción, Argentina (2010-2023).
-
+## Figura S8. Evolución temporal de las tasas de mortalidad por códigos garbage nivel 2 (GC2) estandarizadas por edad según jurisdicción, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
 ```{r}
-#| id: Tabla S7
-tabs7 <- mod_jp[str_detect(names(mod_jp), "GC2")] |>
-  summary_jp() |>
-  select(-group) |>
-  separate(subgroup, into = c("group", "subgroup"), sep = ": ") |>
-  jp_to_ft(lan = "es")
-
-## Formato de tabla
-tabs7 |>
-  tab_fmt() |>
-  # Cambiar nombres columnas
-  set_header_labels(
-    Grupo = "Región",
-    Subgrupo = "Jurisdicción"
-  ) |>
-
-  # Unir filas
-  merge_h(i = nrow_part(tabs7, part = "body") - 1) |>
-
-  # Líneas horizontales
-  hline(
-    i = which(tabs7$body$dataset[[2]] != lag(tabs7$body$dataset[[2]])) - 1
+#| id: Figura S8
+# Datos para el gráfico -----
+mod_gc2 <- datos_jp |>
+  filter(!is.na(jurisd_deis) & nivel == "GC2") |>
+  model_jp(
+    value = value,
+    time = anio,
+    group = "grupo",
+    step = TRUE,
+    k = 2,
+    min_dist = 2,
+    test = TRUE
   )
+
+# Gráfico -----
+figs8 <- mod_gc2 |>
+  gg_jpoint(
+    facets = "wrap",
+    psize = 1.5,
+    cbpal = "managua"
+  ) +
+  scale_y_continuous(name = "log-tasa", n.breaks = 4) +
+  theme(
+    legend.position = "none",
+    panel.spacing.y = unit(.75, "lines")
+  )
+
+figs8
 ```
 
 \newpage
-## Tabla S8. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 3 (GC3) por jurisdicción, Argentina (2010-2023).
-
+## Figura S9. Evolución temporal de las tasas de mortalidad por códigos garbage nivel 3 (GC3) estandarizadas por edad según jurisdicción, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
 ```{r}
-#| id: Tabla S8
-tabs8 <- mod_jp[str_detect(names(mod_jp), "GC3")] |>
-  summary_jp() |>
-  select(-group) |>
-  separate(subgroup, into = c("group", "subgroup"), sep = ": ") |>
-  jp_to_ft(lan = "es")
-
-## Formato de tabla
-tabs8 |>
-  tab_fmt() |>
-  # Cambiar nombres columnas
-  set_header_labels(
-    Grupo = "Región",
-    Subgrupo = "Jurisdicción"
-  ) |>
-
-  # Unir filas
-  merge_h(i = nrow_part(tabs8, part = "body") - 1) |>
-
-  # Líneas horizontales
-  hline(
-    i = which(tabs8$body$dataset[[2]] != lag(tabs8$body$dataset[[2]])) - 1
+#| id: Figura S9
+# Datos para el gráfico -----
+mod_gc3 <- datos_jp |>
+  filter(!is.na(jurisd_deis) & nivel == "GC3") |>
+  model_jp(
+    value = value,
+    time = anio,
+    group = "grupo",
+    step = TRUE,
+    k = 2,
+    min_dist = 2,
+    test = TRUE
   )
+
+# Gráfico -----
+figs9 <- mod_gc3 |>
+  gg_jpoint(
+    facets = "wrap",
+    psize = 1.5,
+    cbpal = "managua"
+  ) +
+  scale_y_continuous(name = "log-tasa", n.breaks = 4) +
+  theme(
+    legend.position = "none",
+    panel.spacing.y = unit(.75, "lines")
+  )
+
+figs9
 ```
 
 \newpage
-## Tabla S9. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 4 (GC4) por jurisdicción, Argentina (2010-2023).
-
+## Figura S10. Evolución temporal de las tasas de mortalidad por códigos garbage nivel 4 (GC4) estandarizadas por edad según jurisdicción, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
 ```{r}
-#| id: Tabla S9
-tabs9 <- mod_jp[str_detect(names(mod_jp), "GC4")] |>
-  summary_jp() |>
-  select(-group) |>
-  separate(subgroup, into = c("group", "subgroup"), sep = ": ") |>
-  jp_to_ft(lan = "es")
-
-## Formato de tabla
-tabs9 |>
-  tab_fmt() |>
-  # Cambiar nombres columnas
-  set_header_labels(
-    Grupo = "Región",
-    Subgrupo = "Jurisdicción"
-  ) |>
-
-  # Unir filas
-  merge_h(i = nrow_part(tabs9, part = "body") - 1) |>
-
-  # Líneas horizontales
-  hline(
-    i = which(tabs9$body$dataset[[2]] != lag(tabs9$body$dataset[[2]])) - 1
+#| id: Figura S10
+# Datos para el gráfico -----
+mod_gc4 <- datos_jp |>
+  filter(!is.na(jurisd_deis) & nivel == "GC4") |>
+  model_jp(
+    value = value,
+    time = anio,
+    group = "grupo",
+    step = TRUE,
+    k = 2,
+    min_dist = 2,
+    test = TRUE
   )
+
+# Gráfico -----
+figs10 <- mod_gc4 |>
+  gg_jpoint(
+    facets = "wrap",
+    psize = 1.5,
+    cbpal = "managua"
+  ) +
+  scale_y_continuous(name = "log-tasa", n.breaks = 4) +
+  theme(
+    legend.position = "none",
+    panel.spacing.y = unit(.75, "lines")
+  )
+
+figs10
 ```
+

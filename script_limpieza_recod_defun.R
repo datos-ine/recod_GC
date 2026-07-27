@@ -1,4 +1,4 @@
-### Mortalidad por códigos basura en Argentina (2010–2023):
+### Mortalidad por códigos garbage en Argentina (2010–2023):
 ### redistribución hacia causas específicas
 ### Limpieza del dataset: Defunciones Generales Mensuales ocurridas y registradas en la
 ### República Argentina (MSAL-DEIS, 2010-2023)
@@ -6,7 +6,7 @@
 ### según Teixeira et al. (2021), Soares Filho et al. (2024) y GBD-2019
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 23-07-2026 11:41
+# Última modificación: 23-07-2026 13:30
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -109,31 +109,37 @@ defun <- defun_raw |>
     )
   ) |>
 
-  # Modificar etiquetas región DEIS
+  # Crear región DEIS
   mutate(
     region_deis = case_when(
-      region %in% c("8.Pat. Norte.", "9.Pat.Sur.") ~ "Patagonia",
+      str_detect(region, "6.Cuyo|7.Cuyo") ~ "Cuyo",
       str_detect(region, "NOA") ~ "NOA",
-      str_detect(region, "Cuyo") ~ "Cuyo",
-      .default = str_remove(region, "^\\d+\\.") |>
-        str_remove("\\.$")
+      str_detect(region, "8.Pat|9.Pat") ~ "Patagonia",
+      .default = str_remove_all(region, "^\\d+\\.|\\.")
     )
   ) |>
 
-  # Modificar etiquetas jurisdicción
+  # Crear subregión DEIS
   mutate(
-    jurisdiccion = case_when(
+    subregion_deis = case_when(
+      region == "8.Pat. Norte." ~ "Patagonia Norte",
+      region == "9.Pat.Sur." ~ "Patagonia Sur",
+      .default = str_remove_all(region, "^\\d+\\.|\\.")
+    )
+  ) |>
+
+  # Crear jurisdicción DEIS
+  mutate(
+    jurisd_deis = case_when(
       jurisdiccion == "6.Prov. Bs.As." ~ "Buenos Aires",
       jurisdiccion == "14.Cordoba." ~ "Córdoba",
       jurisdiccion == "30.Entre Rios." ~ "Entre Ríos",
       jurisdiccion == "90.Tucuman." ~ "Tucumán",
-      region == "3.NOA1." ~ "NOA1 (Jujuy, Salta)",
-      region == "5.NOA2." ~ "NOA2 (Catamarca, Santiago del Estero)",
-      region == "7.Cuyo2." ~ "Cuyo2 (La Rioja, San Juan, San Luis)",
-      region == "8.Pat. Norte." ~ "Pat. Norte (La Pampa, Neuquén, Río Negro)",
-      region ==
-        "9.Pat.Sur." ~ "Pat. Sur (Chubut, Santa Cruz, Tierra del Fuego)",
-      .default = str_remove_all(jurisdiccion, "[0-9[:punct:]]")
+      str_detect(jurisdiccion, "2.|18.|22.|34.|50.|54.|82.") ~ str_remove_all(
+        jurisdiccion,
+        "[0-9[:punct:]]"
+      ),
+      .default = subregion_deis
     )
   ) |>
 
@@ -142,7 +148,8 @@ defun <- defun_raw |>
     anio,
     mes,
     region_deis,
-    jurisdiccion,
+    subregion_deis,
+    jurisd_deis,
     sexo,
     grupo_edad,
     cie10_cod
@@ -1486,55 +1493,6 @@ recod_defun <- recod_defun |>
   )
 
 
-# Crear dataset para exceso de mortalidad (EM) ---------------------------
-datos_em <- recod_defun |>
-  # Filtrar datos con mes 0
-  filter_out(mes == 0) |>
-
-  # Filtrar datos de 2023
-  filter_out(anio == 2023) |>
-
-  # Filtrar menore de 20 años
-  filter_out(grupo_edad == "<20 años") |>
-
-  droplevels() |>
-
-  # Crear grupo de causas
-  mutate(
-    grupo_causa = if_else(
-      cie10_cod %in% c("U07.1", "U07.2"),
-      "COVID-19",
-      paso4
-    )
-  ) |>
-
-  # Agrupar datos
-  count(
-    anio,
-    mes,
-    region_deis,
-    # jurisdiccion,
-    sexo,
-    grupo_edad,
-    grupo_causa,
-    .drop = FALSE
-  ) |>
-
-  # Completar filas con 0 muertes (n = 102960)
-  complete(
-    anio,
-    mes,
-    nesting(region_deis, sexo, grupo_edad, grupo_causa),
-    fill = list(n = 0)
-  ) |>
-
-  # Filtrar COVID previo a 2020
-  filter_out(grupo_causa == "COVID-19" & anio < 2020) |>
-
-  # Columnas caracter a factor
-  mutate(across(.cols = where(is.character), .fns = ~ factor(.x)))
-
-
 # Crear dataset para análisis GC -----------------------------------------
 datos_gc <- recod_defun |>
   # Recategorizar paso 1
@@ -1549,7 +1507,8 @@ datos_gc <- recod_defun |>
   count(
     anio,
     region_deis,
-    jurisdiccion,
+    subregion_deis,
+    jurisd_deis,
     sexo,
     grupo_edad,
     cie10_cod,
@@ -1584,9 +1543,6 @@ datos_gc <- recod_defun |>
 
 
 # Exportar datos limpios -------------------------------------------------
-## Análisis EM
-export(datos_em, file = "../EM_ENT_CE/clean/arg_defun_mes_2010_2022.rds")
-
 ## Análisis GC
 export(datos_gc, file = "clean/arg_defun_recod_2010_2023.rds")
 

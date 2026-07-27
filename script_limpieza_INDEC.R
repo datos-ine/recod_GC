@@ -1,10 +1,10 @@
-### Mortalidad por códigos basura en Argentina (2010–2023):
+### Mortalidad por códigos garbage en Argentina (2010–2023):
 ### redistribución hacia causas específicas
 ### Limpieza de los dataset:
 ## - Proyecciones poblacionales por sexo y grupo etario quinquenal, 2010-2023 (INDEC)
 ## - Población estándar por sexo y grupo etario, Argentina, Censo 2022 (INDEC)
 ### Autora: Tamara Ricardo
-# Última modificación: 20-07-2026 13:26
+# Última modificación: 23-07-2026 13:54
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -101,23 +101,26 @@ proy_2010_2023 <- map(
     )
   ) |>
 
+  # Crear subregión DEIS
+  mutate(
+    subregion_deis = case_when(
+      str_detect(prov_1, "50") ~ "Cuyo1",
+      str_detect(prov_1, "46|70|74") ~ "Cuyo2",
+      str_detect(prov_1, "90") ~ "NOA",
+      str_detect(prov_1, "38|66") ~ "NOA1",
+      str_detect(prov_1, "10|86") ~ "NOA2",
+      str_detect(prov_1, "42|58|62") ~ "Patagonia Norte",
+      str_detect(prov_1, "26|78|94") ~ "Patagonia Sur",
+      .default = region_deis
+    )
+  ) |>
+
   # Crear jurisdicción DEIS
   mutate(
-    jurisdiccion = case_when(
-      str_detect(prov_1, "46|70|74") ~ "Cuyo2 (La Rioja, San Juan, San Luis)",
-      str_detect(prov_1, "38|66") ~ "NOA1 (Jujuy, Salta)",
-      str_detect(prov_1, "10|86") ~ "NOA2 (Catamarca, Santiago del Estero)",
-      str_detect(
-        prov_1,
-        "42|58|62"
-      ) ~ "Pat. Norte (La Pampa, Neuquén, Río Negro)",
-      str_detect(
-        prov_1,
-        "26|78|94"
-      ) ~ "Pat. Sur (Chubut, Santa Cruz, Tierra del Fuego)",
-      prov_1 == "02-CABA" ~ "CABA",
-      .default = str_sub(prov_1, 4) |>
-        str_to_title()
+    jurisd_deis = case_when(
+      str_detect(subregion_deis, "Cuyo2|NOA1|NOA2|Pat") ~ subregion_deis,
+      str_detect(prov_1, "CABA") ~ "CABA",
+      .default = str_to_title(str_sub(prov_1, 4))
     )
   ) |>
 
@@ -147,7 +150,8 @@ proy_2010_2023 <- map(
   # Agrupar datos
   count(
     region_deis,
-    jurisdiccion,
+    subregion_deis,
+    jurisd_deis,
     anio = parse_number(anio),
     sexo,
     grupo_edad,
@@ -160,10 +164,10 @@ proy_2010_2023 <- map(
 
 
 # Estimar población mensual ----------------------------------------------
-proy_mes_2010_2023 <- proy_2010_2023 |>
+proy_mes_2010_2022 <- proy_2010_2023 |>
   # Expandir dataset
   expand(
-    nesting(region_deis, jurisdiccion),
+    nesting(region_deis, subregion_deis, jurisd_deis),
     sexo,
     grupo_edad,
     fecha = seq(
@@ -188,21 +192,30 @@ proy_mes_2010_2023 <- proy_2010_2023 |>
   # Interpolación lineal
   mutate(
     proy_pob = na.approx(proy, x = fecha, na.rm = FALSE),
-    .by = c(jurisdiccion, sexo, grupo_edad)
+    .by = c(jurisd_deis, sexo, grupo_edad)
   ) |>
 
-  # Eliminar filas 2024
-  filter_out(anio == 2024) |>
+  # Eliminar filas 2023-2024
+  filter_out(anio > 2022) |>
 
   # Ordenar columnas
-  select(anio, mes, region_deis, jurisdiccion, sexo, grupo_edad, proy_pob)
+  select(
+    anio,
+    mes,
+    region_deis,
+    subregion_deis,
+    jurisd_deis,
+    sexo,
+    grupo_edad,
+    proy_pob
+  )
 
 
 # Exportar datos limpios -------------------------------------------------
 ## Proyecciones poblacionales mensuales
 export(
-  proy_mes_2010_2023,
-  file = "../EM_ENT_CE/clean/arg_proy_mensual_2010_2023.rds"
+  proy_mes_2010_2022,
+  file = "../EM_ENT_CE/clean/arg_proy_mensual_2010_2022.rds"
 )
 
 ## Proyecciones poblacionales anuales
