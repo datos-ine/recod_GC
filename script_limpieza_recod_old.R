@@ -1,4 +1,4 @@
-### Mortalidad por códigos basura en Argentina (2010–2023):
+### Mortalidad por códigos garbage en Argentina (2010–2023):
 ### redistribución hacia causas específicas
 ### Limpieza del dataset: Defunciones Generales Mensuales ocurridas y registradas en la
 ### República Argentina (MSAL-DEIS, 2010-2023)
@@ -6,7 +6,7 @@
 ### según Teixeira et al. (2021), Soares Filho et al. (2024) y GBD-2019
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 05-06-2026 10:44
+# Última modificación: 23-07-2026 13:30
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -63,7 +63,6 @@ defun <- defun_raw |>
     mes = mes_def,
     sexo = sexo_id,
     grupo_edad = grupo_etario,
-    # region_deis = region,
     cie10_cod = cod_causa_muerte_CIE10
   ) |>
 
@@ -71,10 +70,10 @@ defun <- defun_raw |>
   filter(between(anio, 2010, 2023)) |>
 
   # Filtrar datos ausentes región geográfica
-  filter(region != "10.sin especificar.") |>
+  filter_out(region == "10.sin especificar.") |>
 
   # Filtrar datos ausentes grupo etario
-  filter(grupo_edad != "08.sin especificar") |>
+  filter_out(grupo_edad == "08.sin especificar") |>
 
   # Filtrar datos ausentes sexo
   filter(between(sexo, 1, 2)) |>
@@ -110,31 +109,51 @@ defun <- defun_raw |>
     )
   ) |>
 
-  # Modificar etiquetas región DEIS
+  # Crear región DEIS
   mutate(
     region_deis = case_when(
-      region == "8.Pat. Norte." ~ "Patagonia Norte",
-      region == "9.Pat.Sur." ~ "Patagonia Sur",
-      .default = str_remove(region, "^\\d+\\.") |>
-        str_remove("\\.$")
+      str_detect(region, "6.Cuyo|7.Cuyo") ~ "Cuyo",
+      str_detect(region, "NOA") ~ "NOA",
+      str_detect(region, "8.Pat|9.Pat") ~ "Patagonia",
+      .default = str_remove_all(region, "^\\d+\\.|\\.")
     )
   ) |>
 
-  # Modificar etiquetas jurisdicción
+  # Crear subregión DEIS
   mutate(
-    jurisdiccion = case_when(
+    subregion_deis = case_when(
+      region == "8.Pat. Norte." ~ "Patagonia Norte",
+      region == "9.Pat.Sur." ~ "Patagonia Sur",
+      .default = str_remove_all(region, "^\\d+\\.|\\.")
+    )
+  ) |>
+
+  # Crear jurisdicción DEIS
+  mutate(
+    jurisd_deis = case_when(
       jurisdiccion == "6.Prov. Bs.As." ~ "Buenos Aires",
       jurisdiccion == "14.Cordoba." ~ "Córdoba",
       jurisdiccion == "30.Entre Rios." ~ "Entre Ríos",
       jurisdiccion == "90.Tucuman." ~ "Tucumán",
-      str_detect(jurisdiccion, "99") & region_deis == "Cuyo" ~ "Cuyo2",
-      str_detect(jurisdiccion, "99") ~ region_deis,
-      .default = str_remove_all(jurisdiccion, "[0-9[:punct:]]")
+      str_detect(jurisdiccion, "2.|18.|22.|34.|50.|54.|82.") ~ str_remove_all(
+        jurisdiccion,
+        "[0-9[:punct:]]"
+      ),
+      .default = subregion_deis
     )
   ) |>
 
   # Seleccionar columnas relevantes
-  select(anio, mes, region_deis, jurisdiccion, sexo, grupo_edad, cie10_cod)
+  select(
+    anio,
+    mes,
+    region_deis,
+    subregion_deis,
+    jurisd_deis,
+    sexo,
+    grupo_edad,
+    cie10_cod
+  )
 
 
 # Paso 1: Agrupar causas objetivo ----------------------------------------
@@ -148,15 +167,15 @@ recod_defun <- defun |>
         between(cie10_cod, "E11.3", "E11.9") |
         cie10_cod == "P70.2" ~ "DM",
 
-      ### GC3: Diabetes mellitus
-      # E08: No existe
-
       ### GC4: Diabetes mellitus
       between(cie10_cod, "E12.0", "E12.1") |
         between(cie10_cod, "E12.3", "E13.1") |
         between(cie10_cod, "E13.3", "E14.1") |
         between(cie10_cod, "E14.3", "E14.9") |
         between(cie10_cod, "R73.0", "R73.9") ~ "GC4-DM",
+
+      ### GC3: Diabetes mellitus
+      # E08: No existe
 
       ### Valor por defecto
       .default = NA
@@ -197,6 +216,22 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "I86.0", "I89.0") |
         cie10_cod %in% c("I89.9", "K75.1") ~ "ECV",
 
+      ### GC4: Enfermedades cardiovasculares
+      cie10_cod %in%
+        c(
+          "I37.9",
+          "I42.0",
+          "I42.9",
+          "I51.5",
+          "I64.0", # I64: No tiene decimales
+          "I67.8",
+          "I67.9",
+          "I68.8"
+        ) |
+        between(cie10_cod, "I69.4", "I69.8") ~
+        # I69.9: No existe
+        "GC4-ECV",
+
       ### GC3: Enfermedades cardiovasculares
       cie10_cod %in%
         c("I00.0") |
@@ -214,21 +249,12 @@ recod_defun <- recod_defun |>
         # I98.4: No existe
         cie10_cod %in% c("I98.8", "I99.0") ~ "GC3-ECV",
 
-      ### GC4: Enfermedades cardiovasculares
-      cie10_cod %in%
-        c(
-          "I37.9",
-          "I42.0",
-          "I42.9",
-          "I51.5",
-          "I64.0", # I64: No tiene decimales
-          "I67.8",
-          "I67.9",
-          "I68.8"
-        ) |
-        between(cie10_cod, "I69.4", "I69.8") ~
-        # I69.9: No existe
-        "GC4-ECV",
+      ### GC2: Cardiovasculares
+      cie10_cod == "I10.0" |
+        between(cie10_cod, "I15.0", "I15.9") |
+        between(cie10_cod, "I27.2", "I27.9") |
+        between(cie10_cod, "I70.0", "I70.9") |
+        between(cie10_cod, "I74.0", "I74.9") ~ "GC2-ECV",
 
       ### Valor por defecto
       .default = paso1
@@ -253,6 +279,10 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "J92.0", "J92.9") ~
         "ERC",
 
+      ### GC4: Enfermedades respiratorias crónicas
+      cie10_cod == "J64.0" ~ # J64: No tiene decimales
+        "GC4-ERC",
+
       ### GC3: Enfermedades respiratorias crónicas
       cie10_cod %in%
         c(
@@ -272,16 +302,15 @@ recod_defun <- recod_defun |>
         ) |
         between(cie10_cod, "J98.4", "J99.8") ~ "GC3-ERC",
 
-      ### GC4: Enfermedades respiratorias crónicas
-      cie10_cod == "J64.0" ~ # J64: No tiene decimales
-        "GC4-ERC",
+      ### GC1: Respiratorias crónicas
+      cie10_cod == "J96.1" ~ "GC1-ERC",
 
       .default = paso1
     )
   )
 
 
-## Neoplasias -----
+## Neoplasias (NPL) -----
 recod_defun <- recod_defun |>
   mutate(
     paso1 = case_when(
@@ -347,6 +376,26 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "N84.0", "N84.1") |
         between(cie10_cod, "N87.0", "N87.9") ~ "NPL",
 
+      ### GC4: Neoplasias
+      cie10_cod %in%
+        c(
+          "C69.9",
+          "C91.1",
+          "C91.4",
+          "C91.5",
+          "C91.7",
+          "C91.8",
+          "C91.9",
+          "C92.7",
+          "C92.8",
+          "C92.9",
+          "C93.2",
+          "C93.5",
+          "C93.6",
+          "C93.7",
+          "C93.9"
+        ) ~ "GC4-NPL",
+
       ### GC3: Neoplasias
       between(cie10_cod, "C14.0", "C14.8") |
         # C14.9: No existe
@@ -386,7 +435,8 @@ recod_defun <- recod_defun |>
           ) |
         between(cie10_cod, "D17.0", "D21.9") |
         # D20.9: No existe
-        cie10_cod %in% c("D28.9", "D29.9", "D30.9", "D36.0", "D36.9", "D37.0") |
+        cie10_cod %in%
+          c("D28.9", "D29.9", "D30.9", "D36.0", "D36.9", "D37.0") |
         between(cie10_cod, "D37.6", "D37.9") |
         between(cie10_cod, "D38.6", "D39.0") |
         cie10_cod %in%
@@ -404,33 +454,13 @@ recod_defun <- recod_defun |>
           ) |
         between(cie10_cod, "N84.2", "N84.8") ~ "GC3-NPL",
 
-      ### GC4: Neoplasias
-      cie10_cod %in%
-        c(
-          "C69.9",
-          "C91.1",
-          "C91.4",
-          "C91.5",
-          "C91.7",
-          "C91.8",
-          "C91.9",
-          "C92.7",
-          "C92.8",
-          "C92.9",
-          "C93.2",
-          "C93.5",
-          "C93.6",
-          "C93.7",
-          "C93.9"
-        ) ~ "GC4-NPL",
-
       ### Valor por defecto
       .default = paso1
     )
   )
 
 
-## Accidentes de tránsito -----
+## Causas externas (CE) -----
 recod_defun <- recod_defun |>
   mutate(
     paso1 = case_when(
@@ -446,16 +476,6 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "V87.4", "V87.9") |
         between(cie10_cod, "V89.0", "V89.9") ~ "GC4-TRA",
 
-      ### Valor por defecto
-      .default = paso1
-    )
-  )
-
-
-## Suicidio -----
-recod_defun <- recod_defun |>
-  mutate(
-    paso1 = case_when(
       ### Suicidio
       between(cie10_cod, "X60.0", "X64.9") |
         between(cie10_cod, "X66.0", "X83.9") |
@@ -464,16 +484,6 @@ recod_defun <- recod_defun |>
       ### GC4: Suicidio
       between(cie10_cod, "X84.0", "X84.9") ~ "GC4-SU",
 
-      ### Valor por defecto
-      .default = paso1
-    )
-  )
-
-
-## Homicidio ------
-recod_defun <- recod_defun |>
-  mutate(
-    paso1 = case_when(
       ### Homicidio
       between(cie10_cod, "X85.0", "Y08.9") |
         cie10_cod == "Y87.1" ~ "HO",
@@ -481,14 +491,17 @@ recod_defun <- recod_defun |>
       ### GC4: Homicidio
       between(cie10_cod, "Y09.0", "Y09.9") ~ "GC4-HO",
 
+      ### GC2: tránsito, suicidio, homicidio
+      between(cie10_cod, "Y31.0", "Y32.9") ~ "GC2-TRA-SU-HO",
+
       ### Valor por defecto
       .default = paso1
     )
   )
 
 
-# Paso 1: Agrupar causas no objetivo y GC --------------------------------
-## CMNN -----
+# Paso 1:  Agrupar causas no objetivo ------------------------------------
+## Transmisibles, maternas y neonatales, nutricionales (CMNN) -----
 recod_defun <- recod_defun |>
   mutate(
     paso1 = case_when(
@@ -623,6 +636,18 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "W83.0", "W84.9") |
         between(cie10_cod, "Z16.0", "Z16.3") ~ "CMNN",
 
+      ### GC4: Trasmisibles, maternas/neonatales, nutricionales (CMNN)
+      cie10_cod %in%
+        c("B16.9", "B64.0") |
+        between(cie10_cod, "B82.0", "B82.9") |
+        cie10_cod == "B83.9" |
+        between(cie10_cod, "G00.9", "G02.8") |
+        cie10_cod == "G03.9" |
+        between(cie10_cod, "J17.0", "J17.9") |
+        cie10_cod == "J22.0" |
+        between(cie10_cod, "P23.5", "P23.9") |
+        between(cie10_cod, "P37.3", "P37.4") ~ "GC4-CMNN",
+
       ### GC3: Trasmisibles, maternas/neonatales, nutricionales (CMNN)
       between(cie10_cod, "A31.0", "A31.9") |
         between(cie10_cod, "A42.0", "A44.9") |
@@ -641,21 +666,9 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "R07.1", "R07.9") |
         between(cie10_cod, "R31.0", "R31.9") ~ "GC3-CMNN",
 
-      ### GC4: Trasmisibles, maternas/neonatales, nutricionales (CMNN)
-      cie10_cod %in%
-        c("B16.9", "B64.0") |
-        between(cie10_cod, "B82.0", "B82.9") |
-        cie10_cod == "B83.9" |
-        between(cie10_cod, "G00.9", "G02.8") |
-        cie10_cod == "G03.9" |
-        between(cie10_cod, "J17.0", "J17.9") |
-        cie10_cod == "J22.0" |
-        between(cie10_cod, "P23.5", "P23.9") |
-        between(cie10_cod, "P37.3", "P37.4") ~ "GC4-CMNN",
-
       ### Neumonías inespecíficas
       cie10_cod == "J15.9" |
-        between(cie10_cod, "J18.0", "J18.9") ~ "GC4-Neumonías NE",
+        between(cie10_cod, "J18.0", "J18.9") ~ "GC4-NNE",
 
       ### Valor por defecto
       .default = paso1
@@ -826,7 +839,13 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "Q95.0", "Q99.8") |
         cie10_cod == "R50.2" |
         between(cie10_cod, "R78.0", "R78.5") |
-        between(cie10_cod, "R95.0", "R95.9") ~ "ONT",
+        between(cie10_cod, "R95.0", "R95.9") ~ "OENT",
+
+      ### GC4: Otras ENT
+      cie10_cod %in%
+        c("E12.2", "E13.2", "E14.2") |
+        between(cie10_cod, "G00.9", "G02.8") |
+        cie10_cod == "G03.9" ~ "GC4-OENT",
 
       ### GC3: Otras ENT
       cie10_cod == "D75.9" |
@@ -911,13 +930,7 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "N92.0", "N95.0") |
         between(cie10_cod, "Q10.0", "Q10.3") |
         between(cie10_cod, "Q36.0", "Q36.9") |
-        cie10_cod %in% c("Q89.9", "Q99.9") ~ "GC3-ONT",
-
-      ### GC4: Otras ENT
-      cie10_cod %in%
-        c("E12.2", "E13.2", "E14.2") |
-        between(cie10_cod, "G00.9", "G02.8") |
-        cie10_cod == "G03.9" ~ "GC4-ONT",
+        cie10_cod %in% c("Q89.9", "Q99.9") ~ "GC3-OENT",
 
       ### Valor por defecto
       .default = paso1
@@ -972,20 +985,10 @@ recod_defun <- recod_defun |>
   )
 
 
-## GC nivel 2 -----
+# Paso 1: Agrupar GC1-GC2 ------------------------------------------------
 recod_defun <- recod_defun |>
   mutate(
     paso1 = case_when(
-      ### GC2: Cardiovasculares
-      cie10_cod == "I10.0" |
-        between(cie10_cod, "I15.0", "I15.9") |
-        between(cie10_cod, "I27.2", "I27.9") |
-        between(cie10_cod, "I70.0", "I70.9") |
-        between(cie10_cod, "I74.0", "I74.9") ~ "GC2-ECV",
-
-      ### GC2: Cualquier causa externa, otras ENT, CMNN
-      between(cie10_cod, "X59.0", "X59.9") ~ "GC2-CEEC",
-
       ### GC2: Cualquier causa externa
       cie10_cod %in%
         c(
@@ -1009,11 +1012,11 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "Y90.0", "Y91.9") |
         between(cie10_cod, "Y95.0", "Y98.0") ~ "GC2-CE",
 
-      ### GC2: lesiones por transporte, suicidio, homicidio
-      between(cie10_cod, "Y31.0", "Y32.9") ~ "GC2-TSH",
-
       ### GC2: suicidio, homicidio, otras CE
-      between(cie10_cod, "W76.0", "W76.9") ~ "GC2-SHCE",
+      between(cie10_cod, "W76.0", "W76.9") ~ "GC2-SU-HO-OCE",
+
+      ### GC2: Cualquier causa externa, otras ENT, CMNN
+      between(cie10_cod, "X59.0", "X59.9") ~ "GC2-CE-OENT-CMNN",
 
       ### GC2 generales
       # A14.9: No existe
@@ -1092,16 +1095,12 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "Y92.0", "Y94.9") |
         between(cie10_cod, "Y98.1", "Y99.9") ~ "GC2",
 
-      ### Valor por defecto
-      .default = paso1
-    )
-  )
+      ### GC1: Causas externas
+      between(cie10_cod, "X40.0", "X44.9") |
+        between(cie10_cod, "X49.0", "X49.9") |
+        between(cie10_cod, "Y10.0", "Y14.9") |
+        between(cie10_cod, "Y16.0", "Y19.9") ~ "GC1-HO-SU-OCE",
 
-
-## GC nivel 1 -----
-recod_defun <- recod_defun |>
-  mutate(
-    paso1 = case_when(
       ### GC1 generales
       between(cie10_cod, "A40.0", "A41.9") |
         cie10_cod %in% c("A48.0", "A48.3", "A49.0", "A49.1") |
@@ -1257,346 +1256,285 @@ recod_defun <- recod_defun |>
         # Z14 - Z19: No existe
         between(cie10_cod, "Z20.0", "Z99.9") ~ "GC1",
 
-      ### GC1: Respiratorias crónicas
-      cie10_cod == "J96.1" ~ "GC1-ERC",
-
-      ### GC1: Causas externas
-      between(cie10_cod, "X40.0", "X44.9") |
-        between(cie10_cod, "X49.0", "X49.9") |
-        between(cie10_cod, "Y10.0", "Y14.9") |
-        between(cie10_cod, "Y16.0", "Y19.9") ~ "GC1-HSCE",
-
       ### Valor por defecto
       .default = paso1
     )
   )
 
 
-# Paso 2: Redistribuir GC3 y GC4 -----------------------------------------
-## Paso 2.1: Reasignar GC3-GC4 específicos -----
+# Paso 2: Recategorizar GC3-GC4 ------------------------------------------
 recod_defun <- recod_defun |>
-  # Crear variables para grupo y subgrupo causas
+  ## Recategorizar GC3 y GC4
   mutate(
-    grupo_gbd1 = case_when(
-      str_detect(paso1, "GC") ~ "GC",
-      str_detect(paso1, "DM|ECV|ERC|NPL|ONT") ~ "ENT",
-      str_detect(paso1, "HO|SU|TRA|OCE") ~ "CE",
-      .default = paso1
-    ),
-
-    grupo_gbd2i = case_when(
-      str_detect(paso1, "GC1") ~ "GC1",
-      str_detect(paso1, "GC2") ~ "GC2",
-      str_detect(paso1, "GC3") ~ "GC3",
-      str_detect(paso1, "GC4") ~ "GC4",
-      .default = paso1
-    )
-  ) |>
-
-  # Reasignar GC3 y GC4
-  mutate(
-    paso2.1 = case_when(
+    paso2a = case_when(
       ## Reagrupar GC
-      str_detect(paso1, "Neum|GC1|GC2") ~ grupo_gbd2i,
+      str_detect(paso1, "GC1|GC2") ~ str_remove(paso1, "-.*"),
 
       ## Asignar GC3 y GC4 específicos
-      str_detect(paso1, "GC3-|GC4-") ~ str_remove(paso1, ".*-"),
+      str_detect(paso1, "GC3-|GC4-") & paso1 != "GC4-NNE" ~ str_remove(
+        paso1,
+        ".*-"
+      ),
 
       ## Valor por defecto
       .default = paso1
     )
+  ) |>
+
+  ## Crear grupo causa
+  mutate(
+    grupo_causa = case_when(
+      paso1 %in% c("DM", "ECV", "ERC", "NPL") ~ "ENT objetivo",
+      paso1 %in% c("TRA", "HO", "SU") ~ "CE objetivo",
+      str_detect(paso1, "GC|NNE") ~ "GC",
+      .default = paso1
+    )
   )
 
 
-## Frecuencia muertes ENT por edad y sexo -----
-freq_ent <- recod_defun |>
-  # Seleccionar filas ENTs
-  filter(str_detect(paso2.1, "DM|ECV|ERC|NPL")) |>
-
-  # Frecuencias
-  count(grupo_edad, sexo, paso2.1) |>
-  mutate(pct = n / sum(n), .by = c(grupo_edad, sexo))
-
-
-## Frecuencia muertes CE por edad y sexo -----
-freq_ce <- recod_defun |>
-  # Seleccionar filas CE
-  filter(str_detect(paso2.1, "HO|SUI|TRA|CE")) |>
-
-  # Frecuencias
-  count(grupo_edad, sexo, paso2.1) |>
-  mutate(pct = n / sum(n), .by = c(grupo_edad, sexo))
-
-
-## Frecuencia causas definidas por edad y sexo -----
+# Paso 2: Frecuencias causas definidas por sexo y edad -------------------
 freq_cd <- recod_defun |>
-  # Seleccionar filas CE
-  filter(!str_detect(paso2.1, "GC")) |>
+  filter_out(grupo_causa == "GC") |>
+  count(grupo_edad, sexo, grupo_causa, paso2a) |>
+  mutate(
+    prop_grupo = n / sum(n),
+    .by = c(grupo_edad, sexo, grupo_causa)
+  )
 
-  # Frecuencias
-  count(grupo_edad, sexo, paso2.1) |>
-  mutate(pct = n / sum(n), .by = c(grupo_edad, sexo))
 
-
-## Paso 2.2: Redistribuir neumonías inespecíficas -----
+# Paso 2: Redistribuir neumonías NE --------------------------------------
 set.seed(123)
 
 recod_defun <- recod_defun |>
+  # Enviar 50% Neumonías inespecíficas a CMNN
   mutate(
-    paso2.2 = case_when(
-      ### 50% CMNN
-      paso1 == "GC4-Neumonías NE" & runif(n()) <= 0.5 ~ "CMNN",
+    paso2b = {
+      out <- paso2a
+      idx <- which(paso2a == "GC4-NNE" & runif(n()) <= 0.5)
+      out[idx] <- "CMNN"
+      out
+    },
+    .by = c(sexo, grupo_edad)
+  ) |>
 
-      ### 50% redistribución multinomial en ENT
-      paso1 == "GC4-Neumonías NE" ~ {
-        causas <- freq_ent$paso2.1[
-          freq_ent$sexo == cur_group()$sexo &
-            freq_ent$grupo_edad == cur_group()$grupo_edad
-        ]
+  ## Redistribución multinomial del 50% restante a ENT objetivo
+  mutate(
+    paso2b = {
+      out <- paso2b
 
-        probs <- freq_ent$pct[
-          freq_ent$sexo == cur_group()$sexo &
-            freq_ent$grupo_edad == cur_group()$grupo_edad
-        ]
+      idx <- which(paso2b == "GC4-NNE")
 
-        rep(causas, rmultinom(1, n(), probs))
-      },
+      if (length(idx) > 0) {
+        datos <- freq_cd |>
+          filter(
+            grupo_causa == "ENT objetivo",
+            sexo == .data$sexo[1],
+            grupo_edad == .data$grupo_edad[1]
+          )
 
-      ### Valor por defecto
-      .default = paso2.1
-    ),
+        out[idx] <- rep(
+          datos$paso2a,
+          rmultinom(1, length(idx), prob = datos$prop_grupo)
+        )
+      }
 
-    ### Variables de agrupamiento
+      out
+    },
     .by = c(sexo, grupo_edad)
   )
 
 
 # Paso 3: Redistribuir GC2 -----------------------------------------------
-## Paso 3.1: Redistribuir GC2 específicos -----
 set.seed(123)
 
 recod_defun <- recod_defun |>
   mutate(
-    paso3.1 = case_when(
-      ### GC2: Cardiovascular
-      paso1 == "GC2-ECV" ~ "ECV",
+    paso3 = {
+      out <- paso2b
 
-      ### GC2: Cualquier causa externa
-      paso1 == "GC2-CE" ~ {
-        causas <- freq_ce$paso2.1[
-          freq_ce$sexo == cur_group()$sexo &
-            freq_ce$grupo_edad == cur_group()$grupo_edad
-        ]
+      # Recategorizar GC2-ECV
+      out[paso1 == "GC2-ECV"] <- "ECV"
 
-        probs <- freq_ce$pct[
-          freq_ce$sexo == cur_group()$sexo &
-            freq_ce$grupo_edad == cur_group()$grupo_edad
-        ]
+      # Redistribuir GC2 tránsito, suicidio, homicidio
+      idx <- which(paso1 == "GC2-TRA-SU-HO")
 
-        rep(causas, rmultinom(1, n(), probs))
-      },
+      if (length(idx) > 0) {
+        datos <- freq_cd |>
+          filter(
+            grupo_causa == "CE objetivo",
+            sexo == .data$sexo[1],
+            grupo_edad == .data$grupo_edad[1]
+          )
 
-      ### GC2: Transporte, suicidio, homicidio
-      paso1 == "GC2-TSH" ~ {
-        causas <- freq_ce$paso2.1[
-          freq_ce$sexo == cur_group()$sexo &
-            freq_ce$grupo_edad == cur_group()$grupo_edad &
-            str_detect(freq_ce$paso2.1, "TRA|SU|HO")
-        ]
+        out[idx] <- rep(
+          datos$paso2a,
+          rmultinom(1, length(idx), prob = datos$prop_grupo)
+        )
+      }
 
-        probs <- freq_ce$pct[
-          freq_ce$sexo == cur_group()$sexo &
-            freq_ce$grupo_edad == cur_group()$grupo_edad &
-            str_detect(freq_ce$paso2.1, "TRA|SU|HO")
-        ]
+      # Redistribuir GC2 Suicidio, homicidio, otras CE
+      idx <- which(paso1 == "GC2-SU-HO-OCE")
 
-        rep(causas, rmultinom(1, n(), probs))
-      },
+      if (length(idx) > 0) {
+        datos <- freq_cd |>
+          filter(
+            paso2a %in% c("SU", "HO", "OCE"),
+            sexo == .data$sexo[1],
+            grupo_edad == .data$grupo_edad[1]
+          )
 
-      ### GC2: Suicidio, homicidio, otras CE
-      paso1 == "GC2-SHCE" ~ {
-        causas <- freq_ce$paso2.1[
-          freq_ce$sexo == cur_group()$sexo &
-            freq_ce$grupo_edad == cur_group()$grupo_edad &
-            str_detect(freq_ce$paso2.1, "SU|HO|OCE")
-        ]
+        out[idx] <- rep(
+          datos$paso2a,
+          rmultinom(1, length(idx), prob = datos$n)
+        )
+      }
 
-        probs <- freq_ce$pct[
-          freq_ce$sexo == cur_group()$sexo &
-            freq_ce$grupo_edad == cur_group()$grupo_edad &
-            str_detect(freq_ce$paso2.1, "SU|HO|OCE")
-        ]
+      # Redistribuir GC2 cualquier causa externa
+      idx <- which(paso1 == "GC2-CE")
 
-        rep(causas, rmultinom(1, n(), probs))
-      },
+      if (length(idx) > 0) {
+        datos <- freq_cd |>
+          filter(
+            paso2a %in% c("TRA", "SU", "HO", "OCE"),
+            sexo == .data$sexo[1],
+            grupo_edad == .data$grupo_edad[1]
+          )
 
-      ### Valor por defecto
-      .default = paso2.2
-    ),
+        out[idx] <- rep(
+          datos$paso2a,
+          rmultinom(1, length(idx), prob = datos$n)
+        )
+      }
 
-    ### Variables de agrupamiento
-    .by = c(sexo, grupo_edad)
-  )
+      ### Redistribuir códigos X59.0 - X59.9
+      idx <- which(paso1 == "GC2-CE-OENT-CMNN")
 
+      if (length(idx) > 0) {
+        datos <- freq_cd |>
+          filter(
+            paso2a %in% c("TRA", "SU", "HO", "OCE", "CMNN", "OENT"),
+            sexo == .data$sexo[1],
+            grupo_edad == .data$grupo_edad[1]
+          )
 
-## Paso 3.2: Redistribuir GC2 inespecíficos -----
-set.seed(123)
+        out[idx] <- rep(
+          datos$paso2a,
+          rmultinom(1, length(idx), prob = datos$n)
+        )
+      }
 
-recod_defun <- recod_defun |>
-  mutate(
-    paso3.2 = case_when(
-      ### GC2: X59.0 - X59.9
-      paso1 == "GC2-CEEC" ~ {
-        causas <- freq_cd$paso2.1[
-          freq_cd$sexo == cur_group()$sexo &
-            freq_cd$grupo_edad == cur_group()$grupo_edad &
-            !str_detect(freq_cd$paso2.1, "DM|ECV|ERC|NPL")
-        ]
+      ### Redistribuir GC2 generales
+      idx <- which(paso1 == "GC2")
+      if (length(idx) > 0) {
+        datos <- freq_cd |>
+          filter(
+            sexo == .data$sexo[1],
+            grupo_edad == .data$grupo_edad[1]
+          )
 
-        probs <- freq_cd$pct[
-          freq_cd$sexo == cur_group()$sexo &
-            freq_cd$grupo_edad == cur_group()$grupo_edad &
-            !str_detect(freq_cd$paso2.1, "DM|ECV|ERC|NPL")
-        ]
+        out[idx] <- rep(
+          datos$paso2a,
+          rmultinom(1, length(idx), prob = datos$n)
+        )
+      }
 
-        rep(causas, rmultinom(1, n(), probs))
-      },
-
-      ### GC2 generales
-      paso1 == "GC2" & paso1 != "GC2-CEEC" ~ {
-        causas <- freq_cd$paso2.1[
-          freq_cd$sexo == cur_group()$sexo &
-            freq_cd$grupo_edad == cur_group()$grupo_edad
-        ]
-
-        probs <- freq_cd$pct[
-          freq_cd$sexo == cur_group()$sexo &
-            freq_cd$grupo_edad == cur_group()$grupo_edad
-        ]
-
-        rep(causas, rmultinom(1, n(), probs))
-      },
-      ### Valor por defecto
-      .default = paso3.1
-    ),
+      out
+    },
     .by = c(sexo, grupo_edad)
   )
 
 
 # Paso 4: Redistribuir GC1 -----------------------------------------------
-## Paso 4.1: Redistribuir GC1 específicos -----
 set.seed(123)
 
 recod_defun <- recod_defun |>
   mutate(
-    paso4.1 = case_when(
-      ### GC1: ERC
-      paso1 == "GC1-ERC" ~ "ERC",
+    paso4 = {
+      out <- paso3
 
-      ### GC1: Homicidio, suicidio, otras CE
-      paso1 == "GC1-HSCE" ~ {
-        causas <- freq_ce$paso2.1[
-          freq_ce$sexo == cur_group()$sexo &
-            freq_ce$grupo_edad == cur_group()$grupo_edad &
-            str_detect(freq_ce$paso2.1, "SU|HO|CE")
-        ]
+      # Recategorizar GC1-ERC
+      out[paso1 == "GC1-ERC"] <- "ERC"
 
-        probs <- freq_ce$pct[
-          freq_ce$sexo == cur_group()$sexo &
-            freq_ce$grupo_edad == cur_group()$grupo_edad &
-            str_detect(freq_ce$paso2.1, "SU|HO|CE")
-        ]
+      # Redistribuir GC1 Suicidio, homicidio, otras CE
+      idx <- which(paso1 == "GC1-HO-SU-OCE")
 
-        rep(causas, rmultinom(1, n(), probs))
-      },
+      if (length(idx) > 0) {
+        datos <- freq_cd |>
+          filter(
+            paso2a %in% c("SU", "HO", "OCE"),
+            sexo == .data$sexo[1],
+            grupo_edad == .data$grupo_edad[1]
+          )
 
-      ### Valor por defecto
-      .default = paso3.2
-    ),
+        out[idx] <- rep(
+          datos$paso2a,
+          rmultinom(1, length(idx), prob = datos$n)
+        )
+      }
+
+      ### Redistribuir GC1 generales
+      idx <- which(paso1 == "GC1")
+      if (length(idx) > 0) {
+        datos <- freq_cd |>
+          filter(
+            sexo == .data$sexo[1],
+            grupo_edad == .data$grupo_edad[1]
+          )
+
+        out[idx] <- rep(
+          datos$paso2a,
+          rmultinom(1, length(idx), prob = datos$n)
+        )
+      }
+
+      out
+    },
     .by = c(sexo, grupo_edad)
   )
 
 
-## Paso 4.2: Redistribuir GC1 inespecíficos -----
-set.seed(123)
-
-recod_defun <- recod_defun |>
+# Crear dataset para análisis GC -----------------------------------------
+datos_gc <- recod_defun |>
+  # Recategorizar paso 1
   mutate(
-    paso4.2 = case_when(
-      paso1 == "GC1" ~ {
-        causas <- freq_cd$paso2.1[
-          freq_cd$sexo == cur_group()$sexo &
-            freq_cd$grupo_edad == cur_group()$grupo_edad
-        ]
-
-        probs <- freq_cd$pct[
-          freq_cd$sexo == cur_group()$sexo &
-            freq_cd$grupo_edad == cur_group()$grupo_edad
-        ]
-
-        rep(causas, rmultinom(1, n(), probs))
-      },
-
-      ### Valor por defecto
-      .default = paso4.1
-    ),
-    .by = c(sexo, grupo_edad)
-  )
-
-
-# Crear dataset para análisis EM -----------------------------------------
-datos_em <- recod_defun |>
-  # Identificar muertes por COVID-19
-  mutate(
-    grupo_causa = if_else(str_detect(cie10_cod, "U07"), "COVID-19", paso4.2)
+    paso1 = case_when(
+      str_detect(paso1, "GC1|GC2") ~ str_remove(paso1, "-.*"),
+      .default = paso1
+    )
   ) |>
 
   # Agrupar datos
   count(
     anio,
-    mes,
     region_deis,
-    jurisdiccion,
-    sexo,
-    grupo_edad,
-    grupo_causa
-  ) |>
-
-  # Columnas caracter a factor
-  mutate(across(.cols = where(is.character), .fns = ~ factor(.x)))
-
-
-# Crear dataset para análisis GC -----------------------------------------
-recod_defun_f <- recod_defun |>
-  count(
-    anio,
-    region_deis,
-    jurisdiccion,
+    subregion_deis,
+    jurisd_deis,
     sexo,
     grupo_edad,
     cie10_cod,
-    grupo_gbd1,
-    grupo_gbd2i,
-    grupo_gbd2m = paso2.2,
-    grupo_gbd2f = paso4.2
+    grupo_causa,
+    paso1,
+    paso2a,
+    paso2b,
+    paso3,
+    paso4
   ) |>
 
-  # Ordenar grupo nivel 1
-  mutate(grupo_gbd1 = fct_relevel(grupo_gbd1, "ENT", after = Inf)) |>
-
-  # Ordenar grupo nivel 2
+  # Ordenar niveles
   mutate(across(
-    .cols = contains("gbd2"),
+    .cols = contains("paso"),
     .fns = ~ fct_relevel(
       .x,
+      "DM",
+      "ECV",
+      "ERC",
       "NPL",
-      "ONT",
+      "OENT",
+      "TRA",
       "HO",
       "SU",
-      "TRA",
       "OCE",
-      "CMNN",
-      after = 3
+      "CMNN"
     )
   )) |>
 
@@ -1605,11 +1543,8 @@ recod_defun_f <- recod_defun |>
 
 
 # Exportar datos limpios -------------------------------------------------
-## Análisis EM
-export(datos_em, file = "../EM_ENT_CE/clean/arg_defun_mes_2010_2023.rds")
-
 ## Análisis GC
-export(recod_defun_f, file = "clean/arg_defun_recod_2010_2023.rds")
+export(datos_gc, file = "clean/arg_defun_recod_2010_2023.rds")
 
 ## Limpiar environment ----
 rm(list = ls())

@@ -3,7 +3,7 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 27-07-2026 12:02
+# Última modificación: 13-08-2026 10:11
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -57,12 +57,12 @@ pal <- c4a(palette = "managua", n = 10, reverse = TRUE) |>
   set_names(c(
     "DM",
     "ECV",
-    "ERC",
+    "CRD",
     "NPL",
     "OENT",
-    "TRA",
-    "SU",
-    "HO",
+    "AT",
+    "SH",
+    "VI",
     "OCE",
     "CMNN"
   ))
@@ -147,7 +147,7 @@ fig1 <- grViz(
     <td> Enf. cardiovasculares (ECV) </td>
     </tr>
     <tr>
-    <td> Enf. respiratorias crónicas (ERC) </td>
+    <td> Enf. respiratorias crónicas (CRD) </td>
     </tr>
     <tr>
     <td> Neoplasias (NPL) </td>
@@ -161,13 +161,13 @@ fig1 <- grViz(
     <td width="250"><b>CE objetivo</b></td>
     </tr>
     <tr>
-    <td> Accidentes de tránsito (TRA) </td>
+    <td> Accidentes de tránsito (AT) </td>
     </tr>
     <tr>
-    <td> Suicidio (SU) </td>
+    <td> Suicidio (SH) </td>
     </tr>
     <tr>
-    <td> Homicidio (HO) </td>
+    <td> Violencia interpersonal (VI) </td>
     </tr>
     </table>
     >]
@@ -231,7 +231,7 @@ fig1 <- grViz(
     <td> ECV </td>
     </tr>
     <tr>
-    <td> ERC </td>
+    <td> CRD </td>
     </tr>
     <tr>
     <td> NPL </td>
@@ -245,13 +245,13 @@ fig1 <- grViz(
     <td width="250"><b>CE objetivo</b></td>
     </tr>
     <tr>
-    <td> TRA </td>
+    <td> AT </td>
     </tr>
     <tr>
-    <td> SU </td>
+    <td> SH </td>
     </tr>
     <tr>
-    <td> HO </td>
+    <td> VI </td>
     </tr>
     </table>
     >]
@@ -309,7 +309,7 @@ fig1 <- grViz(
     <td> ECV + GC2-ECV</td>
     </tr>
     <tr>
-    <td> ERC </td>
+    <td> CRD </td>
     </tr>
     <tr>
     <td> NPL </td>
@@ -323,13 +323,13 @@ fig1 <- grViz(
     <td width="250"><b>CE objetivo + GC2-CE*</b></td>
     </tr>
     <tr>
-    <td> TRA </td>
+    <td> AT </td>
     </tr>
     <tr>
-    <td> SU </td>
+    <td> SH </td>
     </tr>
     <tr>
-    <td> HO </td>
+    <td> VI </td>
     </tr>
     </table>
     >]
@@ -384,7 +384,7 @@ fig1 <- grViz(
     <td> ECV</td>
     </tr>
     <tr>
-    <td> ERC + GC1-ERC</td>
+    <td> CRD + GC1-CRD</td>
     </tr>
     <tr>
     <td> NPL </td>
@@ -398,13 +398,13 @@ fig1 <- grViz(
     <td width="250"><b>CE objetivo + GC1-CE*</b></td>
     </tr>
     <tr>
-    <td> TRA </td>
+    <td> AT </td>
     </tr>
     <tr>
-    <td> SU </td>
+    <td> SH </td>
     </tr>
     <tr>
-    <td> HO </td>
+    <td> VI </td>
     </tr>
     </table>
     >]
@@ -456,12 +456,12 @@ fig1 <- grViz(
  '
 )
 
+
 # Tabla 1 ----------------------------------------------------------------
 tab1 <- tibble(
   Variable = c(
     "Año",
     "Región",
-    # "Subgregión*",
     "Jurisdicción",
     "Sexo",
     "Grupo etario",
@@ -473,7 +473,6 @@ tab1 <- tibble(
   Descripción = c(
     "Año de ocurrencia de la defunción",
     "Regionalización sanitaria utilizada por la DEIS para agrupar las provincias argentinas",
-    # "Agrupación territorial definida por la DEIS para resguardar la confidencialidad de los datos",
     "Nivel de agregación jurisdiccional definido por la DEIS para resguardar la confidencialidad de los datos",
     "Sexo consignado en el acta de defunción",
     "Categorías de edad agrupadas según criterios de la DEIS",
@@ -485,13 +484,12 @@ tab1 <- tibble(
   Valores = c(
     "2010-2023",
     paste(levels(datos_gc$region_deis), collapse = "; "),
-    # paste(levels(datos_gc$subregion_deis), collapse = "; "),
     paste(levels(datos_gc$jurisd_deis), collapse = "; "),
     "Masculino; Femenino",
     paste(levels(datos_gc$grupo_edad), collapse = "; "),
     "A00.0-Z99.9",
     "CMNN; ENT; CE; GC",
-    "CMNN; DM; ECV; ERC; NPL; OENT; TRA; SU; HO; OCE; GC1; GC2; GC3; GC4; NNE",
+    "CMNN; DM; ECV; CRD; NPL; OENT; AT; SH; VI; OCE; GC1; GC2; GC3; GC4; NNE",
     "Conteo de defunciones"
   )
 ) |>
@@ -542,8 +540,8 @@ treeplot_data <- function(data, var) {
   data |>
     mutate(
       grupo_causa = case_when(
-        {{ var }} %in% c("DM", "ECV", "ERC", "NPL", "OENT") ~ "ENT",
-        {{ var }} %in% c("TRA", "SU", "HO", "OCE") ~ "CE",
+        {{ var }} %in% c("DM", "ECV", "CRD", "NPL", "OENT") ~ "ENT",
+        {{ var }} %in% c("AT", "SH", "VI", "OCE") ~ "CE",
         str_detect({{ var }}, "GC") ~ "GC",
         .default = {{ var }}
       ),
