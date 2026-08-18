@@ -120,8 +120,212 @@ defun <- defun_raw |>
 
 
 # Paso 1: Agrupar causas definidas ---------------------------------------
-## Neoplasias (NPL) -----
+## CMNN -----
 recod_defun <- defun |>
+  mutate(
+    paso1 = case_when(
+      ### HIV/SIDA e ITS -----
+      between(cie10_cod, "A50.0", "A58.0") |
+        between(cie10_cod, "A60.0", "A60.9") |
+        between(cie10_cod, "A63.0", "A63.8") |
+        between(cie10_cod, "B20.0", "B24.9") |
+        # B63: No existe
+        between(cie10_cod, "K67.0", "K67.2") |
+        between(cie10_cod, "M73.0", "M73.1") |
+        cie10_cod %in% c("F02.4", "I98.0", "M03.1") |
+
+        ### Respiratorias y tuberculosis -----
+        # A10 - A14: No existe
+        between(cie10_cod, "A15.0", "A19.9") |
+        between(cie10_cod, "B90.0", "B90.9") |
+        between(cie10_cod, "B97.4", "B97.6") |
+        between(cie10_cod, "H70.0", "H70.9") |
+        between(cie10_cod, "J00.0", "J02.8") |
+        between(cie10_cod, "J03.0", "J03.8") |
+        between(cie10_cod, "J04.0", "J04.2") |
+        between(cie10_cod, "J05.0", "J05.1") |
+        between(cie10_cod, "J06.0", "J06.8") |
+        # J07 - J08: No existe
+        between(cie10_cod, "J09.0", "J15.8") |
+        between(cie10_cod, "J16.0", "J16.9") |
+        # J19: No existe
+        between(cie10_cod, "J20.0", "J21.9") |
+        between(cie10_cod, "N74.0", "N74.1") | # GBD-2023
+        between(cie10_cod, "P23.0", "P23.4") |
+        between(cie10_cod, "U04.0", "U04.9") |
+        between(cie10_cod, "U07.0", "U07.2") | # GBD-2023
+        cie10_cod %in%
+          c(
+            "A48.1",
+            "A70.0",
+            "B34.2", # GBD-2023
+            "B97.2", # GBD-2023
+            "J36.0",
+            "J91.0",
+            "K23.0", # GBD-2023
+            "K67.3",
+            "K93.0",
+            "M49.0",
+            "P37.0",
+            "U84.3"
+          ) |
+
+        ### Entéricas -----
+        between(cie10_cod, "A00.0", "A06.3") |
+        # GBD-2023: A06.4-A06.8 cambió de categoría
+        between(cie10_cod, "A06.9", "A09.9") |
+        between(cie10_cod, "A80.0", "A80.9") |
+        between(cie10_cod, "K52.1", "K52.3") | # GBD-2023
+        cie10_cod %in%
+          c(
+            "B91.0", # GBD-2023
+            "G14.0", # GBD-2023
+            "M89.6" # GBD-2023
+            # R19.7: No existe
+          ) |
+
+        ### NTDs y malaria -----
+        between(cie10_cod, "A68.0", "A68.9") |
+        # GBD-2023: A69.2-A69.4 cambiaron de categoría
+        between(cie10_cod, "A69.5", "A69.9") |
+        between(cie10_cod, "A75.0", "A75.9") |
+        between(cie10_cod, "A77.0", "A77.3") | # GBD-2023
+        between(cie10_cod, "A77.8", "A79.9") | # GBD-2023
+        between(cie10_cod, "A82.0", "A82.9") |
+        between(cie10_cod, "A90.0", "A96.9") |
+        between(cie10_cod, "A98.0", "A98.8") |
+        between(cie10_cod, "B50.0", "B53.8") | # GBD-2023
+        between(cie10_cod, "B56.0", "B57.5") |
+        between(cie10_cod, "B60.0", "B60.8") |
+        # B63: No existe
+        between(cie10_cod, "B65.0", "B67.9") |
+        between(cie10_cod, "B69.0", "B72.0") |
+        between(cie10_cod, "B74.3", "B75.0") |
+        between(cie10_cod, "B77.0", "B78.9") | # GBD-2023
+        between(cie10_cod, "B83.0", "B83.8") |
+        between(cie10_cod, "P37.3", "P37.4") | # GBD-2023
+        between(cie10_cod, "U06.0", "U06.9") |
+        cie10_cod %in%
+          c(
+            "B55.0",
+            "G02.8", # GBD-2023
+            "G05.2", # GBD-2023
+            "I41.2", # GBD-2023
+            "I98.1", # GBD-2023
+            "K23.1", # GBD-2023
+            "K93.1",
+            "P35.4" # GBD-2023
+          ) |
+
+        ### Otras infecciosas -----
+        between(cie10_cod, "A06.4", "A06.8") | # GBD-2023
+        between(cie10_cod, "A20.0", "A28.9") |
+        between(cie10_cod, "A32.0", "A39.9") |
+        between(cie10_cod, "A69.0", "A69.2") | # GBD-2023
+        between(cie10_cod, "A74.8", "A74.9") |
+        between(cie10_cod, "A81.0", "A81.9") |
+        between(cie10_cod, "A83.0", "A89.9") |
+        between(cie10_cod, "B00.0", "B06.9") |
+        # B10: No existe
+        between(cie10_cod, "B15.0", "B16.2") |
+        between(cie10_cod, "B25.0", "B27.9") |
+        between(cie10_cod, "B33.0", "B33.1") | # GBD-2023
+        between(cie10_cod, "B33.3", "B33.8") |
+        between(cie10_cod, "B47.0", "B48.8") |
+        between(cie10_cod, "B95.0", "B95.5") |
+        between(cie10_cod, "G00.0", "G00.8") |
+        between(cie10_cod, "G03.0", "G03.8") |
+        between(cie10_cod, "G04.0", "G05.1") | # GBD-2023
+        between(cie10_cod, "G05.3", "G05.8") | # GBD-2023
+        between(cie10_cod, "P35.0", "P35.3") | # GBD-2023
+        between(cie10_cod, "P35.8", "P35.9") | # GBD-2023
+        between(cie10_cod, "P37.5", "P37.9") |
+        between(cie10_cod, "U82.0", "U84.0") |
+        between(cie10_cod, "U85.0", "U89.9") | # GBD-2023
+        between(cie10_cod, "Z16.0", "Z16.3") |
+        cie10_cod %in%
+          c(
+            "A48.2",
+            "A48.4",
+            # A48.5: No existe
+            "A65.0",
+            # A74 es GC1
+            "A77.4", # GBD-2023
+            "B17.0",
+            "B17.2",
+            "B19.1",
+            "B29.4",
+            "B94.1",
+            "D70.3",
+            "D89.3",
+            "F02.1",
+            "F07.1",
+            "G21.3", # GBD-2023
+            "I02.9",
+            "K67.8",
+            "K75.3",
+            "K76.3",
+            "K77.0",
+            "M49.1",
+            "P37.1" # GBD-2023
+          ) ~ "CMNN:Infecciosas",
+
+      ### Maternas y neonatales -----
+      between(cie10_cod, "N98.0", "N98.9") |
+        between(cie10_cod, "O00.0", "O07.9") |
+        # O09: No existe
+        between(cie10_cod, "O10.0", "O16.0") | # O16: No tiene decimales
+        between(cie10_cod, "O20.0", "O26.9") |
+        between(cie10_cod, "O28.0", "O36.9") |
+        between(cie10_cod, "O40.0", "O48.1") |
+        between(cie10_cod, "O60.0", "O77.9") |
+        between(cie10_cod, "O80.0", "O92.7") |
+        between(cie10_cod, "O96.0", "O98.6") |
+        between(cie10_cod, "O98.8", "P04.0") | # GBD-2023
+        between(cie10_cod, "P04.5", "P05.9") |
+        between(cie10_cod, "P07.0", "P08.2") | # GBD-2023
+        between(cie10_cod, "P10.0", "P15.9") | # GBD-2023
+        between(cie10_cod, "P20.0", "P22.9") | # GBD-2023
+        between(cie10_cod, "P24.0", "P29.9") |
+        between(cie10_cod, "P36.0", "P36.9") |
+        between(cie10_cod, "P38.0", "P39.9") |
+        between(cie10_cod, "P50.0", "P61.9") |
+        between(cie10_cod, "P70.0", "P70.1") |
+        between(cie10_cod, "P70.4", "P72.0") | # GBD-2023
+        between(cie10_cod, "P72.2", "P72.9") | # GBD-2023
+        between(cie10_cod, "P76.0", "P78.9") | # GBD-2023
+        between(cie10_cod, "P83.0", "P83.9") |
+        between(cie10_cod, "P90.0", "P91.9") |
+        between(cie10_cod, "P94.1", "P94.9") | # GBD-2023
+        cie10_cod %in%
+          c(
+            "C58.0", # C58: No tiene decimales
+            "N96.0",
+            "P04.2", # GBD-2023
+            "P37.2", # GBD-2023
+            "P96.3",
+            "P96.8"
+          ) ~ "CMNN:Maternas y neonatales",
+
+      ### Nutricionales -----
+      between(cie10_cod, "D50.1", "D50.8") |
+        between(cie10_cod, "D51.0", "D52.0") |
+        between(cie10_cod, "D52.8", "D53.9") |
+        between(cie10_cod, "E00.0", "E02.0") |
+        between(cie10_cod, "E40.0", "E46.9") |
+        between(cie10_cod, "E51.0", "E61.9") |
+        between(cie10_cod, "E63.0", "E64.0") |
+        between(cie10_cod, "E64.2", "E64.9") |
+        cie10_cod == "M12.1 " ~ "CMNN:Nutricionales",
+
+      ### Valor por defecto
+      .default = NA
+    )
+  )
+
+
+## ENT: Neoplasias (NPL) -----
+recod_defun <- recod_defun |>
   mutate(
     paso1 = case_when(
       ### Neoplasias malignas
@@ -140,23 +344,33 @@ recod_defun <- defun |>
         between(cie10_cod, "C69.0", "C69.8") |
         between(cie10_cod, "C70.0", "C73.0") | # C73: No tiene decimales
         between(cie10_cod, "C75.0", "C75.8") |
-        between(cie10_cod, "C81.0", "C83.8") |
+        between(cie10_cod, "C81.0", "C83.8") | # GBD-2023
         between(cie10_cod, "C84.0", "C85.0") |
         between(cie10_cod, "C85.2", "C85.7") |
         # C85.8: No existe
-        between(cie10_cod, "C86.0", "C86.6") |
+        between(cie10_cod, "C81.0", "C83.8") | # GBD-2023
+        between(cie10_cod, "C81.0", "C83.8") | # GBD-2023
+        between(cie10_cod, "C86.0", "C86.6") | # GBD-2023
         between(cie10_cod, "C88.0", "C91.0") |
+        between(cie10_cod, "C91.2", "C91.3") |
         between(cie10_cod, "C92.0", "C92.6") |
         # C93.8: No existe
-        between(cie10_cod, "C94.0", "C94.5") |
-        between(cie10_cod, "C94.7", "C96.9") |
-        cie10_cod %in% c("C91.2", "C91.3", "C91.6", "C93.0", "C93.1", "C93.3") |
+        between(cie10_cod, "C94.0", "C94.5") | # GBD-2023
+        between(cie10_cod, "C94.7", "C96.9") | # GBD-2023
+        cie10_cod %in%
+          c(
+            "C91.6",
+            "C93.0",
+            "C93.1",
+            "C93.3"
+          ) |
 
         ### Neoplasias in situ/benignas
         between(cie10_cod, "D00.1", "D01.3") |
         between(cie10_cod, "D02.0", "D02.3") |
         between(cie10_cod, "D03.0", "D07.2") |
         # D09.8: No existe
+        between(cie10_cod, "D09.2", "D09.3") |
         between(cie10_cod, "D10.0", "D10.7") |
         between(cie10_cod, "D11.0", "D13.7") |
         between(cie10_cod, "D14.0", "D14.3") |
@@ -178,7 +392,8 @@ recod_defun <- defun |>
         # D41.8: No existe
         between(cie10_cod, "D42.0", "D44.8") |
         between(cie10_cod, "D45.0", "D48.6") |
-        cie10_cod %in% c("D07.4", "D07.5", "D09.0", "D09.2", "D09.3", "D28.7") ~
+        # D49: No existe
+        cie10_cod %in% c("D07.4", "D07.5", "D09.0", "D28.7") ~
         # cie10_cod %in% c("K62.0", "K62.1", "K63.5") |
         # between(cie10_cod, "N60.0", "N60.9") |
         # between(cie10_cod, "N84.0", "N84.1") |
@@ -186,16 +401,15 @@ recod_defun <- defun |>
         "ENT:NPL",
 
       ### Valor por defecto
-      .default = NA
+      .default = paso1
     )
   )
 
 
-## Enfermedades cardiovasculares (ECV) -----
+## ENT: Cardiovasculares (ECV) -----
 recod_defun <- recod_defun |>
   mutate(
     paso1 = case_when(
-      ### Enfermedades cardiovasculares
       between(cie10_cod, "G45.0", "G46.8") |
         between(cie10_cod, "I01.0", "I02.0") |
         between(cie10_cod, "I05.0", "I09.9") |
@@ -204,8 +418,7 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "I28.0", "I28.9") |
         between(cie10_cod, "I30.0", "I31.1") |
         between(cie10_cod, "I31.8", "I37.8") |
-        between(cie10_cod, "I38.0", "I41.8") |
-        # I41.9: No existe
+        between(cie10_cod, "I38.0", "I41.1") | # GBD-2023
         between(cie10_cod, "I42.1", "I42.8") |
         between(cie10_cod, "I43.0", "I43.8") |
         # I43.9: No existe
@@ -216,12 +429,20 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "I67.5", "I67.6") |
         between(cie10_cod, "I68.0", "I68.2") |
         between(cie10_cod, "I69.0", "I69.3") |
-        between(cie10_cod, "I70.2", "I70.7") |
+        between(cie10_cod, "I70.2", "I70.7") | # GBD-2023
         between(cie10_cod, "I71.0", "I73.9") |
         between(cie10_cod, "I77.0", "I83.9") |
         between(cie10_cod, "I86.0", "I89.0") |
         cie10_cod %in%
-          c("B33.2", "I27.0", "I27.2", "I89.9", "K75.1") ~ "ENT:ECV",
+          c(
+            "B33.2",
+            "I27.0",
+            "I27.2",
+            "I41.8", # GBD-2023
+            # I41.9: No existe
+            "I89.9",
+            "K75.1"
+          ) ~ "ENT:ECV",
 
       ### Valor por defecto
       .default = paso1
@@ -229,7 +450,7 @@ recod_defun <- recod_defun |>
   )
 
 
-## Enfermedades respiratorias crónicas (CRD) -----
+## ENT: Respiratorias crónicas (CRD) -----
 recod_defun <- recod_defun |>
   mutate(
     paso1 = case_when(
@@ -239,7 +460,7 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "J37.0", "J39.9") |
         between(cie10_cod, "J41.0", "J46.0") | # J46: No tiene decimales
         between(cie10_cod, "J60.0", "J63.8") |
-        between(cie10_cod, "J65.0", "J68.9") |
+        between(cie10_cod, "J66.0", "J68.9") | # GBD-2023
         between(cie10_cod, "J70.8", "J70.9") |
         between(cie10_cod, "J84.0", "J84.9") |
         # J91.8 no existe
@@ -252,22 +473,14 @@ recod_defun <- recod_defun |>
   )
 
 
-## Diabetes mellitus (DM) y renales crónicas------
+## ENT: Diabetes mellitus (DM) -----
 recod_defun <- recod_defun |>
   mutate(
     paso1 = case_when(
-      ### DM1 y DM2 ------
       between(cie10_cod, "E10.0", "E10.1") |
         between(cie10_cod, "E10.3", "E11.1") |
         between(cie10_cod, "E11.3", "E11.9") |
         cie10_cod == "P70.2" ~ "ENT:DM",
-
-      ### Renales crónicas -----
-      between(cie10_cod, "I12.0", "I13.9") |
-        between(cie10_cod, "N02.0", "N08.8") |
-        between(cie10_cod, "N18.0", "N18.9") |
-        # between(cie10_cod, "Q61.0", "Q62.8") |
-        cie10_cod %in% c("D63.1", "E10.2", "E11.2", "N15.0") ~ "ENT:ERC",
 
       ### Valor por defecto
       .default = paso1
@@ -275,7 +488,7 @@ recod_defun <- recod_defun |>
   )
 
 
-## Otras ENT -----
+## ENT: Otras -----
 recod_defun <- recod_defun |>
   mutate(
     paso1 = case_when(
@@ -285,16 +498,16 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "I85.0", "I85.9") |
         between(cie10_cod, "K20.0", "K20.9") |
         between(cie10_cod, "K22.0", "K22.6") |
-        between(cie10_cod, "K22.8", "K23.0") |
-        between(cie10_cod, "K23.8", "K29.9") |
+        between(cie10_cod, "K22.8", "K23.0") | # GBD-2023
+        between(cie10_cod, "K23.8", "K29.9") | # GBD-2023
         between(cie10_cod, "K31.0", "K31.8") |
         between(cie10_cod, "K35.0", "K38.9") |
         # K39: No existe
         between(cie10_cod, "K40.0", "K42.9") |
         between(cie10_cod, "K44.0", "K46.9") |
         between(cie10_cod, "K50.0", "K52.0") |
-        between(cie10_cod, "K52.8", "K52.9") |
-        between(cie10_cod, "K55.0", "K62.6") |
+        between(cie10_cod, "K52.8", "K52.9") | # GBD-2023
+        between(cie10_cod, "K55.0", "K62.6") | # GBD-2023
         between(cie10_cod, "K62.8", "K62.9") |
         between(cie10_cod, "K64.0", "K64.9") |
         # K68: No existe
@@ -303,14 +516,14 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "K75.4", "K76.2") |
         between(cie10_cod, "K76.4", "K76.9") |
         between(cie10_cod, "K80.0", "K83.9") |
-        between(cie10_cod, "K85.0", "K87.1") |
+        between(cie10_cod, "K85.0", "K87.1") | # GBD-2023
         between(cie10_cod, "K90.0", "K90.9") |
-        between(cie10_cod, "M07.4", "M07.5") |
-        between(cie10_cod, "M09.1", "M09.2") |
+        between(cie10_cod, "M07.4", "M07.5") | # GBD-2023
+        between(cie10_cod, "M09.1", "M09.2") | # GBD-2023
         cie10_cod %in%
           c(
             "I98.2",
-            "K63.5",
+            "K63.5", # GBD-2023
             "K66.8",
             "K71.7",
             "K75.2",
@@ -338,7 +551,12 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "G90.0", "G90.9") |
         between(cie10_cod, "G95.0", "G95.9") |
         between(cie10_cod, "M33.0", "M33.9") |
-        cie10_cod %in% c("G20.0", "G25.5", "P94.0") |
+        cie10_cod %in%
+          c(
+            "G20.0",
+            "G25.5",
+            "P94.0" # GBD-2023
+          ) |
 
         ### Mentales -----
         between(cie10_cod, "F50.0", "F50.5") |
@@ -351,7 +569,7 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "X45.0", "X45.9") |
         between(cie10_cod, "X65.0", "X65.9") |
         between(cie10_cod, "Y15.0", "Y15.9") |
-        between(cie10_cod, "Y90.0", "Y91.9") |
+        between(cie10_cod, "Y90.0", "Y91.9") | # GBD-2023
         cie10_cod %in%
           c(
             "E24.4",
@@ -362,9 +580,15 @@ recod_defun <- recod_defun |>
             "Q86.0"
           ) |
 
+        ### Renales crónicas -----
+        between(cie10_cod, "I12.0", "I13.9") |
+        between(cie10_cod, "N02.0", "N08.8") |
+        between(cie10_cod, "N18.0", "N18.9") |
+        cie10_cod %in% c("D63.1", "E10.2", "E11.2", "N15.0") |
+
         ## Piel y subcutáneas -----
         between(cie10_cod, "A66.0", "A67.9") |
-        between(cie10_cod, "H05.0", "H05.1") |
+        between(cie10_cod, "H05.0", "H05.1") | # GBD-2023
         between(cie10_cod, "I89.1", "I89.8") |
         between(cie10_cod, "L00.0", "L05.9") |
         between(cie10_cod, "L08.0", "L08.9") |
@@ -372,18 +596,23 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "L51.0", "L51.9") |
         between(cie10_cod, "L88.0", "L89.9") |
         between(cie10_cod, "L97.0", "L98.4") |
-        between(cie10_cod, "M07.0", "M07.3") |
+        between(cie10_cod, "M07.0", "M07.3") | # GBD-2023
         between(cie10_cod, "M72.5", "M72.6") |
-        cie10_cod %in% c("A46.0", "B86.0", "D86.3", "M09.0") |
+        cie10_cod %in%
+          c(
+            "A46.0",
+            "B86.0",
+            "D86.3",
+            "M09.0" # GBD-2023
+          ) |
 
         ## Musculoesqueléticas -----
         between(cie10_cod, "L93.0", "L93.2") |
         between(cie10_cod, "M00.0", "M03.0") |
         between(cie10_cod, "M03.2", "M03.6") |
         # M04: No existe
-        between(cie10_cod, "M05.0", "M06.9") |
-        between(cie10_cod, "M07.6", "M09.0") |
-        between(cie10_cod, "M09.2", "M09.8") |
+        between(cie10_cod, "M05.0", "M06.9") | # GBD-2023
+        between(cie10_cod, "M07.6", "M09.0") | # GBD-2023
         # M26 - M29: No existe
         between(cie10_cod, "M30.0", "M32.9") |
         between(cie10_cod, "M34.0", "M36.8") |
@@ -398,31 +627,40 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "M88.0", "M89.0") |
         between(cie10_cod, "M89.7", "M89.9") |
         cie10_cod %in%
-          c("I27.1", "I67.7", "M65.0", "M87.0", "M89.5") |
+          c(
+            "I27.1",
+            "I67.7",
+            "M09.8", # GBD-2023
+            "M65.0",
+            "M87.0",
+            "M89.5"
+          ) |
 
         ## Otras ENT -----
         between(cie10_cod, "D25.0", "D25.9") |
-        between(cie10_cod, "D55.0", "D58.9") |
-        between(cie10_cod, "D59.3", "D59.5") |
-        between(cie10_cod, "D59.8", "D61.9") |
-        between(cie10_cod, "D66.0", "D69.4") |
-        between(cie10_cod, "D69.6", "D69.8") |
+        between(cie10_cod, "D55.0", "D58.9") | # GBD-2023
+        between(cie10_cod, "D59.3", "D59.5") | # GBD-2023
+        between(cie10_cod, "D59.8", "D61.9") | # GBD-2023
+        between(cie10_cod, "D66.0", "D67.0") |
+        between(cie10_cod, "D68.0", "D69.4") | # GBD-2023
+        between(cie10_cod, "D69.6", "D69.8") | # GBD-2023
         between(cie10_cod, "D70.4", "D75.8") |
-        between(cie10_cod, "D76.0", "D77.0") |
+        between(cie10_cod, "D76.0", "D77.0") | # GBD-2023
         between(cie10_cod, "D89.0", "D89.2") |
-        between(cie10_cod, "E03.0", "E03.1") |
-        between(cie10_cod, "E03.3", "E06.3") |
-        between(cie10_cod, "E06.5", "E07.1") |
-        between(cie10_cod, "E16.1", "E16.9") |
-        between(cie10_cod, "E20.0", "E23.0") |
-        between(cie10_cod, "E23.2", "E24.1") |
-        between(cie10_cod, "E24.8", "E27.2") |
-        between(cie10_cod, "E27.4", "E33.9") |
+        between(cie10_cod, "E03.0", "E03.1") | # GBD-2023
+        between(cie10_cod, "E03.3", "E06.3") | # GBD-2023
+        between(cie10_cod, "E06.5", "E07.1") | # GBD-2023
+        between(cie10_cod, "E16.1", "E16.9") | # GBD-2023
+        between(cie10_cod, "E20.0", "E23.0") | # GBD-2023
+        between(cie10_cod, "E23.2", "E24.1") | # GBD-2023
+        between(cie10_cod, "E24.8", "E27.2") | # GBD-2023
+        between(cie10_cod, "E27.4", "E33.9") | # GBD-2023
         between(cie10_cod, "E34.1", "E34.8") |
-        between(cie10_cod, "E65.0", "E66.0") |
-        between(cie10_cod, "E66.2", "E68.0") |
+        between(cie10_cod, "E65.0", "E66.0") | # GBD-2023
+        between(cie10_cod, "E66.2", "E68.0") | # GBD-2023
         between(cie10_cod, "E70.0", "E85.2") |
-        between(cie10_cod, "E88.0", "E88.2") |
+        between(cie10_cod, "E88.0", "E88.2") | # GBD-2023
+        between(cie10_cod, "E88.4", "E88.9") | # GBD-2023
         between(cie10_cod, "N10.0", "N12.9") |
         between(cie10_cod, "N15.1", "N16.8") |
         between(cie10_cod, "N20.0", "N23.0") |
@@ -436,18 +674,18 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "N41.0", "N41.9") |
         between(cie10_cod, "N45.0", "N45.9") |
         between(cie10_cod, "N49.0", "N49.9") |
-        between(cie10_cod, "N60.0", "N60.9") |
+        between(cie10_cod, "N60.0", "N60.9") | # GBD-2023
         between(cie10_cod, "N75.0", "N77.8") |
         between(cie10_cod, "N80.0", "N81.9") |
-        between(cie10_cod, "N83.0", "N84.1") |
-        between(cie10_cod, "N87.0", "N87.9") |
+        between(cie10_cod, "N83.0", "N84.1") | # GBD-2023
+        between(cie10_cod, "N87.0", "N87.9") | # GBD-2023
         between(cie10_cod, "Q00.0", "Q07.9") |
         between(cie10_cod, "Q10.4", "Q18.9") |
         between(cie10_cod, "Q20.0", "Q28.9") |
-        between(cie10_cod, "Q30.0", "Q45.9") |
-        between(cie10_cod, "Q50.0", "Q56.4") |
-        between(cie10_cod, "Q60.0", "Q85.9") |
-        between(cie10_cod, "Q86.8", "Q87.8") |
+        between(cie10_cod, "Q30.0", "Q45.9") | # GBD-2023
+        between(cie10_cod, "Q50.0", "Q56.4") | # GBD-2023
+        between(cie10_cod, "Q60.0", "Q85.9") | # GBD-2023
+        between(cie10_cod, "Q86.8", "Q87.8") | # GBD-2023
         between(cie10_cod, "Q89.0", "Q89.8") |
         between(cie10_cod, "Q90.0", "Q93.9") |
         between(cie10_cod, "Q95.0", "Q99.8") |
@@ -455,22 +693,20 @@ recod_defun <- recod_defun |>
         cie10_cod %in%
           c(
             "D28.2",
-            "D59.1",
+            "D59.1", # GBD-2023
             "D64.0",
-            "D70.0",
+            "D70.0", # GBD-2023
             "D86.8",
+            "E24.3", # GBD-2023
             "E88.4",
             "E88.9",
-            "G24.0",
-            "G25.1",
-            "G25.4",
             "G71.2",
             "N13.6",
             "N44.0",
             "N72.0",
-            "P72.1",
+            "P72.1", # GBD-2023
             "P96.0"
-          ) ~ "ENT:Otras ENT",
+          ) ~ "ENT: Otras ENT",
 
       ### Valor por defecto
       .default = paso1
@@ -478,91 +714,83 @@ recod_defun <- recod_defun |>
   )
 
 
-## Eventos de tránsito -----
+## CE: Accidentes de tránsito, suicidio, homicidio -----
 recod_defun <- recod_defun |>
   mutate(
     paso1 = case_when(
       ### Accidentes de tránsito (AT) -----
-      between(cie10_cod, "V01.0", "V04.9") |
-        between(cie10_cod, "V06.0", "V80.9") |
+      between(cie10_cod, "V06.0", "V80.9") |
         between(cie10_cod, "V82.0", "V82.9") |
         between(cie10_cod, "V87.2", "V87.3") ~ "CE:AT",
 
+      ### Suicidio (SH) -----
+      between(cie10_cod, "X60.0", "X63.9") |
+        # GBD-2023: X64.9 cambió de categoría
+        between(cie10_cod, "X66.0", "X68.9") |
+        # GBD-2023: X69 cambió de categoría
+        between(cie10_cod, "X70.0", "X83.9") |
+        cie10_cod == "Y87.0" ~ "CE:SH",
+
+      ### Violencia interpersonal -----
+      between(cie10_cod, "X85.0", "Y08.9") |
+        cie10_cod == "Y87.1" ~ "CE:VI",
+
+      ### Valor por defecto
+      .default = paso1
+    )
+  )
+
+
+## CE: Otras CE -----
+recod_defun <- recod_defun |>
+  mutate(
+    paso1 = case_when(
       ### Otras lesiones por transporte -----
       # V00.0 - V00.8: No existe
       between(cie10_cod, "V05.0", "V05.9") |
         between(cie10_cod, "V81.0", "V81.9") |
         between(cie10_cod, "V83.0", "V86.9") |
         between(cie10_cod, "V88.2", "V88.3") |
-        between(cie10_cod, "V90.0", "V98.8") ~ "CE:Otras transporte",
+        between(cie10_cod, "V90.0", "V98.8") |
 
-      ### Valor por defecto
-      .default = paso1
-    )
-  )
-
-
-## Suicidio y violencias -----
-recod_defun <- recod_defun |>
-  mutate(
-    paso1 = case_when(
-      ### Suicidio (SH) -----
-      between(cie10_cod, "X60.0", "X63.9") |
-        between(cie10_cod, "X66.0", "X68.9") |
-        between(cie10_cod, "X70.0", "X83.9") |
-        cie10_cod == "Y87.0" ~ "CE:SH",
-
-      ### Violencia interpersonal (VI) -----
-      between(cie10_cod, "X85.0", "Y08.9") |
-        cie10_cod == "Y87.1" ~ "CE:VI",
-
-      ### Conflictos y terrorismo -----
-      between(cie10_cod, "U00.0", "U03.0") |
+        ### Conflictos y terrorismo -----
+        between(cie10_cod, "U00.0", "U03.0") |
         between(cie10_cod, "Y36.0", "Y38.9") |
-        cie10_cod == "Y89.1" ~ "CE:Conflictos/terrorismo",
+        cie10_cod == "Y89.1" |
 
-      ### Represión policial/ejecuciones -----
-      between(cie10_cod, "Y35.0", "Y35.9") |
-        cie10_cod == "Y89.0" ~ "CE:Ejecuciones/policial",
+        ### Represión policial/ejecuciones -----
+        between(cie10_cod, "Y35.0", "Y35.9") |
+        cie10_cod == "Y89.0" |
 
-      ### Valor por defecto
-      .default = paso1
-    )
-  )
-
-
-## Lesiones no intencionales -----
-recod_defun <- recod_defun |>
-  mutate(
-    paso1 = case_when(
-      between(cie10_cod, "D70.1", "D70.2") |
-        between(cie10_cod, "D78.0", "D78.8") |
-        between(cie10_cod, "E09.0", "E09.9") |
-        between(cie10_cod, "E36.0", "E36.8") |
-        between(cie10_cod, "E89.0", "E89.9") |
-        between(cie10_cod, "G21.0", "G21.1") |
-        between(cie10_cod, "G25.6", "G25.7") |
-        between(cie10_cod, "G97.0", "G97.9") |
-        between(cie10_cod, "I95.2", "I95.3") |
-        between(cie10_cod, "I97.0", "I97.9") |
-        between(cie10_cod, "J70.0", "J70.5") |
-        between(cie10_cod, "J95.0", "J95.9") |
-        between(cie10_cod, "K43.0", "K43.9") |
-        between(cie10_cod, "K91.0", "K91.9") |
-        between(cie10_cod, "K94.0", "K95.8") |
+        ### Lesiones no intencionales -----
+        between(cie10_cod, "D70.1", "D70.2") | # GBD-2023
+        between(cie10_cod, "D78.0", "D78.8") | # GBD-2023
+        between(cie10_cod, "E09.0", "E09.9") | # GBD-2023
+        between(cie10_cod, "E36.0", "E36.8") | # GBD-2023
+        between(cie10_cod, "E89.0", "E89.9") | # GBD-2023
+        between(cie10_cod, "G21.0", "G21.1") | # GBD-2023
+        between(cie10_cod, "G25.6", "G25.7") | # GBD-2023
+        between(cie10_cod, "G97.0", "G97.9") | # GBD-2023
+        between(cie10_cod, "I95.2", "I95.3") | # GBD-2023
+        between(cie10_cod, "I97.0", "I97.9") | # GBD-2023
+        between(cie10_cod, "J70.0", "J70.5") | # GBD-2023
+        between(cie10_cod, "J95.0", "J95.9") | # GBD-2023
+        between(cie10_cod, "K43.0", "K43.9") | # GBD-2023
+        between(cie10_cod, "K91.0", "K91.9") | # GBD-2023
+        between(cie10_cod, "K94.0", "K95.8") | # GBD-2023
         between(cie10_cod, "L55.0", "L55.9") |
         between(cie10_cod, "L56.8", "L56.9") |
         between(cie10_cod, "L58.0", "L58.9") |
-        between(cie10_cod, "N14.0", "N14.4") |
-        between(cie10_cod, "N65.0", "N65.1") |
-        between(cie10_cod, "N99.0", "N99.9") |
-        between(cie10_cod, "P04.0", "P04.1") |
-        between(cie10_cod, "P93.0", "P93.8") |
-        between(cie10_cod, "Q86.1", "Q86.2") |
+        between(cie10_cod, "N14.0", "N14.4") | # GBD-2023
+        between(cie10_cod, "N65.0", "N65.1") | # GBD-2023
+        between(cie10_cod, "N99.0", "N99.9") | # GBD-2023
+        between(cie10_cod, "P04.0", "P04.1") | # GBD-2023
+        between(cie10_cod, "P93.0", "P93.8") | # GBD-2023
+        between(cie10_cod, "Q86.1", "Q86.2") | # GBD-2023
         between(cie10_cod, "W00.0", "W46.2") |
         between(cie10_cod, "W49.0", "W62.9") |
         between(cie10_cod, "W64.0", "W70.9") |
-        between(cie10_cod, "W73.0", "W81.9") |
+        between(cie10_cod, "W73.0", "W81.9") | # GBD-2023
         between(cie10_cod, "W83.0", "W94.9") |
         between(cie10_cod, "W99.0", "X06.9") |
         between(cie10_cod, "X08.0", "X39.9") |
@@ -573,232 +801,36 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "Y88.0", "Y88.3") |
         cie10_cod %in%
           c(
-            "D52.1",
-            "D59.0",
-            "D59.2",
-            "D59.6",
-            "D69.5",
-            "E03.2",
-            "E06.4",
-            "E16.0",
-            "E23.1",
-            "E24.2",
-            "E27.3",
-            "E66.1",
-            "E88.3",
-            "G24.0",
-            "G25.1",
-            "G25.4",
-            "G72.0",
-            "G93.7",
-            "I98.9",
-            "K52.0",
-            "K62.7",
+            "D52.1", # GBD-2023
+            "D59.0", # GBD-2023
+            "D59.2", # GBD-2023
+            "D59.6", # GBD-2023
+            "D69.5", # GBD-2023
+            "E03.2", # GBD-2023
+            "E06.4", # GBD-2023
+            "E16.0", # GBD-2023
+            "E23.1", # GBD-2023
+            "E24.2", # GBD-2023
+            "E27.3", # GBD-2023
+            "E66.1", # GBD-2023
+            "E88.3", # GBD-2023
+            "G24.0", # GBD-2023
+            "G25.1", # GBD-2023
+            "G25.4", # GBD-2023
+            "G72.0", # GBD-2023
+            "G93.7", # GBD-2023
+            "I98.9", # GBD-2023
+            "K52.0", # GBD-2023
+            "K62.7", # GBD-2023
             "L56.3",
-            "M87.1",
+            "M87.1", # GBD-2023
             "N30.4",
-            "P70.3",
-            "P96.2",
-            "P96.5",
-            "R50.2",
+            "P70.3", # GBD-2023
+            "P96.2", # GBD-2023
+            "P96.5", # GBD-2023
+            "R50.2", # GBD-2023
             "W97.9"
-          ) ~ "CE:No intencionales",
-
-      ### Valor por defecto
-      .default = paso1
-    )
-  )
-
-
-## CMNN -----
-recod_defun <- recod_defun |>
-  mutate(
-    paso1 = case_when(
-      ### HIV/SIDA e ITS -----
-      between(cie10_cod, "A50.0", "A58.0") |
-        between(cie10_cod, "A60.0", "A60.9") |
-        between(cie10_cod, "A63.0", "A63.8") |
-        between(cie10_cod, "B20.0", "B24.9") |
-        # B63: No existe
-        between(cie10_cod, "K67.0", "K67.2") |
-        between(cie10_cod, "M73.0", "M73.1") |
-        cie10_cod %in% c("F02.4", "I98.0", "M03.1") |
-
-        ### Tuberculosis y respiratorias -----
-        # A10 - A14: No existe
-        between(cie10_cod, "A15.0", "A19.9") |
-        between(cie10_cod, "B90.0", "B90.9") |
-        between(cie10_cod, "B97.4", "B97.6") |
-        between(cie10_cod, "H70.0", "H70.9") |
-        between(cie10_cod, "J00.0", "J02.8") |
-        between(cie10_cod, "J03.0", "J03.8") |
-        between(cie10_cod, "J04.0", "J04.2") |
-        between(cie10_cod, "J05.0", "J05.1") |
-        between(cie10_cod, "J06.0", "J06.8") |
-        # J07 - J08: No existe
-        between(cie10_cod, "J09.0", "J15.8") |
-        between(cie10_cod, "J16.0", "J16.9") |
-        # J19: No existe
-        between(cie10_cod, "J20.0", "J21.9") |
-        between(cie10_cod, "N74.0", "N74.1") |
-        between(cie10_cod, "P23.0", "P23.4") |
-        between(cie10_cod, "U04.0", "U04.9") |
-        between(cie10_cod, "U07.0", "U07.2") |
-        cie10_cod %in%
-          c(
-            "A48.1",
-            "A70.0",
-            "B34.2",
-            "B97.2",
-            "J36.0",
-            "J91.0",
-            "K23.0",
-            "K67.3",
-            "K93.0",
-            "M49.0",
-            "P37.0",
-            "U84.3"
-          ) |
-
-        ### Entéricas -----
-        between(cie10_cod, "A00.0", "A06.3") |
-        between(cie10_cod, "A06.9", "A09.9") |
-        # A10 - A14: No existe
-        between(cie10_cod, "A80.0", "A80.9") |
-        between(cie10_cod, "G14.0", "G14.6") |
-        between(cie10_cod, "K52.1", "K52.3") |
-        cie10_cod %in% c("B91.0", "M89.6", "R19.7") |
-
-        ### NTDs y malaria -----
-        between(cie10_cod, "A68.0", "A68.9") |
-        between(cie10_cod, "A69.2", "A69.9") |
-        between(cie10_cod, "A75.0", "A75.9") |
-        between(cie10_cod, "A77.0", "A77.3") |
-        between(cie10_cod, "A77.8", "A79.9") |
-        between(cie10_cod, "A82.0", "A82.9") |
-        between(cie10_cod, "A90.0", "A96.9") |
-        between(cie10_cod, "A98.0", "A98.8") |
-        between(cie10_cod, "B50.0", "B53.8") |
-        between(cie10_cod, "B56.0", "B57.5") |
-        between(cie10_cod, "B60.0", "B60.8") |
-        # B63: No existe
-        between(cie10_cod, "B65.0", "B67.9") |
-        between(cie10_cod, "B69.0", "B72.0") |
-        between(cie10_cod, "B74.3", "B75.0") |
-        between(cie10_cod, "B77.0", "B78.9") |
-        between(cie10_cod, "B83.0", "B83.8") |
-        between(cie10_cod, "P37.3", "P37.4") |
-        between(cie10_cod, "U06.0", "U06.9") |
-        cie10_cod %in%
-          c(
-            "B55.0",
-            "G02.8",
-            "G05.2",
-            "I41.2",
-            "I98.1",
-            "K23.1",
-            "K93.1"
-          ) |
-
-        ### Otras infecciosas
-        between(cie10_cod, "A06.4", "A06.8") |
-        between(cie10_cod, "A20.0", "A28.9") |
-        between(cie10_cod, "A32.0", "A39.9") |
-        # A48.5: No existe
-        between(cie10_cod, "A69.0", "A69.2") |
-        between(cie10_cod, "A74.8", "A74.9") |
-        between(cie10_cod, "A81.0", "A81.9") |
-        between(cie10_cod, "A83.0", "A89.9") |
-        between(cie10_cod, "B00.0", "B06.9") |
-        # B10: No existe
-        between(cie10_cod, "B15.0", "B16.2") |
-        between(cie10_cod, "B25.0", "B27.9") |
-        between(cie10_cod, "B33.0", "B33.1") |
-        between(cie10_cod, "B33.3", "B33.8") |
-        between(cie10_cod, "B47.0", "B48.8") |
-        between(cie10_cod, "B95.0", "B95.5") |
-        between(cie10_cod, "G00.0", "G00.8") |
-        between(cie10_cod, "G04.0", "G05.1") |
-        between(cie10_cod, "G05.3", "G05.8") |
-        between(cie10_cod, "G14.0", "G14.6") |
-        between(cie10_cod, "P35.0", "P35.3") |
-        between(cie10_cod, "P35.8", "P35.9") |
-        between(cie10_cod, "P37.5", "P37.9") |
-        between(cie10_cod, "U82.0", "U84.0") |
-        between(cie10_cod, "U85.0", "U89.9") |
-        between(cie10_cod, "Z16.0", "Z16.3") |
-        cie10_cod %in%
-          c(
-            "A48.2",
-            "A48.4",
-            "A65.0",
-            "A77.4",
-            "B17.0",
-            "B17.2",
-            "B19.1",
-            "B29.4",
-            "B94.1",
-            "D70.3",
-            "D89.3",
-            "F02.1",
-            "F07.1",
-            "G21.3",
-            "I02.9",
-            "K67.8",
-            "K75.3",
-            "K76.3",
-            "K77.0",
-            "M49.1",
-            "P37.1"
-          ) ~ "CMNN:Infecciosas",
-
-      ### Maternas y neonatales -----
-      between(cie10_cod, "N98.0", "N98.9") |
-        between(cie10_cod, "O00.0", "O07.9") |
-        # O09: No existe
-        between(cie10_cod, "O10.0", "O16.0") | # O16: No tiene decimales
-        between(cie10_cod, "O20.0", "O26.9") |
-        between(cie10_cod, "O28.0", "O36.9") |
-        between(cie10_cod, "O40.0", "O48.1") |
-        between(cie10_cod, "O60.0", "O77.9") |
-        between(cie10_cod, "O80.0", "O92.7") |
-        between(cie10_cod, "O96.0", "O98.6") |
-        between(cie10_cod, "O98.8", "P04.0") |
-        between(cie10_cod, "P04.5", "P05.9") |
-        between(cie10_cod, "P07.0", "P08.2") |
-        between(cie10_cod, "P10.0", "P15.9") |
-        between(cie10_cod, "P20.0", "P22.9") |
-        between(cie10_cod, "P24.0", "P29.9") |
-        between(cie10_cod, "P36.0", "P36.9") |
-        between(cie10_cod, "P38.0", "P39.9") |
-        between(cie10_cod, "P50.0", "P61.9") |
-        between(cie10_cod, "P70.0", "P70.1") |
-        between(cie10_cod, "P70.4", "P72.0") |
-        between(cie10_cod, "P72.2", "P72.9") |
-        between(cie10_cod, "P76.0", "P78.9") |
-        between(cie10_cod, "P83.0", "P83.9") |
-        between(cie10_cod, "P90.0", "P91.9") |
-        between(cie10_cod, "P94.1", "P94.9") |
-        cie10_cod %in%
-          c(
-            "C58.0",
-            "P04.2",
-            "P37.2",
-            "N96.0",
-            "P96.3",
-            "P96.8"
-          ) ~ "CMNN:Maternas y neonatales",
-
-      ### Nutricionales -----
-      between(cie10_cod, "D50.1", "D50.8") |
-        between(cie10_cod, "D51.0", "D52.0") |
-        between(cie10_cod, "D52.8", "D53.9") |
-        between(cie10_cod, "E00.0", "E02.0") |
-        between(cie10_cod, "E40.0", "E46.9") |
-        between(cie10_cod, "E51.0", "E61.9") |
-        between(cie10_cod, "E63.0", "E64.0") |
-        between(cie10_cod, "E64.2", "E64.9") |
-        cie10_cod == "M12.1 " ~ "CMNN:Nutricionales",
+          ) ~ "CE: Otras CE",
 
       ### Valor por defecto
       .default = paso1
@@ -807,7 +839,7 @@ recod_defun <- recod_defun |>
 
 
 # Paso 1: Agrupar GC -----------------------------------------------------
-## GC1 -----
+## GC nivel 1 -----
 recod_defun <- recod_defun |>
   mutate(
     paso1 = case_when(
@@ -825,7 +857,7 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "E50.0", "E50.9") |
         between(cie10_cod, "E85.3", "E87.6") |
         between(cie10_cod, "E87.8", "E87.9") |
-        between(cie10_cod, "F19.0", "F19.9") |
+        between(cie10_cod, "F19.0", "F19.9") | # GBD-2023
         between(cie10_cod, "G06.0", "G08.0") |
         between(cie10_cod, "G32.0", "G32.8") |
         between(cie10_cod, "G43.0", "G44.2") |
@@ -852,7 +884,7 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "I46.0", "I46.9") |
         between(cie10_cod, "I50.0", "I50.1") |
         # I50.4: No existe
-        between(cie10_cod, "I91.0", "I91.1") |
+        between(cie10_cod, "I91.0", "I91.1") | # GBD-2023
         between(cie10_cod, "I95.0", "I95.1") |
         between(cie10_cod, "I95.8", "I95.9") |
         between(cie10_cod, "J69.0", "J69.9") |
@@ -860,7 +892,7 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "J85.0", "J85.3") |
         between(cie10_cod, "J86.0", "J86.9") |
         between(cie10_cod, "J93.0", "J93.1") |
-        between(cie10_cod, "J93.8", "J94.9") |
+        between(cie10_cod, "J93.8", "J94.9") | # GBD-2023
         between(cie10_cod, "J96.0", "J96.9") |
         between(cie10_cod, "J98.1", "J98.3") |
         between(cie10_cod, "K00.0", "K14.9") |
@@ -878,7 +910,8 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "L59.0", "L68.9") |
         # L69: No existe
         between(cie10_cod, "L70.0", "L75.9") |
-        # L76: No existebetween(cie10_cod, "L80.0", "L87.9") |
+        # L76: No existe
+        between(cie10_cod, "L80.0", "L87.9") |
         between(cie10_cod, "L90.0", "L92.9") |
         between(cie10_cod, "L94.0", "L95.9") |
         # L96: No existe
@@ -901,7 +934,7 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "M89.1", "M89.4") |
         between(cie10_cod, "M90.0", "M99.9") |
         between(cie10_cod, "N17.0", "N17.9") |
-        between(cie10_cod, "N32.1", "N33.2") |
+        between(cie10_cod, "N32.1", "N32.2") |
         between(cie10_cod, "N32.8", "N33.8") |
         between(cie10_cod, "N35.0", "N35.9") |
         between(cie10_cod, "N37.0", "N37.8") |
@@ -917,9 +950,9 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "N95.1", "N95.9") |
         between(cie10_cod, "N97.0", "N97.9") |
         between(cie10_cod, "R02.0", "R02.9") |
-        between(cie10_cod, "R03.1", "R03.9") |
-        between(cie10_cod, "R04.1", "R04.9") |
-        between(cie10_cod, "R08.0", "R12.0") |
+        between(cie10_cod, "R03.1", "R03.9") | # GBD-2023
+        between(cie10_cod, "R04.1", "R04.9") | # GBD-2023
+        between(cie10_cod, "R08.0", "R12.0") | # GBD-2023
         between(cie10_cod, "R14.0", "R19.6") |
         between(cie10_cod, "R19.8", "R22.9") |
         between(cie10_cod, "R23.1", "R30.9") |
@@ -928,9 +961,10 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "R74.0", "R78.0") |
         between(cie10_cod, "R78.6", "R94.8") |
         between(cie10_cod, "R96.0", "R99.9") |
-        between(cie10_cod, "U08.0", "U49.0") |
-        between(cie10_cod, "U51.0", "U81.0") |
-        between(cie10_cod, "U90.0", "U99.0") |
+        between(cie10_cod, "U08.0", "U49.0") | # GBD-2023
+        between(cie10_cod, "U51.0", "U81.0") | # GBD-2023
+        between(cie10_cod, "U90.0", "U99.0") | # GBD-2023
+        between(cie10_cod, "X46.0", "X46.9") |
         between(cie10_cod, "Z00.0", "Z13.9") |
         # Z14 - Z19: No existe
         between(cie10_cod, "Z20.0", "Z99.9") |
@@ -939,7 +973,7 @@ recod_defun <- recod_defun |>
             "A48.0",
             "A48.3",
             "A74.0",
-            "B07.0",
+            "B07.0", # B07: No tiene decimales
             "B94.0",
             "D50.0",
             "D50.9",
@@ -948,28 +982,28 @@ recod_defun <- recod_defun |>
             "E15.0",
             "E64.1",
             "G62.0",
-            "J90.0",
+            "J90.0", # GBD-2023
             "K30.0",
             "K66.9",
             "K75.0",
-            "N19.0",
+            "N19.0", # N19: No tiene decimales
             "R07.0",
             "U05.0"
           ) ~ "GC1",
 
-      ### GC1: CE
+      ### GC1: VI, SH, otras CE-----
       between(cie10_cod, "X40.0", "X44.9") |
-        between(cie10_cod, "X46.0", "X46.9") |
         between(cie10_cod, "X49.0", "X49.9") |
         between(cie10_cod, "Y10.0", "Y14.9") |
-        between(cie10_cod, "Y16.0", "Y19.9") ~ "GC1-CE:SH-VI-OCE",
+        between(cie10_cod, "Y16.0", "Y19.9") ~ "GC1:CE",
 
       ### Valor por defecto
       .default = paso1
     )
   )
 
-## GC2 -----
+
+## GC nivel 2 -----
 recod_defun <- recod_defun |>
   mutate(
     paso1 = case_when(
@@ -988,26 +1022,28 @@ recod_defun <- recod_defun |>
         # B11 - B14: No existe
         # B28 - B29: No existe
         # B31 - B32: No existe
-        between(cie10_cod, "B34.0", "B34.1") |
-        between(cie10_cod, "B34.3", "B34.9") |
+        between(cie10_cod, "B34.0", "B34.1") | # GBD-2023
+        between(cie10_cod, "B34.3", "B34.9") | # GBD-2023
         # B61 - B62: No existe
         between(cie10_cod, "B68.0", "B68.9") |
         between(cie10_cod, "B73.0", "B74.2") |
         between(cie10_cod, "B76.0", "B76.9") |
-        between(cie10_cod, "B79.0", "B81.8") |
-        between(cie10_cod, "B94.8", "B94.9") |
-        between(cie10_cod, "B95.6", "B97.1") |
-        between(cie10_cod, "B97.7", "B99.9") |
+        between(cie10_cod, "B79.0", "B81.8") | # GBD-2023
         # B84: No existe
+        between(cie10_cod, "B92.0", "B94.0") |
+        # B93: No existe
+        between(cie10_cod, "B94.8", "B94.9") |
+        between(cie10_cod, "B95.6", "B97.1") | # GBD-2023
+        between(cie10_cod, "B97.7", "B99.9") |
         between(cie10_cod, "F17.0", "F17.9") |
         between(cie10_cod, "F17.0", "F17.9") |
         between(cie10_cod, "K92.0", "K92.2") |
         between(cie10_cod, "N70.0", "N71.9") |
-        between(cie10_cod, "N73.0", "N74.0") |
+        between(cie10_cod, "N73.0", "N74.0") | # GBD-2023
         between(cie10_cod, "N74.2", "N74.8") |
-        between(cie10_cod, "R04.0", "R06.9") |
+        between(cie10_cod, "R05.0", "R06.9") | # GBD-2023
         between(cie10_cod, "R13.0", "R13.9") |
-        between(cie10_cod, "S00.0", "T99.9") |
+        between(cie10_cod, "S00.0", "T99.9") | # GBD-2023
         # W47 - W48: No existe
         # W63: No existe
         # W71 - W72: No existe
@@ -1015,7 +1051,7 @@ recod_defun <- recod_defun |>
         # W95 - W98: No existe
         between(cie10_cod, "Y20.0", "Y24.4") |
         between(cie10_cod, "Y24.8", "Y25.1") |
-        between(cie10_cod, "Y25.4", "Y26.2") |
+        between(cie10_cod, "Y25.3", "Y26.2") |
         between(cie10_cod, "Y26.4", "Y27.3") |
         between(cie10_cod, "Y27.8", "Y28.2") |
         between(cie10_cod, "Y28.8", "Y29.2") |
@@ -1025,50 +1061,40 @@ recod_defun <- recod_defun |>
         cie10_cod %in%
           c(
             "A48.8",
-            "B92.0",
-            # B93: No existe
-            "B94.0",
-            "B97.3",
-            "F07.2",
-            # "G44.3",
-            # "G91.3",
+            "B97.3", # GBD-2023
+            "F07.2", # GBD-2023
+            "G44.3",
+            "G91.3",
             "G93.0",
             "G93.3",
-            # I50.8: No existe
             "I50.9",
             "I67.4",
             # I75: No existe
             # J81.1: No existe
-            "J90.0",
-            "J94.0",
-            "J94.1",
-            "J94.8",
-            "J94.9",
             "R03.0",
-            "R23.0",
-            "Y28.4",
-            "Y28.6"
+            "R04.0", # GBD-2023
+            "R23.0"
+            # U50 no existe
           ) ~ "GC2",
 
       ### GC2-ECV -----
       cie10_cod == "I10.0" |
         between(cie10_cod, "I15.0", "I15.9") |
-        between(cie10_cod, "I27.2", "I27.9") |
+        between(cie10_cod, "I27.8", "I27.9") |
         between(cie10_cod, "I70.0", "I70.1") |
         between(cie10_cod, "I70.8", "I70.9") |
         between(cie10_cod, "I74.0", "I74.9") ~ "GC2-ENT:ECV",
 
-      ### GC2: Cualquier causa externa -----
+      ## GC2: AT, SH, VI -----
+      between(cie10_cod, "Y31.0", "Y32.9") ~ "GC2-CE:AT-SH-VI",
+
+      ## GC2: CE -----
       between(cie10_cod, "Y24.5", "Y24.7") |
         between(cie10_cod, "Y27.4", "Y27.6") |
         between(cie10_cod, "Y29.1", "Y30.9") |
         between(cie10_cod, "Y33.0", "Y33.9") |
-        between(cie10_cod, "Y95.0", "Y98.0") |
         cie10_cod %in%
           c(
-            "G44.3",
-            "G91.3",
-            "R58.0",
             "Y25.2",
             "Y26.3",
             "Y28.3",
@@ -1076,8 +1102,7 @@ recod_defun <- recod_defun |>
             "Y86.0",
             "Y86.2",
             "Y86.8",
-            "Y87.2",
-            "Y89.9"
+            "Y87.2"
           ) ~ "GC2-CE",
 
       ### Valor por defecto
@@ -1086,11 +1111,52 @@ recod_defun <- recod_defun |>
   )
 
 
-## GC3 -----
+## GC nivel 3 -----
 recod_defun <- recod_defun |>
   mutate(
     paso1 = case_when(
-      ### GC3: NPL -----
+      ### GC3: CMNN -----
+      between(cie10_cod, "A31.0", "A31.9") |
+        between(cie10_cod, "A42.0", "A44.9") |
+        between(cie10_cod, "B17.8", "B17.9") |
+        between(cie10_cod, "B19.2", "B19.9") |
+        between(cie10_cod, "B37.0", "B46.9") |
+        between(cie10_cod, "B55.1", "B55.9") |
+        between(cie10_cod, "B58.0", "B59.0") |
+        between(cie10_cod, "O08.0", "O08.9") |
+        # O93: No existe
+        between(cie10_cod, "O94.0", "O95.0") | # 095: No tiene decimales
+        # P06: No existe
+        # P09: No existe
+        # P16-P19: No existe
+        # P30-P34: No existe
+        # P62-P69: No existe
+        # P73: No existe
+        between(cie10_cod, "P74.0", "P75.0") | # GBD-2023
+        # P79-P82: No existe
+        # P85-P89: No existe
+        between(cie10_cod, "P92.0", "P92.9") | # GBD-2023
+        between(cie10_cod, "P96.0", "P96.9") | # GBD-2023
+        # P97-P99: No existe
+        cie10_cod %in%
+          c(
+            "A49.2",
+            "A64.0",
+            "A99.0",
+            "B17.1",
+            "B19.0",
+            "B49.0", # B49: No tiene decimales
+            "B89.0",
+            "B94.2",
+            "J02.9",
+            "J03.9",
+            "J04.3",
+            "J06.9"
+          ) |
+        between(cie10_cod, "R07.1", "R07.9") |
+        between(cie10_cod, "R31.0", "R31.9") ~ "GC3-CMNN",
+
+      ### GC3: NPL ------
       between(cie10_cod, "C14.0", "C14.8") |
         # C14.9: No existe
         between(cie10_cod, "C26.0", "C26.9") |
@@ -1105,6 +1171,7 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "C75.9", "C80.9") |
         # C76.9: No existe
         # C80.1 - C80.2: No existe
+        # C87: No existe
         between(cie10_cod, "C97.0", "D00.0") |
         # C97.9 - C99: No existe
         between(cie10_cod, "D01.4", "D01.9") |
@@ -1113,20 +1180,17 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "D36.9", "D37.0") |
         between(cie10_cod, "D37.6", "D37.9") |
         between(cie10_cod, "D38.6", "D39.0") |
-        between(cie10_cod, "D48.7", "D48.9") |
-        # D49: No existe
         cie10_cod %in%
           c(
             "C22.9",
-            "C55.0",
+            "C55.0", # C55: No tiene decimales
             "C57.9",
             "C63.9",
             "C68.9",
-            "C83.9",
-            "C85.1",
-            "C85.9",
-            # C87: No existe
-            "C94.6",
+            "C83.9", # GBD-2023
+            "C85.1", # GBD-2023
+            "C85.9", # GBD-2023
+            "C94.6", # GBD-2023
             "D02.4",
             # D02.5 - D02.9: No existe
             "D07.3",
@@ -1150,16 +1214,16 @@ recod_defun <- recod_defun |>
             "D48.7",
             "D48.8",
             "D48.9"
-          ) |
-        between(cie10_cod, "N84.2", "N84.8") ~ "GC3-ENT:NPL",
+            # D49: No existe
+            # D54: No existe
+          ) ~ "GC3-ENT:NPL",
 
-      ### GC3: ECV -----
-      cie10_cod %in%
-        # I03 - I04: No existe
-        # I14: No existe
-        # I16 - I19: No existe
-        # I29: No existe
-        between(cie10_cod, "I44.0", "I45.9") |
+      ### GC3: Cardiovasculares -----
+      # I03 - I04: No existe
+      # I14: No existe
+      # I16 - I19: No existe
+      # I29: No existe
+      between(cie10_cod, "I44.0", "I45.9") |
         # I44.8 - I44.9: No existe
         between(cie10_cod, "I49.0", "I49.9") |
         between(cie10_cod, "I51.6", "I52.8") |
@@ -1169,13 +1233,13 @@ recod_defun <- recod_defun |>
         # I98.4: No existe
         cie10_cod %in% c("I00.0", "I98.8", "I99.0") ~ "GC3-ENT:ECV",
 
-      ### GC3: CRD -----
+      ### GC3: Respiratorias crónicas -----
       cie10_cod %in%
         c(
           "J40.0", # J40: No tiene decimales
           "J47.0",
           # J48 - J59: No existe
-          "J65.0",
+          "J65.0", # GBD-2023
           # J71 - J79: No existe
           # J81.9: No existe
           # J83: No existe
@@ -1191,7 +1255,7 @@ recod_defun <- recod_defun |>
       ### GC3: Diabetes mellitus -----
       # E08: No existe
 
-      ### GC3: Otras ENT -----
+      ### GC3: Otras ENT----
       # D79: No existe
       between(cie10_cod, "D80.0", "D84.9") |
         # D85: No existe
@@ -1199,6 +1263,7 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "D89.8", "D89.9") |
         # D90 - D99: No existe
         between(cie10_cod, "E07.8", "E07.9") |
+        # E08: No existe
         # E17 - E19: No existe
         between(cie10_cod, "E34.9", "E35.8") |
         # E36 - E39: No existe
@@ -1206,10 +1271,11 @@ recod_defun <- recod_defun |>
         # E62: No existe
         # E69: No existe
         # E91 - E99: No existe
-        between(cie10_cod, "F04.0", "F07.0") |
-        between(cie10_cod, "F07.8", "F09.9") |
+        between(cie10_cod, "F04.0", "F07.0") | # GBD-2023
+        between(cie10_cod, "F07.8", "F09.9") | # GBD-2023
         # F08: No existe
-        between(cie10_cod, "F50.8", "F99.9") |
+        between(cie10_cod, "F20.0", "F50.0") | # GBD-2023
+        between(cie10_cod, "F50.8", "F99.0") | # GBD-2023
         between(cie10_cod, "G21.4", "G22.0") |
         # G27 - G29: No existe
         # G33 - G34: No existe
@@ -1223,6 +1289,7 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "G96.0", "G96.9") |
         between(cie10_cod, "K21.0", "K21.9") |
         # K32 - K34: No existe
+        # K39: No existe
         # K47 - K49: No existe
         # K53 - K54: No existe
         between(cie10_cod, "K63.0", "K63.4") |
@@ -1237,13 +1304,15 @@ recod_defun <- recod_defun |>
         # L09: No existe
         # L15 - L19: No existe
         # L31 - L39: No existe
+        # L69: No existe
         # L76 - L79: No existe
         # N09: No existe
         between(cie10_cod, "N13.0", "N13.5") |
         between(cie10_cod, "N13.7", "N13.9") |
         # N24: No existe
         between(cie10_cod, "N28.8", "N28.9") |
-        between(cie10_cod, "N39.9", "N40.9") |
+        between(cie10_cod, "N39.9", "N40.0") |
+        between(cie10_cod, "N84.2", "N84.8") |
         # N54 - N59: No existe
         # N65 - N69: No existe
         # N78 - N79: No existe
@@ -1255,7 +1324,7 @@ recod_defun <- recod_defun |>
         # Q19: No existe
         # Q29: No existe
         # Q46-Q49: No existe
-        # Q57-Q59: No existe
+        # Q57: No existe
         # Q88: No existe
         # Q94: No existe
         cie10_cod %in%
@@ -1264,116 +1333,23 @@ recod_defun <- recod_defun |>
             "E34.0",
             "E87.7",
             "E90.0",
+            "F50.8",
+            "F50.9",
             "G09.0", # G09: No tiene decimales
             # G15 - G19: No existe
             "G21.2",
-            "G98.0", # G98: No tiene decimales
+            "G98.0", # G98 no tiene decimales
             "K22.7",
             "K31.9",
             "K92.9",
+            # N38: No existe
             "Q89.9",
             "Q99.9"
           ) ~ "GC3-ENT:Otras ENT",
 
-      ### GC3: CMNNN -----
-      between(cie10_cod, "A31.0", "A31.9") |
-        between(cie10_cod, "A42.0", "A44.9") |
-        between(cie10_cod, "B17.8", "B17.9") |
-        between(cie10_cod, "B19.2", "B19.9") |
-        between(cie10_cod, "B37.0", "B46.9") |
-        between(cie10_cod, "B55.1", "B55.9") |
-        between(cie10_cod, "B58.0", "B59.9") |
-        between(cie10_cod, "O08.0", "O08.9") |
-        # O17-O19: No existe
-        # O27: No existe
-        # O37-O39: No existe
-        # O49-O59: No existe
-        # O78-O79: No existe
-        # O93: No existe
-        between(cie10_cod, "O94.0", "O95.0") | # 095: No tiene decimales
-        between(cie10_cod, "R00.0", "R01.2") |
-        between(cie10_cod, "R07.1", "R07.9") |
-        between(cie10_cod, "R31.0", "R31.9") |
-        cie10_cod %in%
-          c(
-            "A49.2",
-            "A64.0",
-            "A99.0",
-            "B17.1",
-            "B19.0",
-            "B49.0",
-            "B89.0",
-            "B94.2",
-            "J02.9",
-            "J03.9",
-            "J04.3",
-            "J06.9",
-            "P96.9"
-          ) ~ "GC3-CMNN",
-
-      ### Valor por defecto
-      .default = paso1
-    )
-  )
-
-
-## GC4 -----
-recod_defun <- recod_defun |>
-  mutate(
-    paso1 = case_when(
-      ### GC4: Diabetes mellitus -----
-      between(cie10_cod, "E12.0", "E12.1") |
-        between(cie10_cod, "E12.3", "E13.1") |
-        between(cie10_cod, "E13.3", "E14.1") |
-        between(cie10_cod, "E14.3", "E14.9") |
-        between(cie10_cod, "R73.0", "R73.9") ~ "GC4-ENT:DM",
-
-      ### GC4: ECV -----
-      between(cie10_cod, "I69.4", "I69.8") |
-        cie10_cod %in%
-          c(
-            "I37.9",
-            "I42.0",
-            "I42.9",
-            "I51.5",
-            "I64.0", # I64: No tiene decimales
-            "I67.8",
-            "I67.9",
-            "I68.8"
-            # I69.9: No existe
-          ) ~ "GC4-ENT:ECV",
-
-      ### GC4: CRD -----
-      cie10_cod == "J64.0" ~ "GC4-ENT:CRD", # J64: No tiene decimales
-
-      ### GC4: Neoplasias -----
-      between(cie10_cod, "C91.4", "C91.5") |
-        between(cie10_cod, "C91.7", "C91.9") |
-        between(cie10_cod, "C92.7", "C92.9") |
-        between(cie10_cod, "C93.5", "C93.7") |
-        cie10_cod %in%
-          c(
-            "C69.9",
-            "C91.1",
-            "C93.2",
-            "C93.9"
-          ) ~ "GC4-ENT:NPL",
-
-      ### GC4: Accidentes de tránsito -----
-      between(cie10_cod, "V87.0", "V87.1") |
-        between(cie10_cod, "V87.4", "V87.9") |
-        between(cie10_cod, "V89.0", "V89.9") ~ "GC4-CE:AT",
-
-      ### GC4: Suicidio -----
-      between(cie10_cod, "X84.0", "X84.9") ~ "GC4-CE:SH",
-
-      ### GC4: VI -----
-      between(cie10_cod, "Y09.0", "Y09.9") ~ "GC4-CE:VI",
-
-      # "B16.9, B64, B82-B82.9, B83.9, , E12-E14.9, G00,
-      #  G00.9-G02.8, G03.9, , J07-J08, J15.9, J17-J19.6,
-      #   J22-J29, P23, P23.5-P23.9, P37.3-P37.4, R73-R73.9, ,
-      # V99-V99.0, Y85-Y85.9"
+      ### GC3: Suicidio ----
+      between(cie10_cod, "X64.0", "X64.9") |
+        between(cie10_cod, "X69.0", "X69.9") ~ "GC3-CE:SH",
 
       ### Valor por defecto
       .default = paso1
