@@ -3,7 +3,6 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 13-08-2026 10:11
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -53,18 +52,19 @@ tab_fmt <- function(x) {
 
 
 # Paletas colorblind-friendly ----------------------------------------------
-pal <- c4a(palette = "managua", n = 10, reverse = TRUE) |>
+pal <- c4a(palette = "managua", n = 11, reverse = TRUE) |>
   set_names(c(
-    "DM",
+    "NPL",
     "ECV",
     "CRD",
-    "NPL",
-    "OENT",
-    "AT",
-    "SH",
-    "VI",
-    "OCE",
-    "CMNN"
+    "DM-CKD",
+    "OTR-ENT",
+    "TRA",
+    "SH-VI",
+    "LES-NOINT",
+    "INF",
+    "MAT-NEO",
+    "NUT"
   ))
 
 
@@ -98,14 +98,15 @@ datos_gc <- import(here("clean", "arg_defun_recod_2010_2023.rds")) |>
     )
   ) |>
 
-  # Modificar niveles paso1
-  mutate(
-    paso1 = if_else(
-      str_detect(paso1, "GC3|GC4") & paso1 != "GC4-NNE",
-      str_remove(paso1, "-.*"),
-      paso1
+  # Modificar niveles GC
+  mutate(across(
+    .cols = contains("paso"),
+    .fns = ~ if_else(
+      str_detect(.x, "GC") & .x != "GC4:NNE",
+      str_remove(.x, ":.*"),
+      .x
     )
-  )
+  ))
 
 
 # Figura 1 ---------------------------------------------------------------
@@ -141,7 +142,7 @@ fig1 <- grViz(
     <td width="250"><b>ENT objetivo</b></td>
     </tr>
     <tr>
-    <td> Diabetes mellitus (DM) </td>
+    <td> Diabetes y renales crónicas (DM-CKD) </td>
     </tr>
     <tr>
     <td> Enf. cardiovasculares (ECV) </td>
@@ -161,14 +162,11 @@ fig1 <- grViz(
     <td width="250"><b>CE objetivo</b></td>
     </tr>
     <tr>
-    <td> Accidentes de tránsito (AT) </td>
+    <td> Accidentes de tránsito (TRA) </td>
     </tr>
     <tr>
-    <td> Suicidio (SH) </td>
-    </tr>
-    <tr>
-    <td> Violencia interpersonal (VI) </td>
-    </tr>
+    <td> Suicidio y violencias (SH-VI) </td>
+    </tr>    
     </table>
     >]
   
@@ -181,10 +179,10 @@ fig1 <- grViz(
     <td> CMNN </td>
     </tr>
     <tr>
-    <td> Otras CE </td>
+    <td> Lesiones no intencionales (LES-NOINT) </td>
     </tr>
     <tr>
-    <td> Otras ENT</td>
+    <td> Otras ENT (OTR-ENT) </td>
     </tr>
     </table>
     >]
@@ -225,7 +223,7 @@ fig1 <- grViz(
     <td width="250"><b>ENT objetivo</b></td>
     </tr>
     <tr>
-    <td> DM </td>
+    <td> DM-CKD </td>
     </tr>
     <tr>
     <td> ECV </td>
@@ -245,15 +243,12 @@ fig1 <- grViz(
     <td width="250"><b>CE objetivo</b></td>
     </tr>
     <tr>
-    <td> AT </td>
+    <td> TRA </td>
     </tr>
     <tr>
-    <td> SH </td>
+    <td> SH-VI </td>
     </tr>
-    <tr>
-    <td> VI </td>
-    </tr>
-    </table>
+       </table>
     >]
   
     otras2[label = <
@@ -265,10 +260,10 @@ fig1 <- grViz(
     <td port = "cmnn"> CMNN </td>
     </tr>
     <tr>
-    <td> Otras CE </td>
+    <td> LES-NOINT </td>
     </tr>
     <tr>
-    <td> Otras ENT</td>
+    <td> OTR-ENT</td>
     </tr>
     </table>
     >]
@@ -303,7 +298,7 @@ fig1 <- grViz(
     <td width="250"><b>ENT objetivo</b></td>
     </tr>
     <tr>
-    <td> DM </td>
+    <td> DM-CKD </td>
     </tr>
     <tr>
     <td> ECV + GC2-ECV</td>
@@ -323,13 +318,10 @@ fig1 <- grViz(
     <td width="250"><b>CE objetivo + GC2-CE*</b></td>
     </tr>
     <tr>
-    <td> AT </td>
+    <td> TRA </td>
     </tr>
     <tr>
-    <td> SH </td>
-    </tr>
-    <tr>
-    <td> VI </td>
+    <td> SH-VI </td>
     </tr>
     </table>
     >]
@@ -343,10 +335,10 @@ fig1 <- grViz(
     <td> CMNN </td>
     </tr>
     <tr>
-    <td> Otras CE + GC2-CE*</td>
+    <td> LES-NOINT + GC2-CE*</td>
     </tr>
     <tr>
-    <td> Otras ENT</td>
+    <td> OTR-ENT</td>
     </tr>
     </table>
     >]
@@ -378,7 +370,7 @@ fig1 <- grViz(
     <td width="250"><b>ENT objetivo</b></td>
     </tr>
     <tr>
-    <td> DM </td>
+    <td> DM-CKD </td>
     </tr>
     <tr>
     <td> ECV</td>
@@ -398,13 +390,10 @@ fig1 <- grViz(
     <td width="250"><b>CE objetivo + GC1-CE*</b></td>
     </tr>
     <tr>
-    <td> AT </td>
+    <td> TRA </td>
     </tr>
     <tr>
-    <td> SH </td>
-    </tr>
-    <tr>
-    <td> VI </td>
+    <td> SH-VI </td>
     </tr>
     </table>
     >]
@@ -418,10 +407,10 @@ fig1 <- grViz(
     <td port = "cmnn"> CMNN </td>
     </tr>
     <tr>
-    <td> Otras CE + GC1-CE*</td>
+    <td> LES-NOINT + GC1-CE*</td>
     </tr>
     <tr>
-    <td> Otras ENT</td>
+    <td> OTR-ENT</td>
     </tr>
     </table>
     >]
@@ -465,9 +454,9 @@ tab1 <- tibble(
     "Jurisdicción",
     "Sexo",
     "Grupo etario",
+    "Grupo nivel 1",
+    "Grupo nivel 2",
     "Causa básica de muerte",
-    "Grupo de causas",
-    "Subgrupo de causas",
     "Número de muertes"
   ),
   Descripción = c(
@@ -476,9 +465,9 @@ tab1 <- tibble(
     "Nivel de agregación jurisdiccional definido por la DEIS para resguardar la confidencialidad de los datos",
     "Sexo consignado en el acta de defunción",
     "Categorías de edad agrupadas según criterios de la DEIS",
+    "Clasificación de causas según grandes grupos del GBD-2023",
+    "Clasificación de causas según grupos nivel 2 del GBD-2023",
     "Causa básica de muerte codificada a cuatro dígitos según la CIE-10",
-    "Clasificación de causas según grandes grupos del GBD-2019",
-    "Clasificación de causas según grupos nivel 2 del GBD-2019",
     "Cantidad anual de defunciones según región, jurisdicción, sexo, grupo etario y causa básica de muerte"
   ),
   Valores = c(
@@ -487,9 +476,9 @@ tab1 <- tibble(
     paste(levels(datos_gc$jurisd_deis), collapse = "; "),
     "Masculino; Femenino",
     paste(levels(datos_gc$grupo_edad), collapse = "; "),
-    "A00.0-Z99.9",
     "CMNN; ENT; CE; GC",
-    "CMNN; DM; ECV; CRD; NPL; OENT; AT; SH; VI; OCE; GC1; GC2; GC3; GC4; NNE",
+    "INF; MAT-NEO; NUT; NPL; ECV; CRD; DM-CKD; OTR-ENT; TRA; SH-VI; LES-NOINT; GC1; GC2; GC3; GC4; NNE",
+    "A00.0-Z99.9",
     "Conteo de defunciones"
   )
 ) |>
@@ -538,46 +527,37 @@ tab1 <- tibble(
 ## Función auxiliar -----
 treeplot_data <- function(data, var) {
   data |>
-    mutate(
-      grupo_causa = case_when(
-        {{ var }} %in% c("DM", "ECV", "CRD", "NPL", "OENT") ~ "ENT",
-        {{ var }} %in% c("AT", "SH", "VI", "OCE") ~ "CE",
-        str_detect({{ var }}, "GC") ~ "GC",
-        .default = {{ var }}
-      ),
-      fill_id = {{ var }}
+    separate(
+      {{ var }},
+      into = c("nivel1", "nivel2"),
+      sep = ":",
+      fill = "left"
     ) |>
-    count(grupo_causa, fill_id, wt = n) |>
+    mutate(
+      nivel1 = if_else(is.na(nivel1) | nivel1 == "GC4", "GC", nivel1)
+    ) |>
+    count(nivel1, nivel2, wt = n) |>
     mutate(pct = n / sum(n)) |>
     mutate(
-      grupo_causa = if_else(
-        grupo_causa == "CE",
-        paste0(
-          grupo_causa,
-          "\n(",
-          percent(sum(pct), accuracy = .1, decimal.mark = ","),
-          ")"
-        ),
-        paste0(
-          grupo_causa,
-          " (",
-          percent(sum(pct), accuracy = .1, decimal.mark = ","),
-          ")"
-        )
+      nivel1 = paste0(
+        nivel1,
+        " (",
+        percent(sum(pct), accuracy = .1, decimal.mark = ","),
+        ")"
       ),
-      .by = grupo_causa
+      .by = nivel1
     )
 }
 
 ## Panel 1 -----
 g1 <- datos_gc |>
-  treeplot_data(var = paso1) |>
+  treeplot_data(var = n2_paso1) |>
 
   # Generar plot
   ggplot(aes(
     area = pct,
-    subgroup = grupo_causa,
-    fill = fill_id
+    subgroup = nivel1,
+    fill = nivel2
   )) +
   labs(subtitle = "Paso 1") +
   theme(
@@ -588,13 +568,13 @@ g1 <- datos_gc |>
 
 ## Panel 2 -----
 g2 <- datos_gc |>
-  treeplot_data(var = paso2a) |>
+  treeplot_data(var = n2_paso2a) |>
 
   # Generar plot
   ggplot(aes(
     area = pct,
-    subgroup = grupo_causa,
-    fill = fill_id
+    subgroup = nivel1,
+    fill = nivel2
   )) +
   labs(subtitle = "Paso 2A") +
   theme(
@@ -605,13 +585,13 @@ g2 <- datos_gc |>
 
 ## Panel 3 -----
 g3 <- datos_gc |>
-  treeplot_data(var = paso2b) |>
+  treeplot_data(var = n2_paso2b) |>
 
   # Generar plot
   ggplot(aes(
     area = pct,
-    subgroup = grupo_causa,
-    fill = fill_id
+    subgroup = nivel1,
+    fill = nivel2
   )) +
   labs(subtitle = "Paso 2B") +
   theme(
@@ -622,13 +602,13 @@ g3 <- datos_gc |>
 
 ## Panel 4 -----
 g4 <- datos_gc |>
-  treeplot_data(var = paso4) |>
+  treeplot_data(var = n2_paso4) |>
 
   # Generar plot
   ggplot(aes(
     area = pct,
-    subgroup = grupo_causa,
-    fill = fill_id
+    subgroup = nivel1,
+    fill = nivel2
   )) +
   guides(fill = guide_legend(nrow = 1)) +
   labs(subtitle = "Pasos 3-4") +
@@ -649,17 +629,15 @@ fig2 <- g1 /
   geom_treemap(alpha = .9) &
   geom_treemap_text(
     aes(
-      label = case_when(
-        pct < .01 | fill_id == "CMNN" ~ "",
-        pct >= .009 ~
-          paste0(
-            fill_id,
-            " (",
-            percent(pct, accuracy = .1, decimal.mark = ","),
-            ")"
-          ),
-
-        .default = percent(pct, accuracy = .1, decimal.mark = ",")
+      label = if_else(
+        pct < 0.01,
+        "",
+        paste0(
+          nivel2,
+          " (",
+          percent(pct, accuracy = .1, decimal.mark = ","),
+          ")"
+        )
       )
     ),
     place = "topright",
