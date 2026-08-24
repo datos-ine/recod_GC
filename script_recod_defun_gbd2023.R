@@ -1,12 +1,14 @@
-### Mortalidad por códigos garbage en Argentina (2010–2023):
-### redistribución hacia causas específicas
-### Limpieza del dataset: Defunciones Generales Mensuales ocurridas y registradas en la
-### República Argentina (MSAL-DEIS, 2010-2023)
-### Recategorización de causas de muerte, reasignación y redistribución de códigos garbage
-### según Teixeira et al. (2021), Soares Filho et al. (2024) y GBD-2023
+### Mortalidad por códigos garbage en Argentina (2010-2023)
+### Redistribución hacia causas específicas
+### Limpieza del dataset:
+# Defunciones Generales Mensuales ocurridas y registradas en la
+# República Argentina (MSAL-DEIS, 2010-2023)
+### Asignación de códigos CIE-10 a grupos de causas nivel 1 y 2 según GBD-2023
+### Recategorización y redistribución de códigos garbage
+### según Teixeira et al. (2021) y Soares Filho et al. (2024).
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 21-08-2026 14:21
+# Última modificación: 24-08-2026 08:22
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -1604,7 +1606,6 @@ recod_defun <- recod_defun |>
 
 # Paso 4: Redistribuir GC1 -----------------------------------------------
 set.seed(123)
-
 recod_defun <- recod_defun |>
   mutate(
     paso4 = {
@@ -1613,7 +1614,7 @@ recod_defun <- recod_defun |>
       ## Recategorizar GC1-ERC -----
       out[cie10_cod == "J96.1"] <- "ENT:CRD"
 
-      ## Redistribuir GC1 Suicidio, homicidio, otras CE -----
+      ## Redistribuir GC1 SH-VI, LES-NI -----
       idx <- which(gc_red == "GC1:CE")
 
       if (length(idx) > 0) {
@@ -1689,7 +1690,16 @@ datos_gc <- recod_defun |>
 
 # Crear dataset para análisis EM -----------------------------------------
 datos_em <- recod_defun |>
+  # Filtrar datos de 2023
+  filter_out(anio == 2023) |>
+
+  # Filtrar datos con mes 0
+  filter_out(mes == 0) |>
+
+  # Separar paso 4 en grupos de causas nivel 1 y nivel 2
   separate(paso4, into = c("nivel1", "nivel2"), sep = ":") |>
+
+  # Agrupar datos
   count(
     anio,
     mes,
@@ -1704,10 +1714,10 @@ datos_em <- recod_defun |>
 
 # Guardar datos ----------------------------------------------------------
 ### Análisis GC -----
-export(datos_gc, "clean/arg_defun_recodgbd23_2010_2023.rds")
+export(datos_gc, "clean/recod_gbd23_arg_defun_2010-2023.rds")
 
 ### Análisis EM ----
-export(datos_em, "../EM_ENT_CE/raw/arg_defun_mes_recod.rds")
+export(datos_em, "../EM_ENT_CE/raw/recod_gbd23_arg_defun_mes_2010-2022.rds")
 
 ### Limpiar environment -----
 rm(list = ls())
