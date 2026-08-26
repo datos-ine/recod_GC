@@ -1,4 +1,0 @@
-population_group_id,population_group_name,measure_id,measure_name,location_id,location_name,sex_id,sex_name,age_id,age_name,cause_id,cause_name,metric_id,metric_name,year,val,upper,lower
-1,Toda la población,1,Muertes,1,Mundo,3,Ambos,22,Todas las edades,295,"Enfermedades contagiosas, maternas, neonatales y de la nutrición",2,Porcentaje,2023,0.17279092134840832,0.18471331550610892,0.16318424349840907
-1,Toda la población,1,Muertes,1,Mundo,3,Ambos,22,Todas las edades,687,Lesiones,2,Porcentaje,2023,0.08117737055380139,0.08828478236583202,0.07242928242111568
-1,Toda la población,1,Muertes,1,Mundo,3,Ambos,22,Todas las edades,409,Enfermedades que no son contagiosas,2,Porcentaje,2023,0.7460317080977905,0.7556660110639154,0.7360776223643495

@@ -1,3 +1,7 @@
+### Comparación categorías nivel 2: GBD-2017 y GBD-2023
+### Autora: Tamara Ricardo
+# Última modificación: 24-08-2026 13:21
+
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
   rio,
@@ -7,9 +11,9 @@ pacman::p_load(
 
 
 # Cargar datos -----------------------------------------------------------
-## GBD-2019 -----
-gbd19_raw <- import(
-  "extra/IHME_GBD_2019_COD_CAUSE_ICD_CODE_MAP_Y2020M10D15.XLSX",
+## GBD-2017 -----
+gbd17_raw <- import(
+  "extra/IHME_GBD_2017_ICD_CAUSE_MAP_CAUSES_OF_DEATH_Y2018M11D08.XLSX",
   skip = 1
 )
 
@@ -30,7 +34,7 @@ clean_gbd <- function(x) {
     # Descartar códigos CIE9
     select(-3) |>
 
-    # Seleccionar causas nivel 2 y 3
+    # Seleccionar causas nivel 2
     filter(
       cause %in%
         c(
@@ -48,18 +52,13 @@ clean_gbd <- function(x) {
           "Neurological disorders",
           "Mental disorders",
           "Substance use disorders",
-          "Diabetes mellitus",
-          "Chronic kidney disease",
+          "Diabetes and kidney diseases",
           "Skin and subcutaneous diseases",
           "Musculoskeletal disorders",
           "Other non-communicable diseases",
-          "Road injuries",
-          "Other transport injuries",
+          "Transport injuries",
           "Unintentional injuries",
-          "Self-harm",
-          "Interpersonal violence",
-          "Conflict and terrorism",
-          "Police conflict and executions",
+          "Self-harm and interpersonal violence",
           "Garbage Code (GBD Level 1)",
           "Garbage Code (GBD Level 2)",
           "Garbage Code (GBD Level 3)",
@@ -73,27 +72,30 @@ clean_gbd <- function(x) {
 
 
 # Limpiar datos ----------------------------------------------------------
-gbd19 <- clean_gbd(gbd19_raw)
+gbd17 <- clean_gbd(gbd17_raw)
 
 gbd23 <- clean_gbd(gbd23_raw)
 
 ## Códigos añadidos y removidos 2023 -----
 gbd <- full_join(
-  gbd23,
-  gbd19 |> rename(cause19 = cause)
+  gbd17 |> rename(causa17 = cause),
+  gbd23 |> rename(causa23 = cause)
 ) |>
 
   mutate(
     cat = case_when(
-      is.na(cause) ~ "Removed 2023",
-      is.na(cause19) ~ "Added 2023",
-      cause != cause19 ~ "Recoded 2023",
-      .default = "Unchanged"
+      causa17 == causa23 ~ "Sin cambios",
+      is.na(causa23) ~ "Quitado 2023",
+      is.na(causa17) ~ "Añadido 2023",
+      .default = "Modificado 2023"
     )
   ) |>
 
-  select(contains("cau"), cat, icd10)
+  select(icd10, everything())
 
 
 # Guardar datos ----------------------------------------------------------
-export(gbd, "clean/codigos_gbd_19_23.xlsx")
+export(gbd, "extra/codigos_gbd_17_23.xlsx")
+
+## Limpiar environment -----
+rm(list = ls())

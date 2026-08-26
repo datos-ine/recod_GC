@@ -1139,7 +1139,7 @@ recod_defun <- recod_defun |>
         between(cie10_cod, "K63.8", "K63.9") |
         # K69: No existe
         between(cie10_cod, "K70.4", "K70.9") |
-        # K78 - K79: No existe
+
         # K84: No existe
         # K88 - K89: No existe
         cie10_cod == "K92.9" |
