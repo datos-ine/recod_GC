@@ -1,6 +1,6 @@
-### Comparación categorías nivel 2: GBD-2017 y GBD-2023
+### Comparación categorías nivel 2: GBD-2019 y GBD-2023
 ### Autora: Tamara Ricardo
-# Última modificación: 24-08-2026 13:21
+# Última modificación: 03-09-2026 14:49
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -11,9 +11,9 @@ pacman::p_load(
 
 
 # Cargar datos -----------------------------------------------------------
-## GBD-2017 -----
-gbd17_raw <- import(
-  "extra/IHME_GBD_2017_ICD_CAUSE_MAP_CAUSES_OF_DEATH_Y2018M11D08.XLSX",
+## GBD-2019 -----
+gbd19_raw <- import(
+  "extra/IHME_GBD_2019_COD_CAUSE_ICD_CODE_MAP_Y2020M10D15.XLSX",
   skip = 1
 )
 
@@ -72,21 +72,21 @@ clean_gbd <- function(x) {
 
 
 # Limpiar datos ----------------------------------------------------------
-gbd17 <- clean_gbd(gbd17_raw)
+gbd19 <- clean_gbd(gbd19_raw)
 
 gbd23 <- clean_gbd(gbd23_raw)
 
 ## Códigos añadidos y removidos 2023 -----
 gbd <- full_join(
-  gbd17 |> rename(causa17 = cause),
+  gbd19 |> rename(causa19 = cause),
   gbd23 |> rename(causa23 = cause)
 ) |>
 
   mutate(
     cat = case_when(
-      causa17 == causa23 ~ "Sin cambios",
+      causa19 == causa23 ~ "Sin cambios",
       is.na(causa23) ~ "Quitado 2023",
-      is.na(causa17) ~ "Añadido 2023",
+      is.na(causa19) ~ "Añadido 2023",
       .default = "Modificado 2023"
     )
   ) |>
@@ -95,7 +95,7 @@ gbd <- full_join(
 
 
 # Guardar datos ----------------------------------------------------------
-export(gbd, "extra/codigos_gbd_17_23.xlsx")
+export(gbd, "extra/codigos_gbd_19_23.xlsx")
 
 ## Limpiar environment -----
 rm(list = ls())

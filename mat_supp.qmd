@@ -120,13 +120,13 @@ tabs2 |>
 ```
 
 \newpage
-## Tabla S3. Principales códigos garbage de nivel 1 y 2 (GC1-GC2) registrados como causa básica de defunción en Argentina (2010-2023).
+## Tabla S2. Principales códigos garbage de nivel 1 y 2 (GC1-GC2) registrados como causa básica de defunción en Argentina (2010-2023).
 
 ```{r}
-#| id: Tabla S3
+#| id: Tabla S2
 tabs2 <- datos_gc |>
   # Filtrar GC1-GC2
-  filter(n2_paso1 %in% c("GC1", "GC2")) |>
+  filter(gbd_paso1 %in% c("GC:GC1", "GC:GC2")) |>
 
   # Reagrupar niveles
   mutate(
@@ -175,52 +175,40 @@ tabs2 |>
 ```
 
 \newpage
-## Tabla S4. Cambios en las frecuencias de muertes por causas definidas durante los distintos pasos de redistribución de códigos garbage (GC), Argentina (2010-2023).
+## Tabla S3. Cambios en las frecuencias de muertes por causas definidas durante los distintos pasos de redistribución de códigos garbage (GC), Argentina (2010-2023).
 
 ```{r}
-#| id: Tabla S4
+#| id: Tabla S3
 # Datos para la tabla -----
 tabs3 <- datos_gc |>
 
-  # Modificar grupo causa
-  separate(n2_paso1, into = c("n1", "n2"), sep = ":", fill = "left") |>
-  mutate(g1)
-# mutate(
-#   grupo_causa = case_when(
-#     m2_paso1 %in% c("DM", "ECV", "ERC", "NPL", "OENT") ~ "ENT",
-#     n2_paso1 %in% c("TRA", "SU", "HO", "OCE") ~ "CE",
-#     str_detect(paso1, "GC") ~ "GC",
-#     .default = paso1
-#   ) |>
-#     fct_relevel("ENT")
-# ) |>
-
-# Frecuencias iniciales
-count(grupo_causa, causa = paso1, wt = n, name = "n1") |>
+  # Frecuencias iniciales
+  count(causa = gbd_paso1, wt = n, name = "n1") |>
 
   # Añadir frecuencias paso 2
   left_join(
     datos_gc |>
-      # Frecuencias por grupo
-      count(causa = paso2b, wt = n, name = "n2")
+      count(causa = gbd_paso2b, wt = n, name = "n2")
   ) |>
 
   # Añadir frecuencias paso 3
   left_join(
     datos_gc |>
-      # Frecuencias por grupo
-      count(causa = paso3, wt = n, name = "n3")
+      count(causa = gbd_paso3, wt = n, name = "n3")
   ) |>
 
   # Añadir frecuencias paso 4
   left_join(
     datos_gc |>
       # Frecuencias por grupo
-      count(causa = paso4, wt = n, name = "n4")
+      count(causa = gbd_paso4, wt = n, name = "n4")
   ) |>
 
   # Cambio absoluto
-  mutate(razon = number(n4 / n1, accuracy = .1, decimal.mark = ","))
+  mutate(razon = number(n4 / n1, accuracy = .1, decimal.mark = ",")) |>
+
+  # Separar en grupo de causa y causa
+  separate(causa, into = c("grupo_causa", "causa"), sep = ":")
 
 
 # Tabla -----
@@ -288,10 +276,10 @@ tabs3 |>
 ```
 
 \newpage
-## Figura S5. Distribución regional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
+## Figura S4. Distribución regional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
 
 ```{r}
-#| id: Figura S5
+#| id: Figura S4
 figs4 <- bind_rows(tasa_gc_arg, tasa_gc_reg) |>
   # Gráfico
   ggplot(aes(x = value, y = nivel, fill = nivel)) +
@@ -332,10 +320,10 @@ figs4
 
 
 \newpage
-## Figura S6. Distribución jurisdiccional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
+## Figura S5. Distribución jurisdiccional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
 
 ```{r}
-#| id: Figura S6
+#| id: Figura S5
 figs5 <- tasa_gc_jur |>
   # Gráfico
   ggplot(aes(x = value, y = nivel, fill = nivel)) +
@@ -375,10 +363,10 @@ figs5
 ```
 
 \newpage
-## Figura S7. Evolución temporal de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad según región, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
+## Figura S6. Evolución temporal de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad según región, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
 
 ```{r}
-#| id: Figura S7
+#| id: Figura S6
 # Datos para el gráfico -----
 mod_gc <- datos_jp |>
   filter(is.na(jurisd_deis)) |>
@@ -396,10 +384,10 @@ mod_gc <- datos_jp |>
 figs6 <- mod_gc |>
   gg_jpoint(
     facets = "grid",
-    psize = 1.5,
-    cbpal = "managua"
+    psize = 1.5
   ) +
   scale_y_continuous(name = "log-tasa", n.breaks = 4) +
+  scale_color_manual(values = c4a(palette = "managua", n = 4)) +
   theme(
     legend.position = "none",
     panel.spacing.y = unit(.75, "lines")
@@ -408,9 +396,9 @@ figs6 <- mod_gc |>
 figs6
 ```
 
-## Figura S8. Evolución temporal de las tasas de mortalidad por códigos garbage nivel 1 (GC1) estandarizadas por edad según jurisdicción, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
+## Figura S7. Evolución temporal de las tasas de mortalidad por códigos garbage nivel 1 (GC1) estandarizadas por edad según jurisdicción, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
 ```{r}
-#| id: Figura S8
+#| id: Figura S7
 # Datos para el gráfico -----
 mod_gc1 <- datos_jp |>
   filter(!is.na(jurisd_deis) & nivel == "GC1") |>
@@ -432,6 +420,7 @@ figs7 <- mod_gc1 |>
     cbpal = "managua"
   ) +
   scale_y_continuous(name = "log-tasa", n.breaks = 4) +
+  scale_color_manual(values = rep("#D28C50", 16)) +
   theme(
     legend.position = "none",
     panel.spacing.y = unit(.75, "lines")
@@ -441,9 +430,9 @@ figs7
 ```
 
 \newpage
-## Figura S9. Evolución temporal de las tasas de mortalidad por códigos garbage nivel 2 (GC2) estandarizadas por edad según jurisdicción, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
+## Figura S8. Evolución temporal de las tasas de mortalidad por códigos garbage nivel 2 (GC2) estandarizadas por edad según jurisdicción, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
 ```{r}
-#| id: Figura S9
+#| id: Figura S8
 # Datos para el gráfico -----
 mod_gc2 <- datos_jp |>
   filter(!is.na(jurisd_deis) & nivel == "GC2") |>
@@ -461,10 +450,10 @@ mod_gc2 <- datos_jp |>
 figs8 <- mod_gc2 |>
   gg_jpoint(
     facets = "wrap",
-    psize = 1.5,
-    cbpal = "managua"
+    psize = 1.5
   ) +
   scale_y_continuous(name = "log-tasa", n.breaks = 4) +
+  scale_color_manual(values = rep("#7B3539", 16)) +
   theme(
     legend.position = "none",
     panel.spacing.y = unit(.75, "lines")
@@ -474,9 +463,9 @@ figs8
 ```
 
 \newpage
-## Figura S10. Evolución temporal de las tasas de mortalidad por códigos garbage nivel 3 (GC3) estandarizadas por edad según jurisdicción, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
+## Figura S9. Evolución temporal de las tasas de mortalidad por códigos garbage nivel 3 (GC3) estandarizadas por edad según jurisdicción, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
 ```{r}
-#| id: Figura S10
+#| id: Figura S9
 # Datos para el gráfico -----
 mod_gc3 <- datos_jp |>
   filter(!is.na(jurisd_deis) & nivel == "GC3") |>
@@ -494,10 +483,10 @@ mod_gc3 <- datos_jp |>
 figs9 <- mod_gc3 |>
   gg_jpoint(
     facets = "wrap",
-    psize = 1.5,
-    cbpal = "managua"
+    psize = 1.5
   ) +
   scale_y_continuous(name = "log-tasa", n.breaks = 4) +
+  scale_color_manual(values = rep("#4C4077", 16)) +
   theme(
     legend.position = "none",
     panel.spacing.y = unit(.75, "lines")
@@ -507,9 +496,9 @@ figs9
 ```
 
 \newpage
-## Figura S11. Evolución temporal de las tasas de mortalidad por códigos garbage nivel 4 (GC4) estandarizadas por edad según jurisdicción, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
+## Figura S10. Evolución temporal de las tasas de mortalidad por códigos garbage nivel 4 (GC4) estandarizadas por edad según jurisdicción, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
 ```{r}
-#| id: Figura S11
+#| id: Figura S10
 # Datos para el gráfico -----
 mod_gc4 <- datos_jp |>
   filter(!is.na(jurisd_deis) & nivel == "GC4") |>
@@ -531,6 +520,7 @@ figs10 <- mod_gc4 |>
     cbpal = "managua"
   ) +
   scale_y_continuous(name = "log-tasa", n.breaks = 4) +
+  scale_color_manual(values = rep("#68A3D4", 16)) +
   theme(
     legend.position = "none",
     panel.spacing.y = unit(.75, "lines")

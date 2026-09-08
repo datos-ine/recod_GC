@@ -3,6 +3,7 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
+# Última modificación: 03-09-2026 14:20
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -60,11 +61,11 @@ pal <- c4a(palette = "managua", n = 11, reverse = TRUE) |>
     "DM-CKD",
     "OTR-ENT",
     "TRA",
-    "SH-VI",
-    "LES-NOINT",
-    "INF",
-    "MAT-NEO",
-    "NUT"
+    "SH",
+    "VI",
+    "CA",
+    "OTR-CE",
+    "CMNN"
   ))
 
 
@@ -77,7 +78,7 @@ proy_2010_2023 <- import(here("clean", "arg_proy_2010_2023.rds"))
 
 
 ## Defunciones por grupo de causas -----
-datos_gc <- import(here("clean", "arg_defun_recod_2010_2023.rds")) |>
+datos_gc <- import(here("clean", "arg_recod_defun_gbd23.rds")) |>
 
   # Ordenar datos
   mutate(
@@ -96,17 +97,7 @@ datos_gc <- import(here("clean", "arg_defun_recod_2010_2023.rds")) |>
       "Misiones",
       "Tucumán"
     )
-  ) |>
-
-  # Modificar niveles GC
-  mutate(across(
-    .cols = contains("paso"),
-    .fns = ~ if_else(
-      str_detect(.x, "GC") & .x != "GC4:NNE",
-      str_remove(.x, ":.*"),
-      .x
-    )
-  ))
+  )
 
 
 # Figura 1 ---------------------------------------------------------------
@@ -142,16 +133,16 @@ fig1 <- grViz(
     <td width="250"><b>ENT objetivo</b></td>
     </tr>
     <tr>
-    <td> Diabetes y renales crónicas (DM-CKD) </td>
-    </tr>
-    <tr>
-    <td> Enf. cardiovasculares (ECV) </td>
-    </tr>
-    <tr>
-    <td> Enf. respiratorias crónicas (CRD) </td>
-    </tr>
-    <tr>
     <td> Neoplasias (NPL) </td>
+    </tr>    
+    <tr>
+    <td> Cardiovasculares (ECV) </td>
+    </tr>
+    <tr>
+    <td> Respiratorias crónicas (CRD) </td>
+    </tr>    
+    <tr>
+    <td> Diabetes y renales crónicas (DM-CKD) </td>
     </tr>
     </table>
     >]
@@ -165,7 +156,13 @@ fig1 <- grViz(
     <td> Accidentes de tránsito (TRA) </td>
     </tr>
     <tr>
-    <td> Suicidio y violencias (SH-VI) </td>
+    <td> Suicidio (SH) </td>
+    </tr>    
+    <tr>
+    <td> Violencia interpersonal (VI) </td>
+    </tr>    
+    <tr>
+    <td> Accidentes por caídas (CA) </td>
     </tr>    
     </table>
     >]
@@ -179,7 +176,7 @@ fig1 <- grViz(
     <td> CMNN </td>
     </tr>
     <tr>
-    <td> Lesiones no intencionales (LES-NOINT) </td>
+    <td> Otras lesiones (OTR-CE) </td>
     </tr>
     <tr>
     <td> Otras ENT (OTR-ENT) </td>
@@ -223,7 +220,7 @@ fig1 <- grViz(
     <td width="250"><b>ENT objetivo</b></td>
     </tr>
     <tr>
-    <td> DM-CKD </td>
+    <td> NPL </td>
     </tr>
     <tr>
     <td> ECV </td>
@@ -232,7 +229,7 @@ fig1 <- grViz(
     <td> CRD </td>
     </tr>
     <tr>
-    <td> NPL </td>
+    <td> DM-CKD </td>
     </tr>
     </table>
     >]
@@ -246,7 +243,13 @@ fig1 <- grViz(
     <td> TRA </td>
     </tr>
     <tr>
-    <td> SH-VI </td>
+    <td> SH </td>
+    </tr>
+    <tr>
+    <td> VI </td>
+    </tr>
+    <tr>
+    <td> CA </td>
     </tr>
        </table>
     >]
@@ -260,7 +263,7 @@ fig1 <- grViz(
     <td port = "cmnn"> CMNN </td>
     </tr>
     <tr>
-    <td> LES-NOINT </td>
+    <td> OTR-CE </td>
     </tr>
     <tr>
     <td> OTR-ENT</td>
@@ -298,7 +301,7 @@ fig1 <- grViz(
     <td width="250"><b>ENT objetivo</b></td>
     </tr>
     <tr>
-    <td> DM-CKD </td>
+    <td> NPL </td>
     </tr>
     <tr>
     <td> ECV + GC2-ECV</td>
@@ -307,7 +310,7 @@ fig1 <- grViz(
     <td> CRD </td>
     </tr>
     <tr>
-    <td> NPL </td>
+    <td> DM-CKD </td>
     </tr>
     </table>
     >]
@@ -321,7 +324,13 @@ fig1 <- grViz(
     <td> TRA </td>
     </tr>
     <tr>
-    <td> SH-VI </td>
+    <td> SH </td>
+    </tr>
+    <tr>
+    <td> VI </td>
+    </tr>
+    <tr>
+    <td> CA </td>
     </tr>
     </table>
     >]
@@ -335,7 +344,7 @@ fig1 <- grViz(
     <td> CMNN </td>
     </tr>
     <tr>
-    <td> LES-NOINT + GC2-CE*</td>
+    <td> OTR-CE + GC2-CE*</td>
     </tr>
     <tr>
     <td> OTR-ENT</td>
@@ -370,7 +379,7 @@ fig1 <- grViz(
     <td width="250"><b>ENT objetivo</b></td>
     </tr>
     <tr>
-    <td> DM-CKD </td>
+    <td> NPL </td>
     </tr>
     <tr>
     <td> ECV</td>
@@ -379,7 +388,7 @@ fig1 <- grViz(
     <td> CRD + GC1-CRD</td>
     </tr>
     <tr>
-    <td> NPL </td>
+    <td> DM-CKD </td>
     </tr>
     </table>
     >]
@@ -393,7 +402,13 @@ fig1 <- grViz(
     <td> TRA </td>
     </tr>
     <tr>
-    <td> SH-VI </td>
+    <td> SH </td>
+    </tr>
+    <tr>
+    <td> VI </td>
+    </tr>
+    <tr>
+    <td> CA </td>
     </tr>
     </table>
     >]
@@ -407,7 +422,7 @@ fig1 <- grViz(
     <td port = "cmnn"> CMNN </td>
     </tr>
     <tr>
-    <td> LES-NOINT + GC1-CE*</td>
+    <td> OTR-CE + GC1-CE*</td>
     </tr>
     <tr>
     <td> OTR-ENT</td>
@@ -448,36 +463,37 @@ fig1 <- grViz(
 
 # Tabla 1 ----------------------------------------------------------------
 tab1 <- tibble(
-  Variable = c(
+  var = c(
     "Año",
     "Región",
     "Jurisdicción",
     "Sexo",
     "Grupo etario",
     "Grupo nivel 1",
-    "Grupo nivel 2",
+    "Grupo causa",
     "Causa básica de muerte",
     "Número de muertes"
   ),
-  Descripción = c(
+  desc = c(
     "Año de ocurrencia de la defunción",
     "Regionalización sanitaria utilizada por la DEIS para agrupar las provincias argentinas",
     "Nivel de agregación jurisdiccional definido por la DEIS para resguardar la confidencialidad de los datos",
     "Sexo consignado en el acta de defunción",
     "Categorías de edad agrupadas según criterios de la DEIS",
     "Clasificación de causas según grandes grupos del GBD-2023",
-    "Clasificación de causas según grupos nivel 2 del GBD-2023",
+    "Clasificación de causas según grupos niveles 2-3 del GBD-2023",
     "Causa básica de muerte codificada a cuatro dígitos según la CIE-10",
     "Cantidad anual de defunciones según región, jurisdicción, sexo, grupo etario y causa básica de muerte"
   ),
-  Valores = c(
+
+  val = c(
     "2010-2023",
     paste(levels(datos_gc$region_deis), collapse = "; "),
     paste(levels(datos_gc$jurisd_deis), collapse = "; "),
     "Masculino; Femenino",
     paste(levels(datos_gc$grupo_edad), collapse = "; "),
     "CMNN; ENT; CE; GC",
-    "INF; MAT-NEO; NUT; NPL; ECV; CRD; DM-CKD; OTR-ENT; TRA; SH-VI; LES-NOINT; GC1; GC2; GC3; GC4; NNE",
+    "CMNN; NPL; ECV; CRD; DM-CKD; OTR-ENT; TRA; SH; VI; CA; OTR-CE; GC1; GC2; GC3; GC4",
     "A00.0-Z99.9",
     "Conteo de defunciones"
   )
@@ -485,7 +501,6 @@ tab1 <- tibble(
 
   # Formato tabla
   flextable() |>
-  width(width = c(3, 7, 7), unit = "cm") |>
   add_footer_row(
     values = as_paragraph(
       as_b("Centro: "),
@@ -506,7 +521,15 @@ tab1 <- tibble(
     colwidths = 3,
     top = FALSE
   ) |>
+
   tab_fmt() |>
+
+  set_header_labels(
+    var = "Variable",
+    desc = "Descripción",
+    val = "Valores"
+  ) |>
+
   set_caption(
     autonum = FALSE,
     fp_p = fp_par(line_spacing = 1.5),
@@ -520,7 +543,9 @@ tab1 <- tibble(
         )
       )
     )
-  )
+  ) |>
+
+  width(width = c(3, 7, 7), unit = "cm")
 
 
 # Figura 2 ---------------------------------------------------------------
@@ -529,36 +554,34 @@ treeplot_data <- function(data, var) {
   data |>
     separate(
       {{ var }},
-      into = c("nivel1", "nivel2"),
+      into = c("n1", "n2"),
       sep = ":",
       fill = "left"
     ) |>
-    mutate(
-      nivel1 = if_else(is.na(nivel1) | nivel1 == "GC4", "GC", nivel1)
-    ) |>
-    count(nivel1, nivel2, wt = n) |>
+    count(n1, n2, wt = n) |>
     mutate(pct = n / sum(n)) |>
     mutate(
-      nivel1 = paste0(
-        nivel1,
+      n1 = paste0(
+        n1,
         " (",
         percent(sum(pct), accuracy = .1, decimal.mark = ","),
         ")"
       ),
-      .by = nivel1
-    )
+      .by = n1
+    ) |>
+
+    # Convertir a ggplot
+    ggplot(aes(
+      area = pct,
+      subgroup = n1,
+      fill = n2
+    ))
 }
+
 
 ## Panel 1 -----
 g1 <- datos_gc |>
-  treeplot_data(var = n2_paso1) |>
-
-  # Generar plot
-  ggplot(aes(
-    area = pct,
-    subgroup = nivel1,
-    fill = nivel2
-  )) +
+  treeplot_data(var = gbd_paso1) +
   labs(subtitle = "Paso 1") +
   theme(
     legend.position = "none",
@@ -568,14 +591,7 @@ g1 <- datos_gc |>
 
 ## Panel 2 -----
 g2 <- datos_gc |>
-  treeplot_data(var = n2_paso2a) |>
-
-  # Generar plot
-  ggplot(aes(
-    area = pct,
-    subgroup = nivel1,
-    fill = nivel2
-  )) +
+  treeplot_data(var = gbd_paso2a) +
   labs(subtitle = "Paso 2A") +
   theme(
     legend.position = "none",
@@ -585,14 +601,7 @@ g2 <- datos_gc |>
 
 ## Panel 3 -----
 g3 <- datos_gc |>
-  treeplot_data(var = n2_paso2b) |>
-
-  # Generar plot
-  ggplot(aes(
-    area = pct,
-    subgroup = nivel1,
-    fill = nivel2
-  )) +
+  treeplot_data(var = gbd_paso2b) +
   labs(subtitle = "Paso 2B") +
   theme(
     legend.position = "none",
@@ -602,14 +611,12 @@ g3 <- datos_gc |>
 
 ## Panel 4 -----
 g4 <- datos_gc |>
-  treeplot_data(var = n2_paso4) |>
-
-  # Generar plot
-  ggplot(aes(
-    area = pct,
-    subgroup = nivel1,
-    fill = nivel2
-  )) +
+  treeplot_data(var = gbd_paso4) +
+  labs(subtitle = "Pasos 3-4") +
+  theme(
+    legend.position = "none",
+    text = element_text(family = "Times New Roman")
+  ) +
   guides(fill = guide_legend(nrow = 1)) +
   labs(subtitle = "Pasos 3-4") +
   theme(
@@ -633,7 +640,7 @@ fig2 <- g1 /
         pct < 0.01,
         "",
         paste0(
-          nivel2,
+          n2,
           " (",
           percent(pct, accuracy = .1, decimal.mark = ","),
           ")"
@@ -667,17 +674,17 @@ fig2 <- g1 /
 ## Total país -----
 tasa_gc_arg <- datos_gc |>
   # Seleccionar muertes por GC
-  filter(grupo_causa == "GC") |>
+  filter(str_detect(gbd_paso1, "GC")) |>
   droplevels() |>
 
   # Modificar niveles paso 1
-  mutate(paso1 = str_remove(paso1, "-.*")) |>
+  mutate(nivel = str_remove(gbd_paso1, ".*:")) |>
 
   # Agrupar datos por año
   count(
     anio,
     grupo_edad,
-    nivel = paso1,
+    nivel,
     wt = n
   ) |>
 
@@ -712,18 +719,18 @@ tasa_gc_arg <- datos_gc |>
 ## Región DEIS -----
 tasa_gc_reg <- datos_gc |>
   # Seleccionar muertes por GC
-  filter(grupo_causa == "GC") |>
+  filter(str_detect(gbd_paso1, "GC")) |>
   droplevels() |>
 
   # Modificar niveles paso 1
-  mutate(paso1 = str_remove(paso1, "-.*")) |>
+  mutate(nivel = str_remove(gbd_paso1, ".*:")) |>
 
   # Agrupar datos por año
   count(
     anio,
     grupo_edad,
     region_deis,
-    nivel = paso1,
+    nivel,
     wt = n
   ) |>
 
@@ -756,11 +763,11 @@ tasa_gc_reg <- datos_gc |>
 ## Jurisdicción DEIS -----
 tasa_gc_jur <- datos_gc |>
   # Seleccionar muertes por GC
-  filter(grupo_causa == "GC") |>
+  filter(str_detect(gbd_paso1, "GC")) |>
   droplevels() |>
 
   # Modificar niveles paso 1
-  mutate(paso1 = str_remove(paso1, "-.*")) |>
+  mutate(nivel = str_remove(gbd_paso1, ".*:")) |>
 
   # Agrupar datos por año
   count(
@@ -768,7 +775,7 @@ tasa_gc_jur <- datos_gc |>
     grupo_edad,
     region_deis,
     jurisd_deis,
-    nivel = paso1,
+    nivel,
     wt = n
   ) |>
 
@@ -800,56 +807,60 @@ tasa_gc_jur <- datos_gc |>
 
 
 # Evolución tasas GC -----------------------------------------------------
-## Unir datos tasas -----
-datos_jp <- tasa_gc_arg |>
-  # Añadir tasas x región
-  bind_rows(tasa_gc_reg) |>
-
-  # Añadir tasas x jurisdicción
-  bind_rows(tasa_gc_jur) |>
-
-  # Crear etiqueta
-  mutate(
-    grupo = if_else(
-      is.na(jurisd_deis),
-      region_deis,
-      paste0(region_deis, ": ", jurisd_deis)
-    )
-  )
-
-
-## Regresión joinpoint -----
-mod_jp_reg <- model_jp(
-  datos_jp,
+## Regresión joinpoint: Argentina -----
+mod_ar <- model_jp(
+  tasa_gc_arg,
   value = value,
   time = anio,
-  # group = c("nivel", "grupo"),
-  group = c("nivel", "grupo"),
+  group = "nivel",
   step = TRUE,
   k = 2,
   min_dist = 2,
   test = TRUE
 )
 
-get_aapc(mod_jp_reg, digits = 2) |> print(n = Inf)
+## Regresión joinpoint: Región DEIS -----
+mod_reg <- model_jp(
+  tasa_gc_reg,
+  value = value,
+  time = anio,
+  group = c("nivel", "region_deis"),
+  step = TRUE,
+  k = 2,
+  min_dist = 2,
+  test = TRUE
+)
 
 
+## Regresión joinpoint: Jurisdicción DEIS -----
+mod_reg <- model_jp(
+  tasa_gc_jur,
+  value = value,
+  time = anio,
+  group = c("nivel", "jurisd_deis"),
+  step = TRUE,
+  k = 2,
+  min_dist = 2,
+  test = TRUE
+)
+
+######### SEGUIR DESDE ACÁ #######
 # Tabla 2 ----------------------------------------------------------------
-tab2 <- mod_jp_reg |>
-  summary_jp(dec = ",") |>
-  filter(group %in% c("GC1", "GC2")) |>
-  separate_wider_delim(
-    cols = subgroup,
-    names = c("subgroup", "jurisd"),
-    delim = ": ",
-    too_few = "align_start"
-  ) |>
+tab2 <- summary_jp(
+  mods = c(mod_ar, mod_reg),
+  dec = ","
+) |>
+  # Renombrar columnas
+  rename(region = subgroup) |>
 
-  jp_to_ft(lan = "es") |>
-  set_header_labels(
-    Subgrupo = "Región",
-    jurisd = "Jurisdicción"
-  ) |>
+  # Filtrar GC1-GC2
+  filter(group %in% c("GC1", "GC2"))
+
+jp_to_ft(lan = "es")
+set_header_labels(
+  Subgrupo = "Región",
+  jurisd = "Jurisdicción"
+) |>
   tab_fmt() |>
   merge_v(j = 2:4, combine = TRUE) |>
   merge_v(j = 2) |>
