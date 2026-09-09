@@ -124,43 +124,6 @@ tabs2 |>
 
 ```{r}
 #| id: Tabla S2
-tabs2 <- datos_gc |>
-  # Filtrar GC1-GC2
-  filter(gbd_paso1 %in% c("GC:GC1", "GC:GC2")) |>
-
-  # Reagrupar niveles
-  mutate(
-    cie10_cod = if_else(
-      cie10_cod == "A41.9",
-      cie10_cod,
-      str_sub(cie10_cod, 1, 3)
-    )
-  ) |>
-
-  # Añadir descripción códigos DEIS
-  left_join(
-    import(here("raw", "descdef1.xlsx"), sheet = 4),
-    by = join_by(cie10_cod == CODIGO)
-  ) |>
-
-  # Completar NAs
-  mutate(
-    VALOR = if_else(
-      cie10_cod == "A41.9",
-      "Septicemia no especificada",
-      VALOR
-    )
-  ) |>
-
-  # Frecuencia muertes
-  count(cie10_cod, causa = VALOR, wt = n) |>
-  mutate(pct = percent(n / sum(n), accuracy = .1, decimal.mark = ",")) |>
-
-  # Filtrar por frecuencia
-  arrange(-n) |>
-  filter_out(n < 10000)
-
-## Formato tabla ----
 tabs2 |>
   flextable() |>
   tab_fmt() |>
@@ -179,46 +142,13 @@ tabs2 |>
 
 ```{r}
 #| id: Tabla S3
-# Datos para la tabla -----
-tabs3 <- datos_gc |>
-
-  # Frecuencias iniciales
-  count(causa = gbd_paso1, wt = n, name = "n1") |>
-
-  # Añadir frecuencias paso 2
-  left_join(
-    datos_gc |>
-      count(causa = gbd_paso2b, wt = n, name = "n2")
-  ) |>
-
-  # Añadir frecuencias paso 3
-  left_join(
-    datos_gc |>
-      count(causa = gbd_paso3, wt = n, name = "n3")
-  ) |>
-
-  # Añadir frecuencias paso 4
-  left_join(
-    datos_gc |>
-      # Frecuencias por grupo
-      count(causa = gbd_paso4, wt = n, name = "n4")
-  ) |>
-
-  # Cambio absoluto
-  mutate(razon = number(n4 / n1, accuracy = .1, decimal.mark = ",")) |>
-
-  # Separar en grupo de causa y causa
-  separate(causa, into = c("grupo_causa", "causa"), sep = ":")
-
-
-# Tabla -----
 tabs3 |>
   flextable() |>
   set_header_labels(
     grupo_causa = "Grupo causa",
     causa = "Causa",
     n1 = "N",
-    n2 = "Paso 2",
+    n2 = "Paso 2",4
     n3 = "Paso 3",
     n4 = "Paso 4",
     razon = "Razón cambio"

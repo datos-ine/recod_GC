@@ -52,18 +52,11 @@ tab_fmt <- function(x) {
 
 
 # Paletas colorblind-friendly ----------------------------------------------
-pal <- c4a(palette = "managua", n = 11, reverse = TRUE) |>
+pal <- c4a(palette = "managua", n = 4, reverse = TRUE) |>
   set_names(c(
-    "NPL",
-    "ECV",
-    "CRD",
-    "DM-CKD",
-    "OTR-ENT",
-    "TRA",
-    "SH",
-    "VI",
-    "CA",
-    "OTR-CE",
+    "GC",
+    "ENT",
+    "CE",
     "CMNN"
   ))
 
@@ -492,7 +485,7 @@ tab1 <- tibble(
     "Masculino; Femenino",
     paste(levels(datos_gc$grupo_edad), collapse = "; "),
     "CMNN; ENT; CE; GC",
-    "CMNN; NPL; ECV; CRD; DM-CKD; OTR-ENT; TRA; SH; VI; CA; OTR-CE; GC1; GC2; GC3; GC4",
+    paste(levels(datos_gc$gbd_paso1), collapse = "; "),
     "A00.0-Z99.9",
     "Conteo de defunciones"
   )
@@ -559,21 +552,12 @@ treeplot_data <- function(data, var) {
     ) |>
     count(n1, n2, wt = n) |>
     mutate(pct = n / sum(n)) |>
-    mutate(
-      n1 = paste0(
-        n1,
-        " (",
-        percent(sum(pct), accuracy = .1, decimal.mark = ","),
-        ")"
-      ),
-      .by = n1
-    ) |>
 
     # Convertir a ggplot
     ggplot(aes(
       area = pct,
       subgroup = n1,
-      fill = n2
+      fill = n1
     ))
 }
 
@@ -627,16 +611,16 @@ g4 <- datos_gc |>
 
 
 ## Treemap -----
-fig2 <- g1 /
-  (g2 + g3) /
-  g4 &
-
+# fig2 <- g1 /
+#   (g2 + g3) /
+#   g4 &
+g1 &
   # Treemap
   geom_treemap(alpha = .9) &
   geom_treemap_text(
     aes(
       label = if_else(
-        pct < 0.01,
+        pct == 0,
         "",
         paste0(
           n2,
@@ -657,16 +641,85 @@ fig2 <- g1 /
 
   # Subgrupo
   geom_treemap_subgroup_border() &
-  geom_treemap_subgroup_text(
-    place = "bottomleft",
-    size = 9,
-    family = "Times New Roman",
-    fontface = "bold",
-    color = "grey20"
-  ) &
+  # geom_treemap_subgroup_text(
+  #   place = "bottomleft",
+  #   size = 9,
+  #   family = "Times New Roman",
+  #   fontface = "bold",
+  #   color = "grey20"
+  # ) &
 
   # Layout
   scale_fill_manual(name = NULL, values = pal, na.value = "grey65")
+
+
+# Tabla S2 ---------------------------------------------------------------
+tabs2 <- datos_gc |>
+  # Filtrar GC1-GC2
+  filter(gbd_paso1 %in% c("GC:GC1", "GC:GC2")) |>
+
+  # Reagrupar niveles
+  mutate(
+    cie10_cod = if_else(
+      cie10_cod == "A41.9",
+      cie10_cod,
+      str_sub(cie10_cod, 1, 3)
+    )
+  ) |>
+
+  # Añadir descripción códigos DEIS
+  left_join(
+    import(here("raw", "descdef1.xlsx"), sheet = 4),
+    by = join_by(cie10_cod == CODIGO)
+  ) |>
+
+  # Completar NAs
+  mutate(
+    VALOR = if_else(
+      cie10_cod == "A41.9",
+      "Septicemia no especificada",
+      VALOR
+    )
+  ) |>
+
+  # Frecuencia muertes
+  count(cie10_cod, causa = VALOR, wt = n) |>
+  mutate(pct = percent(n / sum(n), accuracy = .1, decimal.mark = ",")) |>
+
+  # Filtrar por frecuencia
+  arrange(-n) |>
+  filter_out(n < 10000)
+
+
+# Tabla S3 ---------------------------------------------------------------
+tabs3 <- datos_gc |>
+  # Frecuencias iniciales
+  count(causa = gbd_paso1, wt = n, name = "n1") |>
+
+  # Añadir frecuencias paso 2
+  left_join(
+    datos_gc |>
+      count(causa = gbd_paso2b, wt = n, name = "n2")
+  ) |>
+
+  # Añadir frecuencias paso 3
+  left_join(
+    datos_gc |>
+      count(causa = gbd_paso3, wt = n, name = "n3")
+  ) |>
+
+  # Añadir frecuencias paso 4
+  left_join(
+    datos_gc |>
+      # Frecuencias por grupo
+      count(causa = gbd_paso4, wt = n, name = "n4")
+  ) |>
+
+  # Cambio absoluto
+  mutate(razon = number(n4 / n1, accuracy = .1, decimal.mark = ",")) |>
+
+  # Separar en grupo de causa y causa
+  separate(causa, into = c("grupo_causa", "causa"), sep = ":")
 
 
 # Tasas estandarizadas mortalidad x GC -----------------------------------
