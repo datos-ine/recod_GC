@@ -611,10 +611,9 @@ g4 <- datos_gc |>
 
 
 ## Treemap -----
-# fig2 <- g1 /
-#   (g2 + g3) /
-#   g4 &
-g1 &
+fig2 <- g1 /
+  (g2 + g3) /
+  g4 &
   # Treemap
   geom_treemap(alpha = .9) &
   geom_treemap_text(
@@ -872,7 +871,7 @@ mod_ar <- model_jp(
 )
 
 ## Regresión joinpoint: Región DEIS -----
-mod_reg <- model_jp(
+model_jp(
   tasa_gc_reg,
   value = value,
   time = anio,
@@ -895,6 +894,30 @@ mod_reg <- model_jp(
   min_dist = 2,
   test = TRUE
 )
+
+# No coinciden con software joinpoint
+# Región
+# GC1: Centro
+# GC1: Cuyo
+# GC2: NEA
+
+# Jurisdicción
+# GC1: PBA
+# GC1: CABA
+# GC1: Cuyo2
+# GC1: Formosa
+# GC1: Tucumán
+# GC1: Pat. Sur
+# GC2: Córdoba
+# GC2: Entre Ríos
+# GC2: Santa Fe
+# GC2: Corrientes
+# GC2: Tucumán
+# GC3: CABA
+# GC3: Córdoba
+# GC3: Tucumán
+# GC3: Pat. Sur
+# GC4: Corrientes
 
 ######### SEGUIR DESDE ACÁ #######
 # Tabla 2 ----------------------------------------------------------------
