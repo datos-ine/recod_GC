@@ -3,7 +3,6 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 03-09-2026 14:20
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(

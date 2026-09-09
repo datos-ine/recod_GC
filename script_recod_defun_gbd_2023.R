@@ -7,7 +7,7 @@
 ### Recategorización y redistribución de códigos garbage (GC)
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 08-09-2026 15:35
+# Última modificación: 09-09-2026 14:53
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -30,7 +30,7 @@ defun_raw <- bind_rows(
 
 
 # Cargar tabla frecuencias X59-Y34 ---------------------------------------
-fr_x59y34 <- extract_areas(
+fr_gc2 <- extract_areas(
   file = "extra/suppl-e00056424_5279.pdf",
   pages = 4
 ) |>
@@ -449,7 +449,7 @@ recod_defun <- recod_defun |>
           # R06.9: No existe
           cie10_cod %in% c("R13.0", "R23.0") |
           # R13: No tiene decimales
-          # R58: No existe
+          # R58: GC1
           between(cie10_cod, "S00.0", "T99.9") |
           # U50: No existe
           # W47 - W48: No existe
@@ -960,10 +960,10 @@ recod_defun <- recod_defun |>
               "M07.5",
               "M09.1",
               "M09.2"
-            ) |
+            ) ~ "ENT:DIG",
 
-          # --- Neurológicas ---
-          between(cie10_cod, "F00.0", "F02.0") |
+        # --- Neurológicas ---
+        between(cie10_cod, "F00.0", "F02.0") |
           # F02.1: CMNN
           cie10_cod %in% c("F02.2", "F02.3") |
           # F02.4: CMNN
@@ -1014,10 +1014,10 @@ recod_defun <- recod_defun |>
           cie10_cod == "P94.0" |
 
           # --- Mentales ---
-          between(cie10_cod, "F50.0", "F50.5") |
+          between(cie10_cod, "F50.0", "F50.5") ~ "ENT:NEU-MENT",
 
-          # --- Uso de sustancias ---
-          between(cie10_cod, "F10.0", "F18.9") |
+        # --- Uso de sustancias ---
+        between(cie10_cod, "F10.0", "F18.9") |
           between(cie10_cod, "R78.0", "R78.5") |
           between(cie10_cod, "X45.0", "X45.9") |
           between(cie10_cod, "X65.0", "X65.9") |
@@ -1033,10 +1033,10 @@ recod_defun <- recod_defun |>
               "P04.4",
               "P96.1",
               "Q86.0"
-            ) |
+            ) ~ "ENT:SUST",
 
-          # --- Piel y subcutáneas ---
-          between(cie10_cod, "A66.0", "A67.9") |
+        # --- Piel y subcutáneas ---
+        between(cie10_cod, "A66.0", "A67.9") |
           between(cie10_cod, "I89.1", "I89.8") |
           between(cie10_cod, "L00.0", "L51.9") |
           # L06 - L07: No existe
@@ -1065,10 +1065,10 @@ recod_defun <- recod_defun |>
               "M09.0",
               "M72.5",
               "M72.6"
-            ) |
+            ) ~ "ENT:PIEL",
 
-          # --- Musculoesqueléticas ---
-          between(cie10_cod, "L93.0", "L93.2") |
+        # --- Musculoesqueléticas ---
+        between(cie10_cod, "L93.0", "L93.2") |
           cie10_cod %in% c("I27.1", "I67.7") |
           between(cie10_cod, "M00.0", "M03.0") |
           # M03.1: CMNN
@@ -1100,10 +1100,10 @@ recod_defun <- recod_defun |>
           # M87.1: CE
           between(cie10_cod, "M88.0", "M89.5") |
           # M89.6: CMNN
-          between(cie10_cod, "M89.7", "M89.9") |
+          between(cie10_cod, "M89.7", "M89.9") ~ "ENT:MUSC",
 
-          # --- Otras ENT ---
-          between(cie10_cod, "D25.0", "D25.9") |
+        # --- Otras ENT ---
+        between(cie10_cod, "D25.0", "D25.9") |
           # D26.0:  Neoplasias
           cie10_cod == "D28.2" |
           between(cie10_cod, "D55.0", "D58.9") |
@@ -1424,10 +1424,10 @@ recod_defun <- recod_defun |>
           # U05: No existe
           # U07.0: No existe
           # U50 - U81: No existe
-          between(cie10_cod, "Z16.0", "Z16.3") |
+          between(cie10_cod, "Z16.0", "Z16.3") ~ "CMNN:INF",
 
-          # --- Maternas y neonatales ----
-          cie10_cod == "C58.0" |
+        # --- Maternas y neonatales ----
+        cie10_cod == "C58.0" |
           between(cie10_cod, "N96.0", "N98.9") |
           between(cie10_cod, "O00.0", "P03.9") |
           # O09: No existe
@@ -1466,11 +1466,11 @@ recod_defun <- recod_defun |>
           # P84 - P89: No existe
           # P93: CE (no tiene decimales)
           # P96.0:  Otras ENT
-          cie10_cod %in% c("P96.3", "P96.4", "P96.8") |
-          # P97 - P99: No existe
+          cie10_cod %in% c("P96.3", "P96.4", "P96.8") ~ "CMNN:MAT-NEO",
+        # P97 - P99: No existe
 
-          # --- Deficiencias nutricionales ---
-          between(cie10_cod, "D50.1", "D52.0") |
+        # --- Deficiencias nutricionales ---
+        between(cie10_cod, "D50.1", "D52.0") |
           # D52.1: CE
           between(cie10_cod, "D52.8", "D53.9") |
           between(cie10_cod, "E00.0", "E02.0") |
@@ -1480,7 +1480,7 @@ recod_defun <- recod_defun |>
           between(cie10_cod, "E40.0", "E64.9") |
           # E47 - E49: No existe
           # E62: No existe
-          cie10_cod == "M12.1 " ~ "CMNN:CMNN"
+          cie10_cod == "M12.1 " ~ "CMNN:NUTR"
       )
     )
   )
@@ -1490,70 +1490,74 @@ recod_defun <- recod_defun |>
 recod_defun <- recod_defun |>
   mutate(
     gbd_paso2a = case_when(
-      # --- GC3-GC4 recategorizables a NPL ---
+      # --- CMNN: Infecciosas ---
+      str_detect(gbd_paso1, "GC3|GC4") &
+        (between(cie10_cod, "A31.0", "B94.2") |
+          cie10_cod %in%
+            c("J02.9", "J03.9", "J04.3", "J06.9", "J22.0")) ~ "CMNN:INF",
+
+      # --- CMNN: Maternas y neonatales ---
+      str_detect(gbd_paso1, "GC3|GC4") &
+        between(cie10_cod, "O08.0", "P99.9") ~ "CMNN:MAT-NEO",
+
+      # --- ENT: Neoplasias ---
       str_detect(gbd_paso1, "GC3|GC4") &
         between(cie10_cod, "C14.0", "D48.9") ~ "ENT:NPL",
 
-      # --- GC3-GC4 recategorizables a ECV ---
+      # --- ENT: Cardiovasculares ---
       str_detect(gbd_paso1, "GC3|GC4") &
         between(cie10_cod, "I00.0", "I99.0") ~ "ENT:ECV",
 
-      # # --- GC3-GC4 recategorizables a CRD ---
+      # --- ENT: Respiratorias crónicas ---
       str_detect(gbd_paso1, "GC3|GC4") &
         between(cie10_cod, "J40.0", "J98.9") ~ "ENT:CRD",
 
-      # --- GC3-GC4 recategorizables a DM-CKD ---
+      # --- ENT: Diabetes y renales crónicas ---
       str_detect(gbd_paso1, "GC3|GC4") &
         (between(cie10_cod, "E12.0", "E14.9") |
           between(cie10_cod, "R73.0", "R73.9")) ~ "ENT:DM-CKD",
 
-      # --- GC3-GC4 recategorizables a OTR-ENT ---
-      gbd_paso1 == "GC:GC3" &
-        between(cie10_cod, "K20.0", "K99.9") ~ "ENT:DIG",
-
-      # --- GC3-GC4 recategorizables a NEU-MENT ---
+      # --- ENT: Digestivas ---
       str_detect(gbd_paso1, "GC3|GC4") &
-        (between(cie10_cod, "D75.9", "E90.0") |
-          between(cie10_cod, "F04.0", "F09.9") |
-          between(cie10_cod, "F20.0", "F99.0") |
-          between(cie10_cod, "G00.9", "G98.9") |
-          between(cie10_cod, "K20.0", "K99.9") |
+        between(cie10_cod, "K21.0", "K92.9") ~ "ENT:DIG",
+
+      # --- ENT: Neurológicas y mentales ---
+      str_detect(gbd_paso1, "GC3|GC4") &
+        between(cie10_cod, "F04.0", "G98.9") ~ "ENT:NEU-MENT",
+
+      # --- ENT: Otras ENT ---
+      str_detect(gbd_paso1, "GC3|GC4") &
+        (between(cie10_cod, "D75.9", "E07.9") |
+          between(cie10_cod, "E34.0", "E87.7") |
           between(cie10_cod, "N13.0", "N95.0") |
           between(cie10_cod, "Q08.0", "R31.9")) ~ "ENT:OTR-ENT",
 
-      # --- GC3-GC4 recategorizables a TRA ---
+      # --- CE: Accidentes de tránsito ---
       gbd_paso1 == "GC:GC4" &
         (between(cie10_cod, "V87.0", "V87.9") |
           between(cie10_cod, "V89.0", "V89.9")) ~ "CE:TRA",
 
-      # --- GC3-GC4 recategorizables a OTR-TRA ---
+      # --- CE: Otras lesiones por transporte ---
       gbd_paso1 == "GC:GC4" &
         (between(cie10_cod, "V88.0", "V88.9") |
           between(cie10_cod, "V99.0", "V99.9")) ~ "CE:OTR-TRA",
 
-      # --- GC3-GC4 recategorizables a SH ---
+      # --- CE: Suicidio ---
       str_detect(gbd_paso1, "GC3|GC4") &
         between(cie10_cod, "X64.0", "X84.9") ~ "CE:SH",
 
-      # --- GC3-GC4 recategorizables a VI ---
+      # --- CE: Violencia interpersonal ---
       gbd_paso1 == "GC:GC4" &
         between(cie10_cod, "Y09.0", "Y09.9") ~ "CE:VI",
 
-      # --- GC3-GC4 recategorizables a OTR-CE ---
-      between(cie10_cod, "Y85.0", "Y85.9") ~ "CE:OTR-CE",
+      # --- CE: Otras CE ---
+      gbd_paso1 == "GC:GC4" &
+        between(cie10_cod, "Y85.0", "Y85.9") ~ "CE:OTR-CE",
 
-      # --- GC3-GC4 recategorizables a CMNN:INF ---
-      str_detect(gbd_paso1, "GC3|GC4") &
-        (between(cie10_cod, "A31.0", "B94.2") |
-          between(cie10_cod, "J02.9", "J06.9") |
-          between(cie10_cod, "J17.0", "J17.9") |
-          cie10_cod %in% c("J22.0", "J85.9") |
-          between(cie10_cod, "O08.0", "P99.9") |
-          between(cie10_cod, "P23.5", "P23.9")) ~ "CMNN:CMNN",
-
-      # --- Neumonías NNE ---
-      cie10_cod == "J15.9" |
-        between(cie10_cod, "J18.0", "J18.9") ~ "GC:NNE",
+      # --- Neumonías inespecíficas (NNE) ---
+      gbd_paso1 == "GC:GC4" &
+        (cie10_cod == "J15.9" |
+          between(cie10_cod, "J18.0", "J18.9")) ~ "GC:NNE",
 
       # --- Valor por defecto ---
       .default = gbd_paso1
@@ -1561,58 +1565,126 @@ recod_defun <- recod_defun |>
   )
 
 
-# Frecuencias causas definidas -------------------------------------------
+# Frecuencias paso 2a ----------------------------------------------------
+## Frecuencias NNE x sexo y edad----
+recod_defun |>
+  filter(gbd_paso2a == "GC:NNE") |>
+  tabyl(grupo_edad, sexo) |>
+  adorn_percentages(denominator = "col")
+
+
+## Frecuencias causas definidas x sexo y edad ----
 tab_fr <- recod_defun |>
+  # Descartar GC
   filter_out(str_detect(gbd_paso2a, "GC")) |>
-  count(sexo, grupo_edad, causa = gbd_paso2a)
+
+  # Renombrar columnas
+  rename(causa = gbd_paso2a) |>
+
+  # Frecuencias x sexo y edad
+  tabyl(causa, sexo, grupo_edad) |>
+  adorn_percentages(denominator = "col") |>
+
+  # Convertir a dataframe
+  list_rbind(names_to = "grupo_edad")
 
 
 # Paso 2b: Redistribuir neumonías NE -------------------------------------
 set.seed(123)
+
 recod_defun <- recod_defun |>
-  # --- Enviar 50% a CMNN ---
+  # --- Distribuir 50% de GC:NNE entre CMNN ---
   mutate(
     gbd_paso2b = {
       out <- gbd_paso2a
-      idx <- which(gbd_paso2a == "GC:NNE" & runif(n()) <= 0.5)
-      out[idx] <- "CMNN:CMNN"
-      out
-    },
-    .by = c(sexo, grupo_edad)
-  ) |>
 
-  # --- Redistribución multinomial del 50% restante a ENT objetivo ---
-  mutate(
-    gbd_paso2b = {
-      out <- gbd_paso2b
+      # Sexo y edad del grupo actual
+      sexo_actual <- cur_group()$sexo
+      edad_actual <- cur_group()$grupo_edad
 
-      idx <- which(gbd_paso2b == "GC:NNE")
+      # Seleccionar ~50% de las NEE
+      idx <- which(
+        gbd_paso2a == "GC:NNE" &
+          runif(n()) <= 0.5
+      )
 
+      # Redistribución multinomial x edad y sexo
       if (length(idx) > 0) {
         datos <- tab_fr |>
           filter(
-            causa %in% c("ENT:CRD", "ENT:DM-CKD", "ENT:ECV", "ENT:NPL"),
-            sexo == .data$sexo[1],
-            grupo_edad == .data$grupo_edad[1]
+            str_detect(causa, "^CMNN:"),
+            grupo_edad == edad_actual
           )
 
+        # Probabilidades según el sexo
+        prob <- datos[[sexo_actual]]
+
+        # Normalizar para que sumen 1
+        prob <- prob / sum(prob)
+
+        # Redistribución multinomial x sexo y edad
         out[idx] <- rep(
           datos$causa,
-          rmultinom(1, length(idx), prob = datos$n)
+          rmultinom(
+            n = 1,
+            size = length(idx),
+            prob = prob
+          )
         )
       }
 
       out
     },
     .by = c(sexo, grupo_edad)
+  ) |>
+
+  # --- Redistribuir 50% entre ENT objetivo ---
+  mutate(
+    gbd_paso2b = {
+      out <- gbd_paso2b
+
+      # Sexo y edad del grupo actual
+      sexo_actual <- cur_group()$sexo
+      edad_actual <- cur_group()$grupo_edad
+
+      # Seleccionar NNE
+      idx <- which(out == "GC:NNE")
+
+      if (length(idx) > 0) {
+        # Obtener frecuencias ENT objetivo x edad y sexo
+        datos <- tab_fr |>
+          filter(
+            str_detect(causa, "CRD|DM|ECV|NPL"),
+            grupo_edad == edad_actual
+          )
+
+        # Normalizar las probabilidades
+        prob <- datos[[sexo_actual]] / sum(datos[[sexo_actual]])
+
+        # Redistribución multinomial
+        out[idx] <- rep(
+          datos$causa,
+          rmultinom(
+            n = 1,
+            size = length(idx),
+            prob = prob
+          )
+        )
+      }
+
+      # Resultado final
+      out
+    },
+    .by = c(sexo, grupo_edad)
   )
 
+
 # Paso 3: Redistribuir GC2 -----------------------------------------------
-## Identificar GC2 recategorizables a ECV -----
+## Reclasificar GC2 de ECV -----
 recod_defun <- recod_defun |>
   mutate(
-    gbd_paso3 = if_else(
-      gbd_paso1 == "GC:GC2" &
+    gbd_paso3a = if_else(
+      gbd_paso2b == "GC:GC2" &
         (between(cie10_cod, "I10.0", "I27.9") |
           between(cie10_cod, "I70.0", "I74.9")),
       "ENT:ECV",
@@ -1621,234 +1693,341 @@ recod_defun <- recod_defun |>
   )
 
 
-## Redistribuir X59 -----
+## Redistribuir GC2 de  CE -----
 set.seed(123)
 recod_defun <- recod_defun |>
+  # --- GC2: cualquier CE ---
   mutate(
-    gbd_paso3 = {
-      out <- gbd_paso3
-      idx <- which(between(cie10_cod, "X59.0", "X59.9"))
+    gbd_paso3b = {
+      out <- gbd_paso3a
 
-      ## --- Redistribuir 88,64% a causas externas ----
-      if (length(idx) > 0) {
-        n_ce <- round(length(idx) * 0.8864)
+      # Sexo y edad del grupo actual
+      sexo_actual <- cur_group()$sexo
+      edad_actual <- cur_group()$grupo_edad
 
-        out[idx] <- c(
-          with(
-            fr_x59y34 |>
-              filter_out(
-                is.na(fr_x59)
-              ),
-            sample(
-              causa,
-              n_ce,
-              replace = TRUE,
-              prob = fr_x59
-            )
-          ),
-
-          ## --- Redistribuir 11,36% restante a CMNN y OTR-ENT ---
-          with(
-            subset(
-              tab_fr,
-              causa %in%
-                c("CMNN:CMNN", "ENT:OTR-ENT") &
-                sexo == .data$sexo[1] &
-                grupo_edad == .data$grupo_edad[1]
-            ),
-            sample(
-              causa,
-              length(idx) - n_ce,
-              replace = TRUE,
-              prob = n
-            )
-          )
-        )
-      }
-
-      out
-    }
-  )
-
-
-## Redistribuir Y34 -----
-set.seed(123)
-recod_defun <- recod_defun |>
-  mutate(
-    gbd_paso3 = {
-      out <- gbd_paso3
-      idx <- which(between(cie10_cod, "Y34.0", "Y34.9"))
-
-      ## --- 88,77% a CE y ENT ----
-      if (length(idx) > 0) {
-        n_ce <- round(length(idx) * 0.8877)
-
-        out[idx] <- c(
-          with(
-            fr_x59y34 |>
-              filter_out(
-                is.na(fr_y34)
-              ),
-            sample(
-              causa,
-              n_ce,
-              replace = TRUE,
-              prob = fr_y34
-            )
-          ),
-
-          ## --- 11,23% restante a CMNN y  OTR-ENT ---
-          with(
-            subset(
-              tab_fr,
-              causa %in%
-                c("CMNN:CMNN", "ENT:OTR-ENT") &
-                sexo == .data$sexo[1] &
-                grupo_edad == .data$grupo_edad[1]
-            ),
-            sample(
-              causa,
-              length(idx) - n_ce,
-              replace = TRUE,
-              prob = n
-            )
-          )
-        )
-      }
-
-      out
-    }
-  )
-
-
-##  Redistribuir GC2: TRA, SH, VI -----
-set.seed(123)
-recod_defun <- recod_defun |>
-  mutate(
-    gbd_paso3 = {
-      out <- gbd_paso3
-      idx <- which(between(cie10_cod, "Y31.0", "Y32.9"))
-
-      if (length(idx) > 0) {
-        datos <- tab_fr |>
-          filter(
-            causa %in% c("CE:TRA", "CE:SH", "CE:VI"),
-            sexo == .data$sexo[1],
-            grupo_edad == .data$grupo_edad[1]
-          )
-
-        out[idx] <- rep(
-          datos$causa,
-          rmultinom(1, length(idx), prob = datos$n)
-        )
-      }
-
-      out
-    }
-  )
-
-## Redistribuir GC2: CA, TRA, SH, VI ----
-set.seed(123)
-recod_defun <- recod_defun |>
-  mutate(
-    gbd_paso3 = {
-      out <- gbd_paso3
+      # Seleccionar GC redistribuibles
       idx <- which(
-        cie10_cod %in%
-          c("Y29.1", "Y29.2") |
-          between(cie10_cod, "Y29.4", "Y30.9")
+        gbd_paso3a == "GC:GC2" &
+          (between(cie10_cod, "Y24.5", "Y24.7") |
+            between(cie10_cod, "Y27.4", "Y27.6") |
+            between(cie10_cod, "Y33.0", "Y33.9") |
+            between(cie10_cod, "Y95.0", "Y98.0") |
+            cie10_cod %in%
+              c(
+                "Y25.2",
+                "Y26.3",
+                "Y28.3",
+                "Y28.5",
+                "Y29.3",
+                "Y86.0",
+                "Y86.2",
+                "Y86.8",
+                "Y87.2",
+                "Y89.9",
+                "G44.3",
+                "G91.3"
+              ))
       )
 
       if (length(idx) > 0) {
-        datos <- tab_fr |>
-          filter(
-            causa %in% c("CE:CA", "CE:TRA", "CE:SH", "CE:VI"),
-            sexo == .data$sexo[1],
-            grupo_edad == .data$grupo_edad[1]
-          )
-
-        out[idx] <- rep(
-          datos$causa,
-          rmultinom(1, length(idx), prob = datos$n)
-        )
-      }
-
-      out
-    }
-  )
-
-
-## Redistribuir GC2: cualquier CE -----
-set.seed(123)
-recod_defun <- recod_defun |>
-  mutate(
-    gbd_paso3 = {
-      out <- gbd_paso3
-      idx <- which(
-        between(cie10_cod, "Y24.5", "Y24.7") |
-          between(cie10_cod, "Y27.4", "Y27.6") |
-          between(cie10_cod, "Y33.0", "Y33.9") |
-          between(cie10_cod, "Y90.0", "Y91.9") |
-          between(cie10_cod, "Y95.0", "Y98.0") |
-          cie10_cod %in%
-            c(
-              "Y25.2",
-              "Y26.3",
-              "Y28.3",
-              "Y28.5",
-              "Y29.3",
-              "Y86.0",
-              "Y86.2",
-              "Y86.8",
-              "Y87.2",
-              "Y89.9",
-              "G44.3",
-              "G91.3"
-            )
-      )
-
-      if (length(idx) > 0) {
+        # Obtener las CE para esa edad
         datos <- tab_fr |>
           filter(
             str_detect(causa, "CE:"),
-            sexo == .data$sexo[1],
-            grupo_edad == .data$grupo_edad[1]
+            grupo_edad == edad_actual
           )
 
+        # Normalizar las probabilidades según el sexo
+        prob <- datos[[sexo_actual]] / sum(datos[[sexo_actual]])
+
+        # Redistribución multinomial
         out[idx] <- rep(
           datos$causa,
-          rmultinom(1, length(idx), prob = datos$n)
+          rmultinom(
+            n = 1,
+            size = length(idx),
+            prob = prob
+          )
+        )
+      }
+      # Resultado final
+      out
+    },
+    .by = c(sexo, grupo_edad)
+  ) |>
+
+  # --- GC2: CE objetivo ---
+  mutate(
+    gbd_paso3b = {
+      out <- gbd_paso3b
+
+      # Sexo y edad del grupo actual
+      sexo_actual <- cur_group()$sexo
+      edad_actual <- cur_group()$grupo_edad
+
+      # Seleccionar GC redistribuibles
+      idx <- which(
+        gbd_paso3b == "GC:GC2" &
+          between(cie10_cod, "Y31.0", "Y32.9")
+      )
+
+      if (length(idx) > 0) {
+        # Obtener las CE objetivo de esa edad
+        datos <- tab_fr |>
+          filter(
+            str_detect(causa, "CE:TRA|SH|VI"),
+            grupo_edad == edad_actual
+          )
+
+        # Normalizar las probabilidades
+        prob <- datos[[sexo_actual]] / sum(datos[[sexo_actual]])
+
+        # Redistribución multinomial
+        out[idx] <- rep(
+          datos$causa,
+          rmultinom(
+            n = 1,
+            size = length(idx),
+            prob = prob
+          )
         )
       }
 
       out
-    }
+    },
+    .by = c(sexo, grupo_edad)
+  ) |>
+
+  # --- GC2: VI, SH, CA ---
+  mutate(
+    gbd_paso3b = {
+      out <- gbd_paso3b
+
+      # Sexo y edad del grupo actual
+      sexo_actual <- cur_group()$sexo
+      edad_actual <- cur_group()$grupo_edad
+
+      # Seleccionar GC redistribuibles
+      idx <- which(
+        gbd_paso3b == "GC:GC2" &
+          (between(cie10_cod, "Y29.4", "Y30.9") |
+            cie10_cod %in% c("Y29.1", "Y29.2"))
+      )
+
+      if (length(idx) > 0) {
+        # Obtener las CE objetivo  de esa edad
+        datos <- tab_fr |>
+          filter(
+            str_detect(causa, "CE:CA|SH|VI"),
+            grupo_edad == edad_actual
+          )
+
+        # Normalizar las probabilidades
+        prob <- datos[[sexo_actual]] / sum(datos[[sexo_actual]])
+
+        # Redistribución multinomial
+        out[idx] <- rep(
+          datos$causa,
+          rmultinom(
+            n = 1,
+            size = length(idx),
+            prob = prob
+          )
+        )
+      }
+
+      out
+    },
+    .by = c(sexo, grupo_edad)
   )
 
 
-## Redistribuir GC2: cualquier causa -----
+## Redistribuir X59 ----
 set.seed(123)
 recod_defun <- recod_defun |>
+  # --- Redistribuir ~88% entre CE ---
   mutate(
-    gbd_paso3 = {
-      out <- gbd_paso3
-      idx <- which(gbd_paso3 == "GC:GC2")
+    gbd_paso3c = {
+      out <- gbd_paso3b
+
+      idx <- which(
+        gbd_paso3b == "GC:GC2" &
+          between(cie10_cod, "X59.0", "X59.9")
+      )
 
       if (length(idx) > 0) {
-        datos <- tab_fr |>
-          filter(
-            sexo == .data$sexo[1],
-            grupo_edad == .data$grupo_edad[1]
-          )
+        # Número de códigos X59 que se redistribuyen
+        n_ce <- round(length(idx) * sum(fr_gc2$fr_x59, na.rm = TRUE))
 
+        # Seleccionar aleatoriamente las posiciones que se redistribuyen
+        idx <- sample(idx, n_ce)
+
+        # Causas externas y sus probabilidades
+        datos <- fr_gc2 |> filter(str_detect(causa, "CE:"))
+
+        # Redistribución multinomial
         out[idx] <- rep(
           datos$causa,
-          rmultinom(1, length(idx), prob = datos$n)
+          rmultinom(n = 1, size = n_ce, prob = datos$fr_x59)
+        )
+      }
+      out
+    }
+  ) |>
+
+  # --- Distribuir ~11% entre CMNN y ENT no objetivo ---
+  mutate(
+    gbd_paso3c = {
+      out <- gbd_paso3c
+
+      # Sexo y edad del grupo actual
+      sexo_actual <- cur_group()$sexo
+      edad_actual <- cur_group()$grupo_edad
+
+      # Seleccionar GC redistribuibles
+      idx <- which(
+        gbd_paso3c == "GC:GC2" &
+          between(cie10_cod, "X59.0", "X59.9")
+      )
+
+      if (length(idx) > 0) {
+        # Obtener las frecuencias para CMNN y ENT no objetivo
+        datos <- tab_fr |>
+          filter(
+            str_detect(causa, "CMNN|DIG|MUSC|NEU-MENT|OTR-ENT|PIEL|SUST"),
+            grupo_edad == edad_actual
+          )
+
+        # Normalizar las probabilidades
+        prob <- datos[[sexo_actual]] / sum(datos[[sexo_actual]])
+
+        # Redistribución multinomial
+        out[idx] <- rep(
+          datos$causa,
+          rmultinom(
+            n = 1,
+            size = length(idx),
+            prob = prob
+          )
         )
       }
 
       out
+    },
+    .by = c(sexo, grupo_edad)
+  )
+
+
+## Redistribuir Y34 ----
+set.seed(123)
+recod_defun <- recod_defun |>
+  # --- Redistribuir ~89% entre CE Y ENT ---
+  mutate(
+    gbd_paso3d = {
+      out <- gbd_paso3c
+
+      idx <- which(
+        gbd_paso3c == "GC:GC2" &
+          between(cie10_cod, "Y34.0", "Y34.9")
+      )
+
+      if (length(idx) > 0) {
+        # Número de códigos X59 que se redistribuyen
+        n_ce <- round(length(idx) * sum(fr_gc2$fr_y34, na.rm = TRUE))
+
+        # Seleccionar aleatoriamente las posiciones que se redistribuyen
+        idx <- sample(idx, n_ce)
+
+        # Causas externas y sus probabilidades
+        # Redistribución multinomial
+        out[idx] <- rep(
+          fr_gc2$causa,
+          rmultinom(n = 1, size = n_ce, prob = fr_gc2$fr_y34)
+        )
+      }
+      out
     }
+  ) |>
+
+  # --- Distribuir ~11% entre CMNN y ENT no objetivo ---
+  mutate(
+    gbd_paso3d = {
+      out <- gbd_paso3d
+
+      # Sexo y edad del grupo actual
+      sexo_actual <- cur_group()$sexo
+      edad_actual <- cur_group()$grupo_edad
+
+      # Seleccionar GC redistribuibles
+      idx <- which(
+        gbd_paso3c == "GC:GC2" &
+          between(cie10_cod, "Y34.0", "Y34.9")
+      )
+
+      if (length(idx) > 0) {
+        # Obtener las frecuencias para CMNN y ENT no objetivo
+        datos <- tab_fr |>
+          filter(
+            str_detect(causa, "CMNN|DIG|MUSC|NEU-MENT|OTR-ENT|PIEL|SUST"),
+            grupo_edad == edad_actual
+          )
+
+        # Normalizar las probabilidades
+        prob <- datos[[sexo_actual]] / sum(datos[[sexo_actual]])
+
+        # Redistribución multinomial
+        out[idx] <- rep(
+          datos$causa,
+          rmultinom(
+            n = 1,
+            size = length(idx),
+            prob = prob
+          )
+        )
+      }
+
+      out
+    },
+    .by = c(sexo, grupo_edad)
+  )
+
+
+## Redistribuir GC2 generales -----
+recod_defun <- recod_defun |>
+  mutate(
+    gbd_paso3 = {
+      out <- gbd_paso3d
+
+      # Sexo y edad del grupo actual
+      sexo_actual <- cur_group()$sexo
+      edad_actual <- cur_group()$grupo_edad
+
+      # Seleccionar GC redistribuibles
+      idx <- which(gbd_paso3d == "GC:GC2")
+
+      if (length(idx) > 0) {
+        datos <- tab_fr |>
+          filter(,
+            grupo_edad == edad_actual
+          )
+
+        # Normalizar las probabilidades
+        prob <- datos[[sexo_actual]] / sum(datos[[sexo_actual]])
+
+        # Redistribución multinomial
+        out[idx] <- rep(
+          datos$causa,
+          rmultinom(
+            n = 1,
+            size = length(idx),
+            prob = prob
+          )
+        )
+      }
+
+      out
+    },
+    .by = c(sexo, grupo_edad)
   )
 
 
@@ -1856,84 +2035,99 @@ recod_defun <- recod_defun |>
 ## Reclasificar GC1 de CRD -----
 recod_defun <- recod_defun |>
   mutate(
-    gbd_paso4 = if_else(
+    gbd_paso4a = if_else(
       gbd_paso3 == "GC:GC1" & cie10_cod == "J96.1",
       "ENT:CRD",
       gbd_paso3
     )
   )
 
-## Redistribuir GC1: cualquier CE -----
+
+## Redistribuir GC1 de CE -----
 set.seed(123)
+
 recod_defun <- recod_defun |>
   mutate(
-    gbd_paso4 = {
-      out <- gbd_paso4
-      ## --- Redistribuir GC1: SH, VI, OTR-CE ---
+    gbd_paso4b = {
+      out <- gbd_paso4a
+
+      # Sexo y edad del grupo actual
+      sexo_actual <- cur_group()$sexo
+      edad_actual <- cur_group()$grupo_edad
+
+      # Seleccionar GC redistribuibles
       idx <- which(
-        gbd_paso4 == "GC:GC1" &
+        gbd_paso4a == "GC:GC1" &
           between(cie10_cod, "X40.0", "Y19.9")
       )
 
       if (length(idx) > 0) {
+        # Obtener las CE para esa edad
         datos <- tab_fr |>
           filter(
-            causa %in% c("CE:SH", "CE:VI", "CE:OTR-CE"),
-            sexo == .data$sexo[1],
-            grupo_edad == .data$grupo_edad[1]
+            str_detect(causa, "SH|VI|OTR-CE"),
+            grupo_edad == edad_actual
           )
 
+        # Normalizar las probabilidades según el sexo
+        prob <- datos[[sexo_actual]] / sum(datos[[sexo_actual]])
+
+        # Redistribución multinomial
         out[idx] <- rep(
           datos$causa,
-          rmultinom(1, length(idx), prob = datos$n)
-        )
-      }
-
-      ## --- Redistribuir R58 ---
-      idx <- which(cie10_cod == "R58.0")
-
-      if (length(idx) > 0) {
-        datos <- tab_fr |>
-          filter(
-            str_detect(causa, "CE:"),
-            sexo == .data$sexo[1],
-            grupo_edad == .data$grupo_edad[1]
+          rmultinom(
+            n = 1,
+            size = length(idx),
+            prob = prob
           )
-
-        out[idx] <- rep(
-          datos$causa,
-          rmultinom(1, length(idx), prob = datos$n)
         )
       }
-
+      # Resultado final
       out
-    }
+    },
+    .by = c(sexo, grupo_edad)
   )
 
 
-## Redistribuir GC1: todas las causas -----
+## Redistribuir GC1 generales -----
 set.seed(123)
+
 recod_defun <- recod_defun |>
   mutate(
     gbd_paso4 = {
-      out <- gbd_paso4
-      idx <- which(gbd_paso4 == "GC:GC1")
+      out <- gbd_paso4b
+
+      # Sexo y edad del grupo actual
+      sexo_actual <- cur_group()$sexo
+      edad_actual <- cur_group()$grupo_edad
+
+      # Seleccionar GC redistribuibles
+      idx <- which(gbd_paso4b == "GC:GC1")
 
       if (length(idx) > 0) {
+        # Obtener las CE para esa edad
         datos <- tab_fr |>
           filter(
-            sexo == .data$sexo[1],
-            grupo_edad == .data$grupo_edad[1]
+            grupo_edad == edad_actual
           )
 
+        # Normalizar las probabilidades según el sexo
+        prob <- datos[[sexo_actual]] / sum(datos[[sexo_actual]])
+
+        # Redistribución multinomial
         out[idx] <- rep(
           datos$causa,
-          rmultinom(1, length(idx), prob = datos$n)
+          rmultinom(
+            n = 1,
+            size = length(idx),
+            prob = prob
+          )
         )
       }
-
+      # Resultado final
       out
-    }
+    },
+    .by = c(sexo, grupo_edad)
   )
 
 
@@ -1959,6 +2153,43 @@ datos_gc <- recod_defun |>
   )
 
 
-# Exportar datos limpios -------------------------------------------------
-## Análisis GC ----
+## Exportar datos -----
 export(datos_gc, "clean/arg_recod_defun_gbd23.rds")
+
+
+# Crear dataset para análisis EM -----------------------------------------
+datos_em <- recod_defun |>
+  # Filtrar fechas fuera de rango
+  filter_out(anio == 2023 | mes == 0) |>
+
+  # Separar en grupo causa y causa
+  separate(gbd_paso4, into = c("grupo_causa", "causa"), sep = ":") |>
+
+  # Agrupar datos
+  count(
+    anio,
+    mes,
+    region_deis,
+    jurisd_deis,
+    sexo,
+    grupo_edad,
+    grupo_causa,
+    causa
+  ) |>
+
+  # --- Variables caracter a factor ---
+  mutate(
+    across(.cols = where(is.character), .fns = ~ factor(.x))
+  )
+
+
+## Exportar datos train -----
+datos_em |>
+  filter(anio < 2020) |>
+  export("../EM_ENT_CE/clean/arg_datos_em_train.rds")
+
+
+## Exportar datos pandemia -----
+datos_em |>
+  filter_out(anio < 2020) |>
+  export("../EM_ENT_CE/clean/arg_datos_em_test.rds")
