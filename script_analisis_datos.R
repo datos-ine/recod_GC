@@ -3,6 +3,7 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
+# Última modificación: 10-09-2026 11:06
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -152,23 +153,23 @@ fig1 <- grViz(
     </tr>    
     <tr>
     <td> Violencia interpersonal (VI) </td>
-    </tr>    
+    </tr> 
     <tr>
     <td> Accidentes por caídas (CA) </td>
-    </tr>    
+    </tr> 
     </table>
     >]
   
     otras1[label = <
     <table border="0" cellborder = "1" cellspacing  ="0">
     <tr>
-    <td width="250"><b>Otras causas</b></td>
+    <td width="250"><b>Causas no objetivo</b></td>
     </tr>
     <tr>
-    <td> CMNN </td>
+    <td> CMNN (INF, MAT-NEO, NUTR) </td>
     </tr>
     <tr>
-    <td> Otras lesiones (OTR-CE) </td>
+    <td> Otras CE (OTR-CE) </td>
     </tr>
     <tr>
     <td> Otras ENT (OTR-ENT) </td>
@@ -252,7 +253,7 @@ fig1 <- grViz(
     <td width="250"><b>Otras causas</b></td>
     </tr>
     <tr>
-    <td port = "cmnn"> CMNN </td>
+    <td port = "cmnn"> CMNN (INF, MAT-NEO, NUTR) </td>
     </tr>
     <tr>
     <td> OTR-CE </td>
@@ -333,7 +334,7 @@ fig1 <- grViz(
     <td width="250"><b>Otras causas</b></td>
     </tr>
     <tr>
-    <td> CMNN </td>
+    <td> CMNN (INF, MAT-NEO, NUTR) </td>
     </tr>
     <tr>
     <td> OTR-CE + GC2-CE*</td>
@@ -411,7 +412,7 @@ fig1 <- grViz(
     <td width="250"><b>Otras causas</b></td>
     </tr>
     <tr>
-    <td port = "cmnn"> CMNN </td>
+    <td port = "cmnn"> CMNN (INF, MAT-NEO, NUTR) </td>
     </tr>
     <tr>
     <td> OTR-CE + GC1-CE*</td>
@@ -425,7 +426,9 @@ fig1 <- grViz(
    }
   
     t1[
-    label=<* Redistribución proporcional por sexo y edad <br/>>
+    label=<* Redistribución proporcional por sexo y edad <br/>
+      según frecuencias calculadas luego de <br/>
+      recategorizar los GC3 y GC4.>
     shape=plain
     fillcolor="none"
     width=10
@@ -437,7 +440,7 @@ fig1 <- grViz(
            labelangle=-50 
            labeldistance=2.5
            ]
-  gc1:nne -> otras2:cmnn[label="50%" constraint=false]
+  gc1:nne -> otras2:cmnn[label="50%*" constraint=false]
   
   gc1 -> ent3 [style="invis"] 
   
@@ -479,10 +482,10 @@ tab1 <- tibble(
   ),
 
   val = c(
-    "2010-2023",
+    paste(range(datos_gc$anio), collapse = "-"),
     paste(levels(datos_gc$region_deis), collapse = "; "),
     paste(levels(datos_gc$jurisd_deis), collapse = "; "),
-    "Masculino; Femenino",
+    paste(levels(datos_gc$sexo), collapse = "; "),
     paste(levels(datos_gc$grupo_edad), collapse = "; "),
     "CMNN; ENT; CE; GC",
     paste(levels(datos_gc$gbd_paso1), collapse = "; "),
@@ -558,62 +561,47 @@ treeplot_data <- function(data, var) {
       area = pct,
       subgroup = n1,
       fill = n1
-    ))
+    )) +
+    theme(
+      legend.position = "none",
+      text = element_text(family = "Times New Roman")
+    )
 }
 
 
 ## Panel 1 -----
 g1 <- datos_gc |>
   treeplot_data(var = gbd_paso1) +
-  labs(subtitle = "Paso 1") +
-  theme(
-    legend.position = "none",
-    text = element_text(family = "Times New Roman")
-  )
+  labs(subtitle = "Paso 1")
 
 
 ## Panel 2 -----
 g2 <- datos_gc |>
   treeplot_data(var = gbd_paso2a) +
-  labs(subtitle = "Paso 2A") +
-  theme(
-    legend.position = "none",
-    text = element_text(family = "Times New Roman")
-  )
+  labs(subtitle = "Paso 2A")
 
 
 ## Panel 3 -----
 g3 <- datos_gc |>
   treeplot_data(var = gbd_paso2b) +
-  labs(subtitle = "Paso 2B") +
-  theme(
-    legend.position = "none",
-    text = element_text(family = "Times New Roman")
-  )
+  labs(subtitle = "Paso 2B")
 
 
 ## Panel 4 -----
 g4 <- datos_gc |>
+  treeplot_data(var = gbd_paso3) +
+  labs(subtitle = "Paso 3")
+
+## Panel 5 ----
+g5 <- datos_gc |>
   treeplot_data(var = gbd_paso4) +
-  labs(subtitle = "Pasos 3-4") +
-  theme(
-    legend.position = "none",
-    text = element_text(family = "Times New Roman")
-  ) +
-  guides(fill = guide_legend(nrow = 1)) +
-  labs(subtitle = "Pasos 3-4") +
-  theme(
-    text = element_text(family = "Times New Roman"),
-    legend.position = "bottom",
-    legend.key.spacing.x = unit(5, "points"),
-    legend.key.size = unit(5, "points")
-  )
+  labs(subtitle = "Paso 4")
 
 
 ## Treemap -----
 fig2 <- g1 /
   (g2 + g3) /
-  g4 &
+  (g4 + g5) &
   # Treemap
   geom_treemap(alpha = .9) &
   geom_treemap_text(
@@ -640,16 +628,25 @@ fig2 <- g1 /
 
   # Subgrupo
   geom_treemap_subgroup_border() &
-  # geom_treemap_subgroup_text(
-  #   place = "bottomleft",
-  #   size = 9,
-  #   family = "Times New Roman",
-  #   fontface = "bold",
-  #   color = "grey20"
-  # ) &
 
   # Layout
-  scale_fill_manual(name = NULL, values = pal, na.value = "grey65")
+  scale_fill_manual(name = NULL, values = pal, na.value = "grey65") &
+
+  plot_annotation(
+    caption = paste0(
+      '<span style="color:#4C4077; font-size:20pt">■</span> ENT',
+      '<span style="color:#7B3539; font-size:20pt">■</span> CE',
+      '<span style="color:#D28C50; font-size:20pt">■</span> CMNN',
+      '<span style="color:#68A3D4; font-size:20pt">■</span> GC'
+    ),
+    theme = theme(
+      plot.caption = ggtext::element_markdown(
+        hjust = 0.5,
+        size = 10,
+        family = "Times New Roman"
+      )
+    )
+  )
 
 
 # Tabla S2 ---------------------------------------------------------------
@@ -854,6 +851,11 @@ tasa_gc_jur <- datos_gc |>
     n = pob,
     stdpop = pob_est_2022,
     type = "standard"
+  ) |>
+
+  # Crear etiqueta para las tablas
+  mutate(
+    label = fct_cross(region_deis, jurisd_deis)
   )
 
 
@@ -870,8 +872,9 @@ mod_ar <- model_jp(
   test = TRUE
 )
 
+
 ## Regresión joinpoint: Región DEIS -----
-model_jp(
+mod_reg <- model_jp(
   tasa_gc_reg,
   value = value,
   time = anio,
@@ -884,58 +887,49 @@ model_jp(
 
 
 ## Regresión joinpoint: Jurisdicción DEIS -----
-mod_reg <- model_jp(
+mod_jur <- model_jp(
   tasa_gc_jur,
   value = value,
   time = anio,
-  group = c("nivel", "jurisd_deis"),
+  group = c("nivel", "label"),
   step = TRUE,
   k = 2,
   min_dist = 2,
   test = TRUE
 )
 
-# No coinciden con software joinpoint
-# Región
-# GC1: Centro
-# GC1: Cuyo
-# GC2: NEA
 
-# Jurisdicción
-# GC1: PBA
-# GC1: CABA
-# GC1: Cuyo2
-# GC1: Formosa
-# GC1: Tucumán
-# GC1: Pat. Sur
-# GC2: Córdoba
-# GC2: Entre Ríos
-# GC2: Santa Fe
-# GC2: Corrientes
-# GC2: Tucumán
-# GC3: CABA
-# GC3: Córdoba
-# GC3: Tucumán
-# GC3: Pat. Sur
-# GC4: Corrientes
+## Coeficientes modelos -----
+tab_mod <- summary_jp(mods = c(mod_ar, mod_reg, mod_jur), dec = ",") |>
+  # Separar en región y jurisdicción
+  separate(
+    subgroup,
+    into = c("region_deis", "jurisd_deis"),
+    sep = ":",
+    fill = "right"
+  ) |>
 
-######### SEGUIR DESDE ACÁ #######
+  # Completar NAs región
+  mutate(region_deis = replace_na(region_deis, "Argentina (Total)")) |>
+
+  # Ordenar filas
+  arrange(group, region_deis) |>
+
+  # Ordenar columnas
+  select(group, region_deis, jurisd_deis, everything())
+
+
 # Tabla 2 ----------------------------------------------------------------
-tab2 <- summary_jp(
-  mods = c(mod_ar, mod_reg),
-  dec = ","
-) |>
-  # Renombrar columnas
-  rename(region = subgroup) |>
-
+tab2 <- tab_mod |>
   # Filtrar GC1-GC2
-  filter(group %in% c("GC1", "GC2"))
+  filter(group %in% c("GC1", "GC2")) |>
 
-jp_to_ft(lan = "es")
-set_header_labels(
-  Subgrupo = "Región",
-  jurisd = "Jurisdicción"
-) |>
+  # Formato tabla
+  jp_to_ft(lan = "es") |>
+  set_header_labels(
+    region_deis = "Región",
+    jurisd_deis = "Jurisdicción"
+  ) |>
   tab_fmt() |>
   merge_v(j = 2:4, combine = TRUE) |>
   merge_v(j = 2) |>
@@ -957,20 +951,15 @@ set_header_labels(
 
 
 # Tabla 3 ----------------------------------------------------------------
-tab3 <- mod_jp_reg |>
-  summary_jp(dec = ",") |>
+tab3 <- tab_mod |>
+  # Filtrar GC3-GC4
   filter(group %in% c("GC3", "GC4")) |>
-  separate_wider_delim(
-    cols = subgroup,
-    names = c("subgroup", "jurisd"),
-    delim = ": ",
-    too_few = "align_start"
-  ) |>
 
+  # Formato tabla
   jp_to_ft(lan = "es") |>
   set_header_labels(
-    Subgrupo = "Región",
-    jurisd = "Jurisdicción"
+    region_deis = "Región",
+    jurisd_deis = "Jurisdicción"
   ) |>
   tab_fmt() |>
   merge_v(j = 2:4, combine = TRUE) |>
