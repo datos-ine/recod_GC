@@ -909,6 +909,7 @@ recod_defun <- recod_defun |>
           between(cie10_cod, "N00.0", "N08.8") |
           between(cie10_cod, "N18.0", "N18.9") |
           cie10_cod %in% c("N15.0", "P70.2") ~ "ENT:DM-CKD"
+        # D63.1: No existe
       )
     )
   )
@@ -1068,8 +1069,9 @@ recod_defun <- recod_defun |>
             ) ~ "ENT:PIEL",
 
         # --- Musculoesqueléticas ---
-        between(cie10_cod, "L93.0", "L93.2") |
-          cie10_cod %in% c("I27.1", "I67.7") |
+        cie10_cod %in%
+          c("I27.1", "I67.7") |
+          between(cie10_cod, "L93.0", "L93.2") |
           between(cie10_cod, "M00.0", "M03.0") |
           # M03.1: CMNN
           between(cie10_cod, "M03.2", "M06.9") |
@@ -1113,7 +1115,6 @@ recod_defun <- recod_defun |>
           between(cie10_cod, "D59.3", "D59.5") |
           # D59.6: CE
           between(cie10_cod, "D59.8", "D69.4") |
-          # D63.1: No existe
           # D69.5: CE
           between(cie10_cod, "D69.6", "D77.0") |
           # D70: No tiene decimales

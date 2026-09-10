@@ -3,7 +3,7 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 10-09-2026 11:06
+# Última modificación: 10-09-2026 11:43
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -696,12 +696,6 @@ tabs3 <- datos_gc |>
   left_join(
     datos_gc |>
       count(causa = gbd_paso2b, wt = n, name = "n2")
-  ) |>
-
-  # Añadir frecuencias paso 3
-  left_join(
-    datos_gc |>
-      count(causa = gbd_paso3, wt = n, name = "n3")
   ) |>
 
   # Añadir frecuencias paso 4
