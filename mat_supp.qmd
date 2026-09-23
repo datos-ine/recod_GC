@@ -34,6 +34,7 @@ knitr::opts_chunk$set(
 ```{r}
 #| id: Cargar script análisis
 #| include: false
+library(joinpointR)
 source("script_analisis_datos.R")
 ```
 
@@ -232,8 +233,7 @@ tabs3 |>
       minibar(
         value = (n2 - n1) / n1,
         width = .5,
-        height = .15,
-        barcol = pal[4]
+        height = .15
       ),
       # linerange(value = (n2 - n1) / n1),
       " ",
@@ -248,8 +248,7 @@ tabs3 |>
       minibar(
         value = (n4 - n1) / n1,
         width = .5,
-        height = .15,
-        barcol = pal[4]
+        height = .15
       ),
       " ",
       as_chunk(percent((n4 - n1) / n1, accuracy = .1, decimal.mark = ","))
@@ -283,10 +282,7 @@ figs4 <- bind_rows(tasa_gc_arg, tasa_gc_reg) |>
   ) +
 
   # Escalas
-  scale_fill_manual(
-    values = c4a(palette = "managua", n = 4),
-    name = NULL
-  ) +
+  scale_cbpal_fill(palette = "managua", name = NULL) +
 
   # Layout
   labs(
@@ -327,10 +323,7 @@ figs5 <- tasa_gc_jur |>
   ) +
 
   # Escalas
-  scale_fill_manual(
-    values = c4a(palette = "managua", n = 4),
-    name = NULL
-  ) +
+  scale_cbpal_fill(palette = "managua", name = NULL) +
 
   # Layout
   labs(
@@ -355,24 +348,21 @@ figs5
 #| id: Figura S6
 # Datos para el gráfico -----
 mod_gc <- tasa_gc_reg |>
-  model_jp(
-    value = value,
+  model_jp_grid(
+    rate = value,
     time = anio,
-    group = c("nivel", "region_deis"),
-    step = TRUE,
-    k = 2,
-    min_dist = 2,
-    test = TRUE
+    group = c("nivel", "region_deis")
   )
 
 # Gráfico -----
 figs6 <- mod_gc |>
   gg_jpoint(
     facets = "grid",
+    geom = "linepoint",
     psize = 1.5
   ) +
   scale_y_continuous(name = "log-tasa", n.breaks = 4) +
-  scale_color_manual(values = c4a(palette = "managua", n = 4)) +
+  scale_cbpal_fill(palette = "managua", name = NULL) +
   theme(
     legend.position = "none",
     panel.spacing.y = unit(.75, "lines")
@@ -387,25 +377,20 @@ figs6
 # Datos para el gráfico -----
 mod_gc1 <- tasa_gc_jur |>
   filter(nivel == "GC1") |>
-  model_jp(
-    value = value,
+  model_jp_grid(
+    rate = value,
     time = anio,
-    group = "label",
-    step = TRUE,
-    k = 2,
-    min_dist = 2,
-    test = TRUE
+    group = "jurisd_deis"
   )
 
 # Gráfico -----
 figs7 <- mod_gc1 |>
   gg_jpoint(
-    facets = "wrap",
+    geom = "linepoint",
     psize = 1.5,
-    cbpal = "managua"
+    cbpal.name = "managua"
   ) +
   scale_y_continuous(name = "log-tasa", n.breaks = 4) +
-  scale_color_manual(values = rep("#D28C50", 16)) +
   theme(
     legend.position = "none",
     panel.spacing.y = unit(.75, "lines")
@@ -421,24 +406,20 @@ figs7
 # Datos para el gráfico -----
 mod_gc2 <- tasa_gc_jur |>
   filter(nivel == "GC2") |>
-  model_jp(
-    value = value,
+  model_jp_grid(
+    rate = value,
     time = anio,
-    group = "label",
-    step = TRUE,
-    k = 2,
-    min_dist = 2,
-    test = TRUE
+    group = "jurisd_deis"
   )
 
 # Gráfico -----
 figs8 <- mod_gc2 |>
   gg_jpoint(
-    facets = "wrap",
-    psize = 1.5
+    geom = "linepoint",
+    psize = 1.5,
+    cbpal.name = "managua"
   ) +
   scale_y_continuous(name = "log-tasa", n.breaks = 4) +
-  scale_color_manual(values = rep("#7B3539", 16)) +
   theme(
     legend.position = "none",
     panel.spacing.y = unit(.75, "lines")
@@ -454,24 +435,20 @@ figs8
 # Datos para el gráfico -----
 mod_gc3 <- tasa_gc_jur |>
   filter(nivel == "GC3") |>
-  model_jp(
-    value = value,
+  model_jp_grid(
+    rate = value,
     time = anio,
-    group = "label",
-    step = TRUE,
-    k = 2,
-    min_dist = 2,
-    test = TRUE
+    group = "jurisd_deis"
   )
 
 # Gráfico -----
 figs9 <- mod_gc3 |>
   gg_jpoint(
-    facets = "wrap",
-    psize = 1.5
+    geom = "linepoint",
+    psize = 1.5,
+    cbpal.name = "managua"
   ) +
   scale_y_continuous(name = "log-tasa", n.breaks = 4) +
-  scale_color_manual(values = rep("#4C4077", 16)) +
   theme(
     legend.position = "none",
     panel.spacing.y = unit(.75, "lines")
@@ -486,26 +463,21 @@ figs9
 #| id: Figura S10
 # Datos para el gráfico -----
 mod_gc4 <- tasa_gc_jur |>
-  filter(nivel == "GC1") |>
-  model_jp(
-    value = value,
+  filter(nivel == "GC4") |>
+  model_jp_grid(
+    rate = value,
     time = anio,
-    group = "label",
-    step = TRUE,
-    k = 2,
-    min_dist = 2,
-    test = TRUE
+    group = "jurisd_deis"
   )
 
 # Gráfico -----
 figs10 <- mod_gc4 |>
   gg_jpoint(
-    facets = "wrap",
+    geom = "linepoint",
     psize = 1.5,
-    cbpal = "managua"
+    cbpal.name = "managua"
   ) +
   scale_y_continuous(name = "log-tasa", n.breaks = 4) +
-  scale_color_manual(values = rep("#68A3D4", 16)) +
   theme(
     legend.position = "none",
     panel.spacing.y = unit(.75, "lines")

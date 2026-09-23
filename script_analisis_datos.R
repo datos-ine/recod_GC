@@ -8,7 +8,7 @@
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
   # Gráficos
-  cols4all,
+  # cols4all,
   patchwork,
   ggridges,
   treemapify,
@@ -21,7 +21,7 @@ pacman::p_load(
   # Tasas estandarizadas
   PHEindicatormethods,
   # Regresión joinpoint
-  joinpointR,
+  # joinpointR,
   # Manejo de datos
   scales,
   here,
@@ -50,16 +50,6 @@ tab_fmt <- function(x) {
       hline(ft, i = idx)
     })()
 }
-
-
-# Paletas colorblind-friendly ----------------------------------------------
-pal <- c4a(palette = "managua", n = 4, reverse = TRUE) |>
-  set_names(c(
-    "GC",
-    "ENT",
-    "CE",
-    "CMNN"
-  ))
 
 
 # Cargar/preparar datos --------------------------------------------------
@@ -456,94 +446,48 @@ fig1 <- grViz(
 )
 
 
-# Tabla 1 ----------------------------------------------------------------
-tab1 <- tibble(
-  var = c(
-    "Año",
-    "Región",
-    "Jurisdicción",
-    "Sexo",
-    "Grupo etario",
-    "Grupo nivel 1",
-    "Grupo causa",
-    "Causa básica de muerte",
-    "Número de muertes"
-  ),
-  desc = c(
-    "Año de ocurrencia de la defunción",
-    "Regionalización sanitaria utilizada por la DEIS para agrupar las provincias argentinas",
-    "Nivel de agregación jurisdiccional definido por la DEIS para resguardar la confidencialidad de los datos",
-    "Sexo consignado en el acta de defunción",
-    "Categorías de edad agrupadas según criterios de la DEIS",
-    "Clasificación de causas según grandes grupos del GBD-2023",
-    "Clasificación de causas según grupos niveles 2-3 del GBD-2023",
-    "Causa básica de muerte codificada a cuatro dígitos según la CIE-10",
-    "Cantidad anual de defunciones según región, jurisdicción, sexo, grupo etario y causa básica de muerte"
-  ),
+# Figura 2 ---------------------------------------------------------------
+fig2 <- datos_gc |>
+  # Crear grupo de nivel 1
+  mutate(grupo_nivel1 = str_remove(gbd_paso1, ":.*")) |>
 
-  val = c(
-    paste(range(datos_gc$anio), collapse = "-"),
-    paste(levels(datos_gc$region_deis), collapse = "; "),
-    paste(levels(datos_gc$jurisd_deis), collapse = "; "),
-    paste(levels(datos_gc$sexo), collapse = "; "),
-    paste(levels(datos_gc$grupo_edad), collapse = "; "),
-    "CMNN; ENT; CE; GC",
-    paste(levels(datos_gc$gbd_paso1), collapse = "; "),
-    "A00.0-Z99.9",
-    "Conteo de defunciones"
-  )
-) |>
-
-  # Formato tabla
-  flextable() |>
-  add_footer_row(
-    values = as_paragraph(
-      as_b("Centro: "),
-      "CABA, Buenos Aires, Córdoba, Entre Ríos, Santa Fe; ",
-      as_b("Cuyo2: "),
-      "La Rioja, San Juan, San Luis; ",
-      as_b("NEA: "),
-      "Chaco, Corrientes, Formosa, Misiones; ",
-      as_b("NOA1: "),
-      "Jujuy, Salta; ",
-      as_b("NOA2: "),
-      "Catamarca, Santiago del Estero; ",
-      as_b("Patagonia Norte: "),
-      "La Pampa, Neuquén, Río Negro; ",
-      as_b("Patagonia Sur: "),
-      "Chubut, Santa Cruz, Tierra del Fuego"
-    ),
-    colwidths = 3,
-    top = FALSE
-  ) |>
-
-  tab_fmt() |>
-
-  set_header_labels(
-    var = "Variable",
-    desc = "Descripción",
-    val = "Valores"
-  ) |>
-
-  set_caption(
-    autonum = FALSE,
-    fp_p = fp_par(line_spacing = 1.5),
-    caption = as_paragraph(
-      as_chunk(
-        "Tabla 1. Variables incluidas en el estudio y categorías de análisis.",
-        props = fp_text(
-          font.size = 12,
-          font.family = "Times New Roman",
-          bold = TRUE
-        )
-      )
+  # Crear grupo de causas
+  mutate(
+    grupo_causa = case_when(
+      str_detect(gbd_paso1, "CRD|DM|ECV|NPL") ~ "ENT-OBJ",
+      str_detect(gbd_paso1, "CA|SH|TRA$|VI") ~ "CE-OBJ",
+      str_detect(gbd_paso1, "ENT") ~ "ENT-OTR",
+      str_detect(gbd_paso1, "CE") ~ "CE-OTR",
+      str_detect(gbd_paso1, "GC") ~ str_remove(gbd_paso1, ".*:"),
+      .default = str_remove(gbd_paso1, ":.*")
     )
   ) |>
 
-  width(width = c(3, 7, 7), unit = "cm")
+  # Calcular frecuencias x edad y sexo
+  count(grupo_edad, sexo, grupo_nivel1, grupo_causa, wt = n) |>
+  mutate(pct = n / sum(n), .by = c(grupo_causa, sexo, grupo_nivel1)) |>
+
+  # Gráfico
+  ggplot(aes(x = grupo_edad, y = pct, fill = grupo_causa)) +
+  facet_grid(sexo ~ grupo_nivel1) +
+  geom_col(position = "dodge") +
+
+  # Escalas
+  scale_cbpal_fill(palette = "managua", name = NULL) +
+  scale_y_continuous(name = NULL, labels = percent) +
+  scale_x_discrete(name = NULL) +
+
+  # Layout
+  guides(fill = guide_legend(nrow = 2)) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 90),
+    text = element_text(family = "Times New Roman", size = 12)
+  )
 
 
-# Figura 2 ---------------------------------------------------------------
+# Figura 3 ---------------------------------------------------------------
 ## Función auxiliar -----
 treeplot_data <- function(data, var) {
   data |>
@@ -599,7 +543,7 @@ g5 <- datos_gc |>
 
 
 ## Treemap -----
-fig2 <- g1 /
+fig3 <- g1 /
   (g2 + g3) /
   (g4 + g5) &
   # Treemap
@@ -607,7 +551,7 @@ fig2 <- g1 /
   geom_treemap_text(
     aes(
       label = if_else(
-        pct == 0,
+        pct < 0.015,
         "",
         paste0(
           n2,
@@ -628,25 +572,15 @@ fig2 <- g1 /
 
   # Subgrupo
   geom_treemap_subgroup_border() &
+  geom_treemap_subgroup_text(
+    size = 10,
+    family = "Times New Roman",
+    fontface = "bold",
+    place = "bottomleft"
+  ) &
 
   # Layout
-  scale_fill_manual(name = NULL, values = pal, na.value = "grey65") &
-
-  plot_annotation(
-    caption = paste0(
-      '<span style="color:#4C4077; font-size:20pt">■</span> ENT',
-      '<span style="color:#7B3539; font-size:20pt">■</span> CE',
-      '<span style="color:#D28C50; font-size:20pt">■</span> CMNN',
-      '<span style="color:#68A3D4; font-size:20pt">■</span> GC'
-    ),
-    theme = theme(
-      plot.caption = ggtext::element_markdown(
-        hjust = 0.5,
-        size = 10,
-        family = "Times New Roman"
-      )
-    )
-  )
+  scale_cbpal_fill(palette = "managua")
 
 
 # Tabla S2 ---------------------------------------------------------------
@@ -855,85 +789,95 @@ tasa_gc_jur <- datos_gc |>
 
 # Evolución tasas GC -----------------------------------------------------
 ## Regresión joinpoint: Argentina -----
-mod_ar <- model_jp(
-  tasa_gc_arg,
-  value = value,
+mod_ar <- model_jp_grid(
+  data = tasa_gc_arg,
+  rate = value,
   time = anio,
-  group = "nivel",
-  step = TRUE,
-  k = 2,
-  min_dist = 2,
-  test = TRUE
+  group = "nivel"
 )
 
 
 ## Regresión joinpoint: Región DEIS -----
-mod_reg <- model_jp(
-  tasa_gc_reg,
-  value = value,
+mod_reg <- model_jp_grid(
+  data = tasa_gc_reg,
+  rate = value,
   time = anio,
-  group = c("nivel", "region_deis"),
-  step = TRUE,
-  k = 2,
-  min_dist = 2,
-  test = TRUE
+  group = c("nivel", "region_deis")
 )
 
 
 ## Regresión joinpoint: Jurisdicción DEIS -----
-mod_jur <- model_jp(
-  tasa_gc_jur,
-  value = value,
+mod_jur <- model_jp_grid(
+  data = tasa_gc_jur,
+  rate = value,
   time = anio,
-  group = c("nivel", "label"),
-  step = TRUE,
-  k = 2,
-  min_dist = 2,
-  test = TRUE
+  group = c("nivel", "label")
 )
 
-
 ## Coeficientes modelos -----
-tab_mod <- summary_jp(mods = c(mod_ar, mod_reg, mod_jur), dec = ",") |>
-  # Separar en región y jurisdicción
+tab_mod <- get_summary(mods = c(mod_ar, mod_reg, mod_jur)) |>
+  # Crear columnas nivel, región y jurisdicción
   separate(
-    subgroup,
-    into = c("region_deis", "jurisd_deis"),
-    sep = ":",
-    fill = "right"
+    col = model,
+    into = c("nivel", "region", "jurisdiccion"),
+    fill = "right",
+    extra = "merge"
   ) |>
 
-  # Completar NAs región
-  mutate(region_deis = replace_na(region_deis, "Argentina (Total)")) |>
+  # Reemplazar NAs
+  mutate(region = replace_na(region, "Argentina (Total)")) |>
+
+  # Redondear cifras
+  mutate(across(.cols = where(is.numeric), .fns = ~ round(.x, 2))) |>
+
+  # Unir CI
+  mutate(
+    ci = paste0(apc_lower, "-", apc_upper, " ", apc_sig),
+    .after = apc
+  ) |>
+
+  # Unir AAPC y significancia
+  unite(col = "aapc", c(aapc, aapc_sig), sep = " ") |>
 
   # Ordenar filas
-  arrange(group, region_deis) |>
+  arrange(nivel, region) |>
 
-  # Ordenar columnas
-  select(group, region_deis, jurisd_deis, everything())
+  # Seleccionar columnas
+  select(-segment, -contains("_"))
 
 
-# Tabla 2 ----------------------------------------------------------------
-tab2 <- tab_mod |>
+# Tabla 1 ----------------------------------------------------------------
+tab1 <- tab_mod |>
   # Filtrar GC1-GC2
-  filter(group %in% c("GC1", "GC2")) |>
+  filter(nivel %in% c("GC1", "GC2")) |>
+
+  # Generar tabla
+  flextable() |>
+
+  # Encabezados
+  set_header_labels(
+    nivel = "Grupo",
+    region = "Región",
+    jurisdiccion = "Jurisdicción",
+    jp = "JP",
+    period = "Período",
+    apc = "APC",
+    ci = "95% IC",
+    aapc = "AAPC"
+  ) |>
 
   # Formato tabla
-  jp_to_ft(lan = "es") |>
-  set_header_labels(
-    region_deis = "Región",
-    jurisd_deis = "Jurisdicción"
-  ) |>
   tab_fmt() |>
   merge_v(j = 2:4, combine = TRUE) |>
-  merge_v(j = 2) |>
+  merge_v(j = "region") |>
+  merge_v(j = "aapc") |>
   autofit() |>
   set_caption(
     autonum = FALSE,
     fp_p = fp_par(line_spacing = 1.5),
     caption = as_paragraph(
       as_chunk(
-        "Tabla 2. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 1 y 2 (GC1-GC2) por región y jurisdicción, Argentina (2010-2023).",
+        "Tabla 1. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 1 y 2 (GC1-GC2) por región y jurisdicción, Argentina (2010-2023).",
         props = fp_text(
           font.size = 12,
           font.family = "Times New Roman",
@@ -944,27 +888,39 @@ tab2 <- tab_mod |>
   )
 
 
-# Tabla 3 ----------------------------------------------------------------
-tab3 <- tab_mod |>
+# Tabla 2 ----------------------------------------------------------------
+tab2 <- tab_mod |>
   # Filtrar GC3-GC4
-  filter(group %in% c("GC3", "GC4")) |>
+  filter(nivel %in% c("GC3", "GC4")) |>
+
+  # Generar tabla
+  flextable() |>
+
+  # Encabezados
+  set_header_labels(
+    nivel = "Grupo",
+    region = "Región",
+    jurisdiccion = "Jurisdicción",
+    jp = "JP",
+    period = "Período",
+    apc = "APC",
+    ci = "95% IC",
+    aapc = "AAPC"
+  ) |>
 
   # Formato tabla
-  jp_to_ft(lan = "es") |>
-  set_header_labels(
-    region_deis = "Región",
-    jurisd_deis = "Jurisdicción"
-  ) |>
   tab_fmt() |>
   merge_v(j = 2:4, combine = TRUE) |>
-  merge_v(j = 2) |>
+
+  merge_v(j = "region") |>
+  merge_v(j = "aapc") |>
   autofit() |>
   set_caption(
     autonum = FALSE,
     fp_p = fp_par(line_spacing = 1.5),
     caption = as_paragraph(
       as_chunk(
-        "Tabla 3. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 3 y 4 (GC3-GC4) por región y jurisdicción, Argentina (2010-2023).",
+        "Tabla 2. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 3 y 4 (GC3-GC4) por región y jurisdicción, Argentina (2010-2023).",
         props = fp_text(
           font.size = 12,
           font.family = "Times New Roman",
@@ -994,20 +950,6 @@ tab3 <- tab_mod |>
 #     width = 560
 #   )
 
-# ## Tabla 1 -----
-# save_as_docx(
-#   tab1,
-#   path = "figs_tablas/Tabla1.docx",
-#   pr_section = prop_section(
-#     page_margins = page_mar(
-#       bottom = 0.7874,
-#       top = 0.7874,
-#       left = 0.7874,
-#       right = 0.7874
-#     )
-#   )
-# )
-
 # ## Figura 2 -----
 # # PNG
 # ggsave(
@@ -1029,10 +971,31 @@ tab3 <- tab_mod |>
 #   dpi = 300
 # )
 
-# ## Tabla 2 -----
+# ## Figura 3 -----
+# # PNG
+# ggsave(
+#   fig3,
+#   filename = "figs_tablas/Figura3.png",
+#   width = 17,
+#   height = 20,
+#   units = "cm",
+#   dpi = 300
+# )
+
+# # SVG
+# ggsave(
+#   fig3,
+#   filename = "figs_tablas/Figura3.svg",
+#   width = 17,
+#   height = 20,
+#   units = "cm",
+#   dpi = 300
+# )
+
+# ## Tabla 1 -----
 # save_as_docx(
-#   tab2,
-#   path = "figs_tablas/Tabla2.docx",
+#   tab1,
+#   path = "figs_tablas/Tabla1.docx",
 #   pr_section = prop_section(
 #     page_margins = page_mar(
 #       bottom = 0.7874,
@@ -1043,10 +1006,10 @@ tab3 <- tab_mod |>
 #   )
 # )
 
-# ## Tabla 3 -----
+# ## Tabla 2 -----
 # save_as_docx(
-#   tab3,
-#   path = "figs_tablas/Tabla3.docx",
+#   tab2,
+#   path = "figs_tablas/Tabla2.docx",
 #   pr_section = prop_section(
 #     page_margins = page_mar(
 #       bottom = 0.7874,
