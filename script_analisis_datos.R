@@ -32,6 +32,7 @@ pacman::p_load(
   # update = TRUE
 )
 
+library(joinpointR)
 
 # Tema flextable -----------------------------------------------------------
 tab_fmt <- function(x) {
@@ -796,6 +797,7 @@ mod_ar <- model_jp_grid(
   group = "nivel"
 )
 
+get_aapc(mod_ar)
 
 ## Regresión joinpoint: Región DEIS -----
 mod_reg <- model_jp_grid(
