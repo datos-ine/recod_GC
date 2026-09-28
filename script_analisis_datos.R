@@ -216,7 +216,7 @@ mod_ar <- model_jp_grid(
   data = tasa_gc_arg,
   rate = value,
   time = anio,
-  group = "nivel"
+  group = c("nivel", "region_deis")
 )
 
 
@@ -363,6 +363,37 @@ tab2 <- tab_mod |>
 
 ## Guardar como DOCX ----
 # save_as_docx(tab2, path = "figs_tablas/Tabla2.docx")
+
+# Figura 4 ---------------------------------------------------------------
+fig4 <- c(mod_ar, mod_reg) |>
+  gg_jpoint(
+    geom = "linepoint",
+    facets = "grid",
+    aapc = TRUE,
+    psize = 1.5,
+    date.breaks = "3 years",
+    cbpal.name = "managua"
+  ) +
+  scale_y_continuous(
+    transform = "exp", # Exponencia los valores del eje
+    labels = label_number(accuracy = 0.1)
+  )
+  theme(
+    legend.position = "none",
+    text = element_text(family = "Times New Roman")
+  )
+
+
+# Save as PNG ----
+ggsave(
+  fig4,
+  filename = "figs_tablas/Figura4.png",
+  width = 17,
+  height = 20,
+  units = "cm",
+  dpi = 300
+)
+
 
 # Limpiar environment ----------------------------------------------------
 rm(pob_est_2022, proy_2010_2023, tab1, tab2, tab_mod)
