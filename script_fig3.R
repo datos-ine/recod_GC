@@ -2,7 +2,7 @@
 ### redistribución hacia causas específicas
 ### Figura 3
 ### Autora: Tamara Ricardo
-# Última modificación: 25-09-2026 12:48
+# Última modificación: 28-09-2026 16:35
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -15,9 +15,9 @@ pacman::p_load(
 
 
 # Cargar datos -----------------------------------------------------------
-datos_gc <- import("clean/arg_recod_defun_gbd23.rds") |> 
+datos_gc <- import("clean/arg_recod_defun_gbd23.rds") |>
   # --- Seleccionar columnas ---
-  select(contains("gbd"), n) 
+  select(contains("gbd"), n)
 
 
 # Figura 3 ---------------------------------------------------------------
@@ -89,7 +89,7 @@ fig3 <- g1 /
   geom_treemap_text(
     aes(
       label = if_else(
-        pct < 0.015,
+        pct < 0.005,
         "",
         paste0(
           n2,
@@ -104,7 +104,7 @@ fig3 <- g1 /
     color = "white",
     family = "Times New Roman",
     fontface = "bold",
-    min.size = 6,
+    min.size = 4,
     size = 11
   ) &
 
@@ -124,14 +124,14 @@ fig3 <- g1 /
 
 
 ## Save as PNG ----
-# ggsave(
-#   fig3,
-#   filename = "figs_tablas/Figura3.png",
-#   width = 17,
-#   height = 20,
-#   units = "cm",
-#   dpi = 300
-# )
+ggsave(
+  fig3,
+  filename = "figs_tablas/Figura3.png",
+  width = 17,
+  height = 20,
+  units = "cm",
+  dpi = 300
+)
 
 ## Save as SVG ----
 # ggsave(
@@ -142,4 +142,3 @@ fig3 <- g1 /
 #   units = "cm",
 #   dpi = 300
 # )
-

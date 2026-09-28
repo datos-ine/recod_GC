@@ -382,9 +382,9 @@ export_svg(fig1) |>
   )
 
 ## Save as SVG ----
-export_svg(fig1) |>
-  charToRaw() |>
-  rsvg_svg(
-    file = "figs_tablas/Figura1.svg",
-    width = 560
-  )
+# export_svg(fig1) |>
+#   charToRaw() |>
+#   rsvg_svg(
+#     file = "figs_tablas/Figura1.svg",
+#     width = 560
+#   )

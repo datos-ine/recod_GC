@@ -68,14 +68,14 @@ fig2 <- fr_sex_edad |>
   )
 
 ## Save as PNG ----
-# ggsave(
-#   fig2,
-#   filename = "figs_tablas/Figura2.png",
-#   width = 17,
-#   height = 20,
-#   units = "cm",
-#   dpi = 300
-# )
+ggsave(
+  fig2,
+  filename = "figs_tablas/Figura2.png",
+  width = 17,
+  height = 20,
+  units = "cm",
+  dpi = 300
+)
 
 ## Save as SVG ----
 # ggsave(

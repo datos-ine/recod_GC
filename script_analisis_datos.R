@@ -239,7 +239,7 @@ mod_jur <- model_jp_grid(
 
 
 # ---- Tabla de coeficientes ----
-tab_mod <- get_summary(mods = c(mod_ar, mod_reg, mod_jur)) |>
+tab_mod <- get_summary(mods = c(mod_reg, mod_jur)) |>
   # --- Separar columnas ---
   separate(
     col = model,
@@ -270,100 +270,6 @@ tab_mod <- get_summary(mods = c(mod_ar, mod_reg, mod_jur)) |>
   select(-contains("_"))
 
 
-# Tabla 1 ----------------------------------------------------------------
-tab1 <- tab_mod |>
-  # --- Filtrar GC1-GC2 ---
-  filter(nivel %in% c("GC1", "GC2")) |>
-
-  # --- Generar tabla ---
-  flextable() |>
-
-  # --- Encabezados ---
-  set_header_labels(
-    nivel = "Grupo",
-    region = "Región",
-    jurisdiccion = "Jurisdicción",
-    jp = "JP",
-    period = "Período",
-    apc = "APC",
-    ci = "95% IC",
-    aapc = "AAPC"
-  ) |>
-
-  # --- Formato tabla ---
-  tab_fmt() |>
-  merge_v(j = 2:4, combine = TRUE) |>
-  merge_v(j = "region") |>
-  merge_v(j = "aapc") |>
-  autofit() |>
-
-  # --- Caption ---
-  set_caption(
-    autonum = FALSE,
-    fp_p = fp_par(line_spacing = 1.5),
-    caption = as_paragraph(
-      as_chunk(
-        "Tabla 1. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 1 y 2 (GC1-GC2) por región y jurisdicción, Argentina (2010-2023).",
-        props = fp_text(
-          font.size = 12,
-          font.family = "Times New Roman",
-          bold = TRUE
-        )
-      )
-    )
-  )
-
-
-## Guardar como DOCX ----
-# save_as_docx(tab1, path = "figs_tablas/Tabla1.docx")
-
-# # Tabla 2 ----------------------------------------------------------------
-tab2 <- tab_mod |>
-  # --- Filtrar GC3-GC4 ---
-  filter(nivel %in% c("GC3", "GC4")) |>
-
-  # --- Generar tabla ---
-  flextable() |>
-
-  # --- Encabezados ---
-  set_header_labels(
-    nivel = "Grupo",
-    region = "Región",
-    jurisdiccion = "Jurisdicción",
-    jp = "JP",
-    period = "Período",
-    apc = "APC",
-    ci = "95% IC",
-    aapc = "AAPC"
-  ) |>
-
-  # --- Formato tabla ---
-  tab_fmt() |>
-  merge_v(j = 2:4, combine = TRUE) |>
-
-  merge_v(j = "region") |>
-  merge_v(j = "aapc") |>
-  autofit() |>
-
-  # --- Caption ---
-  set_caption(
-    autonum = FALSE,
-    fp_p = fp_par(line_spacing = 1.5),
-    caption = as_paragraph(
-      as_chunk(
-        "Tabla 2. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage nivel 3 y 4 (GC3-GC4) por región y jurisdicción, Argentina (2010-2023).",
-        props = fp_text(
-          font.size = 12,
-          font.family = "Times New Roman",
-          bold = TRUE
-        )
-      )
-    )
-  )
-
-## Guardar como DOCX ----
-# save_as_docx(tab2, path = "figs_tablas/Tabla2.docx")
-
 # Figura 4 ---------------------------------------------------------------
 fig4 <- c(mod_ar, mod_reg) |>
   gg_jpoint(
@@ -371,29 +277,60 @@ fig4 <- c(mod_ar, mod_reg) |>
     facets = "grid",
     aapc = TRUE,
     psize = 1.5,
+    text.size = 7,
     date.breaks = "3 years",
-    cbpal.name = "managua"
+    cbpal = "managua"
   ) +
-  scale_y_continuous(
-    transform = "exp", # Exponencia los valores del eje
-    labels = label_number(accuracy = 0.1)
-  )
-  theme(
-    legend.position = "none",
-    text = element_text(family = "Times New Roman")
-  )
+  scale_y_log10()
 
 
-# Save as PNG ----
-ggsave(
-  fig4,
-  filename = "figs_tablas/Figura4.png",
-  width = 17,
-  height = 20,
-  units = "cm",
-  dpi = 300
-)
+## Save as PNG ----
+# ggsave(
+#   fig4,
+#   filename = "figs_tablas/Figura4.png",
+#   width = 17,
+#   height = 20,
+#   units = "cm",
+#   dpi = 300
+# )
 
+# Tabla 1 ----------------------------------------------------------------
+tab1 <- datos_gc |>
+  # --- Filtrar GC1-GC2 ---
+  filter(gbd_paso1 %in% c("GC:GC1", "GC:GC2")) |>
 
-# Limpiar environment ----------------------------------------------------
-rm(pob_est_2022, proy_2010_2023, tab1, tab2, tab_mod)
+  # --- Reagrupar niveles ---
+  mutate(cie10_cod = str_sub(cie10_cod, 1, 3)) |>
+
+  # --- Calcular frecuencias ---
+  count(cie10_cod, wt = n) |>
+  mutate(pct = percent(n / sum(n), accuracy = .1, decimal.mark = ",")) |>
+
+  # --- Añadir descripción códigos DEIS ---
+  left_join(
+    import(here("raw", "descdef1.xlsx"), sheet = 4),
+    by = join_by(cie10_cod == CODIGO)
+  ) |>
+
+  # --- Ordenar por frecuencia ---
+  arrange(-n) |>
+
+  # --- Ordenar columnas ---
+  select(cie10_cod, causa = VALOR, everything()) |>
+
+  head(n = 20) |>
+
+  # --- Convertir a tabla ---
+  flextable() |>
+  tab_fmt() |>
+  set_header_labels(
+    cie10_cod = "Código",
+    causa = "Causa",
+    n = "Frecuencia",
+    pct = "%"
+  ) |>
+  width(width = c(2, 10, 2, 2), unit = "cm") |>
+  theme_booktabs()
+
+## Guardar como DOCX ----
+# save_as_docx(tab1, path = "figs_tablas/Tabla1.docx")
