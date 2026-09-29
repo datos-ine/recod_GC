@@ -372,6 +372,7 @@ gg_jpoint(
 
 ```
 
+
 \newpage
 
 ## Figura S9. Evolución temporal de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Región NEA por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
