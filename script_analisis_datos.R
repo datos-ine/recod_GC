@@ -3,7 +3,7 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 25-09-2026 13:07
+# Última modificación: 30-09-2026 11:44
 
 # Cargar paquetes --------------------------------------------------------
 # remotes::install_github("https://github.com/datos-ine/joinpointR")
@@ -20,6 +20,9 @@ pacman::p_load(
   tidyverse
 )
 
+
+# Formato tablas ---------------------------------------------------------
+source("tab_fmt.R")
 
 # Cargar/preparar datos --------------------------------------------------
 ## Población estándar Argentina (2022) -----
@@ -101,26 +104,9 @@ datos_gc <- datos_gc_raw |>
     )
   )
 
-
-#  Tema flextable -----------------------------------------------------------
-tab_fmt <- function(x) {
-  x |>
-    bold(part = "header") |>
-    font(fontname = "Times New Roman", part = "all") |>
-    fontsize(size = 9, part = "all") |>
-    line_spacing(space = 1.5, part = "all") |>
-    align(align = "left", part = "all") |>
-    merge_v(j = 1) |>
-    merge_v(j = 2:3, combine = TRUE) |>
-    (\(ft) {
-      idx <- which(ft$body$dataset[[2]] != dplyr::lag(ft$body$dataset[[2]])) - 1
-      idx <- idx[!is.na(idx) & idx > 0]
-      hline(ft, i = idx)
-    })()
-}
-
-
-# Análisis exploratorio --------------------------------------------------
+# ========================================================================
+# ---- Análisis exploratorio ----
+# ========================================================================
 # ---- Muertes por sexo y edad ----
 datos_gc |>
   uncount(weights = n) |>
@@ -128,8 +114,9 @@ datos_gc |>
   add_p()
 
 
-# ---- Muertes por GC1 y GC2 ----
-tab_fr1 <- datos_gc |>
+# Tabla 1 ----------------------------------------------------------------
+## ---- Muertes por GC1 y GC2 ----
+datos_tab1 <- datos_gc |>
   # --- Filtrar GC1-GC2 ---
   filter(gbd_paso1 %in% c("GC:GC1", "GC:GC2")) |>
 
@@ -162,8 +149,39 @@ tab_fr1 <- datos_gc |>
   head(n = 20)
 
 
-# ---- Muertes por sexo, edad y grupo causa ----
-tab_fr2 <- datos_gc |>
+## ---- Tabla ----
+tab1 <- datos_tab1 |>
+  # --- Convertir a tabla ---
+  flextable() |>
+
+  # --- Encabezados ---
+  set_header_labels(
+    cie10_cod = "Código",
+    causa = "Causa",
+    n = "Frecuencia",
+    pct = "%"
+  ) |>
+
+  # --- Layout ---
+  tab_fmt() |>
+  width(width = c(2, 10, 2, 2), unit = "cm") |>
+  theme_booktabs(bold_header = TRUE) |>
+
+  # --- Caption ---
+  set_caption(
+    caption = "Tabla 1. Principales códigos garbage de nivel 1 y 2 (GC1-GC2) registrados como causa básica de defunción en Argentina (2010-2023)."
+  )
+
+## Guardar como DOCX ----
+# save_as_docx(
+#   tab1,
+#   path = "figs_tablas/Tabla1.docx",
+#   align = "left"
+# )
+
+# Figura 2 ---------------------------------------------------------------
+## ---- Muertes por sexo, edad y grupo causa ----
+datos_fig2 <- datos_gc |>
   # --- Calcular frecuencias x edad y sexo ---
   count(grupo_edad, sexo, gbd_paso1_g1, gbd_paso1_grupo, wt = n) |>
   mutate(
@@ -172,8 +190,49 @@ tab_fr2 <- datos_gc |>
   )
 
 
-# ---- Muertes por grupo de causa pasos 1-4----
-tab_fr3 <- datos_gc |>
+## ---- Gráfico ----
+fig2 <- datos_fig2 |>
+  ggplot(aes(x = grupo_edad, y = pct, fill = gbd_paso1_grupo)) +
+  facet_grid(sexo ~ gbd_paso1_g1) +
+  geom_col(position = "dodge", alpha = .9) +
+
+  # --- Escalas ---
+  scale_y_continuous(name = NULL, labels = percent) +
+  scale_x_discrete(name = NULL) +
+  scale_cbpal_fill(palette = "managua", name = NULL) +
+
+  # --- Layout ---
+  guides(fill = guide_legend(nrow = 2)) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 90),
+    text = element_text(family = "Times New Roman", size = 12)
+  )
+
+## Guardar como PNG ----
+# ggsave(
+#   fig2,
+#   filename = "figs_tablas/Figura2.png",
+#   width = 17,
+#   height = 20,
+#   units = "cm",
+#   dpi = 300
+# )
+
+## Guardar como SVG ----
+# ggsave(
+#   fig2,
+#   filename = "figs_tablas/Figura2.svg",
+#   width = 17,
+#   height = 20,
+#   units = "cm",
+#   dpi = 300
+# )
+
+# Figura 3 ---------------------------------------------------------------
+## ---- Muertes por grupo de causa pasos 1-4----
+datos_fig3 <- datos_gc |>
   # --- Seleccionar columnas ---
   select(contains(c("g1", "g2")), n) |>
 
@@ -230,83 +289,9 @@ tab_fr3 <- datos_gc |>
     )
   )
 
-# # --- Porcentaje ---
-# arrange(paso, grupo_causa, causa) |>
-# mutate(
-#   pct = if_else(paso != "paso1", (n - lag(n)) / lag(n), n/sum(n)),
-#   .by = c(grupo_causa, causa)
-# )
 
-# Tabla 1 ----------------------------------------------------------------
-tab1 <- tab_fr1 |>
-  # --- Convertir a tabla ---
-  flextable() |>
-
-  # --- Formato de tabla ---
-  tab_fmt() |>
-  set_header_labels(
-    cie10_cod = "Código",
-    causa = "Causa",
-    n = "Frecuencia",
-    pct = "%"
-  ) |>
-  width(width = c(2, 10, 2, 2), unit = "cm") |>
-  theme_booktabs(bold_header = TRUE) |>
-
-  # --- Caption ---
-  set_caption(
-    caption = "Tabla 1. Principales códigos garbage de nivel 1 y 2 (GC1-GC2) registrados como causa básica de defunción en Argentina (2010-2023)."
-  )
-
-## Guardar como DOCX ----
-# save_as_docx(
-#   tab1,
-#   path = "figs_tablas/Tabla1.docx",
-#   align = "left"
-# )
-
-# Figura 2 ---------------------------------------------------------------
-fig2 <- tab_fr2 |>
-  ggplot(aes(x = grupo_edad, y = pct, fill = gbd_paso1_grupo)) +
-  facet_grid(sexo ~ gbd_paso1_g1) +
-  geom_col(position = "dodge", alpha = .9) +
-
-  # --- Escalas ---
-  scale_y_continuous(name = NULL, labels = percent) +
-  scale_x_discrete(name = NULL) +
-  scale_cbpal_fill(palette = "managua", name = NULL) +
-
-  # --- Layout ---
-  guides(fill = guide_legend(nrow = 2)) +
-  theme_minimal() +
-  theme(
-    legend.position = "bottom",
-    axis.text.x = element_text(angle = 90),
-    text = element_text(family = "Times New Roman", size = 12)
-  )
-
-## Guardar como PNG ----
-# ggsave(
-#   fig2,
-#   filename = "figs_tablas/Figura2.png",
-#   width = 17,
-#   height = 20,
-#   units = "cm",
-#   dpi = 300
-# )
-
-## Guardar como SVG ----
-# ggsave(
-#   fig2,
-#   filename = "figs_tablas/Figura2.svg",
-#   width = 17,
-#   height = 20,
-#   units = "cm",
-#   dpi = 300
-# )
-
-# Figura 3 ---------------------------------------------------------------
-fig3 <- tab_fr3 |>
+## ---- Gráfico ----
+fig3 <- datos_fig3 |>
   mutate(
     causa = factor(
       causa,
@@ -359,6 +344,9 @@ fig3 <- tab_fr3 |>
 #   dpi = 300
 # )
 
+# ========================================================================
+# ---- Tendencias temporales tasas GC ----
+# ========================================================================
 # Tasas estandarizadas ---------------------------------------------------
 ## ---- Total país ----
 tasa_gc_arg <- datos_gc |>
@@ -528,38 +516,6 @@ mod_jur <- model_jp_grid(
 )
 
 
-# ---- Tabla de coeficientes ----
-tab_mod <- get_summary(mods = c(mod_reg, mod_jur)) |>
-  # --- Separar columnas ---
-  separate(
-    col = model,
-    into = c("nivel", "region", "jurisdiccion"),
-    fill = "right",
-    extra = "merge"
-  ) |>
-
-  # --- Reemplazar NAs ---
-  mutate(region = replace_na(region, "Argentina")) |>
-
-  # --- Redondear cifras ---
-  mutate(across(.cols = where(is.numeric), .fns = ~ round(.x, 2))) |>
-
-  # --- Unir CI del APC ---
-  mutate(
-    ci = paste0(apc_lower, "; ", apc_upper, " ", apc_sig),
-    .after = apc
-  ) |>
-
-  # Unir AAPC y significancia
-  unite(col = "aapc", c(aapc, aapc_sig), sep = " ") |>
-
-  # Ordenar filas
-  arrange(nivel, region) |>
-
-  # Seleccionar columnas
-  select(-contains("_"))
-
-
 # Figura 4 ---------------------------------------------------------------
 fig4 <- c(mod_ar, mod_reg) |>
   gg_jpoint(
@@ -582,3 +538,6 @@ fig4 <- c(mod_ar, mod_reg) |>
 #   units = "cm",
 #   dpi = 300
 # )
+
+# Limpiar environment ----------------------------------------------------
+rm(datos_gc_raw, pob_est_2022, proy_2010_2023, datos_tab1, fig2, fig3, fig4)

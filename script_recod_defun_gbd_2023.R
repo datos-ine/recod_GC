@@ -7,7 +7,7 @@
 ### Recategorización y redistribución de códigos garbage (GC)
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 09-09-2026 14:53
+# Última modificación: 30-09-2026 09:42
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -1589,6 +1589,9 @@ tab_fr <- recod_defun |>
   # Convertir a dataframe
   list_rbind(names_to = "grupo_edad")
 
+
+## ---- Guardar tabla de frecuencias ----
+# export(tab_fr, "clean/tabla_s2.csv")
 
 # Paso 2b: Redistribuir neumonías NE -------------------------------------
 set.seed(123)
