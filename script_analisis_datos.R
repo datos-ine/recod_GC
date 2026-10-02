@@ -522,22 +522,53 @@ fig4 <- c(mod_ar, mod_reg) |>
     geom = "linepoint",
     facets = "grid",
     aapc = TRUE,
-    psize = 1.5,
-    text.size = 7,
     date.breaks = "3 years",
-    cbpal = "managua"
+    cbpal = "managua",
+    size = 1.5,
+    hjust = 1,
+    border_color = NA,
+    name = NULL
   ) +
   scale_y_log10()
 
-## Save as PNG ----
-# ggsave(
-#   fig4,
-#   filename = "figs_tablas/Figura4.png",
-#   width = 17,
-#   height = 20,
-#   units = "cm",
-#   dpi = 300
-# )
+fig4b <- c(mod_ar, mod_reg) |>
+  gg_jpoint(
+    facets = "grid",
+    aapc = TRUE,
+    date.breaks = "3 years",
+    cbpal = "managua",
+    color.by = "period",
+    size = 1.5,
+    hjust = 1,
+    border_color = NA,
+    name = "Período"
+  ) +
+  scale_y_log10()
+
+fig4c <- c(mod_ar, mod_reg) |>
+  gg_jpoint(
+    facets = "grid",
+    aapc = TRUE,
+    date.breaks = "3 years",
+    cbpal = "managua",
+    color.by = "trend",
+    size = 1.5,
+    hjust = 1,
+    border_color = NA,
+    name = "APC"
+  ) +
+  scale_y_log10()
+
+
+## Guardar como PNG ----
+ggsave(
+  fig4c,
+  filename = "figs_tablas/Figura4.png",
+  width = 17,
+  height = 20,
+  units = "cm",
+  dpi = 300
+)
 
 # Limpiar environment ----------------------------------------------------
 rm(datos_gc_raw, pob_est_2022, proy_2010_2023, datos_tab1, fig2, fig3, fig4)
