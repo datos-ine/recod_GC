@@ -557,8 +557,8 @@ fig4c <- c(mod_ar, mod_reg) |>
     border_color = NA,
     name = "APC"
   ) +
-  scale_y_log10()
-
+  scale_y_log10() +
+  scale_color_manual(values = c("#572948", "#5E89C3"))
 
 ## Guardar como PNG ----
 ggsave(
