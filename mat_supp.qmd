@@ -10,13 +10,7 @@ author:
       - name: M. Jimena Marro
         orcid: 0000-0002-9483-2304
 format: 
-    pdf:
-        papersize: a4
-        geometry:
-            - top=20mm
-            - left=20mm
-            - heightrounded
-        mainfont: Times New Roman
+    docx
 ---
 
 ```{r}
@@ -503,4 +497,3 @@ gg_jpoint(
   scale_y_log10(name = "log(tasa)") +
   scale_cbpal_color(palette = "managua", name = "Período")
 ```
-
