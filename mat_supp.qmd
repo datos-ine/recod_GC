@@ -27,7 +27,7 @@ knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE,
   fig.align = "center",
-  fig.asp = 1.5
+  fig.asp = 1.45
 )
 ```
 
@@ -140,7 +140,7 @@ tab_mod <- get_summary(mods = c(mod_reg, mod_jur)) |>
   select(-contains("_"))
 ```
 
-## Tabla S1. Códigos de la Décima Clasificación Internacional de Enfermedades (CIE-10) utilizados para definir grupos de causas y códigos garbage, según categorías del estudio de Carga Global de Enfermedades 2023 (GBD-2023). Se removieron códigos inexistentes o mal clasificados.
+## Tabla S1. Definición de grupos de causas y códigos *garbage* mediante códigos de la Clasificación Internacional de Enfermedades, décima revisión (CIE-10), adaptados de las categorías del estudio de Carga Global de Enfermedades 2023 (GBD 2023). Los códigos inexistentes o mal clasificados fueron depurados.
 
 ```{r}
 #| id: tabs1
@@ -162,7 +162,7 @@ tabs1 |>
 ```
 
 \newpage
-## Tabla S2. Frecuencia de defunciones grupo etario, grupo de causas y sexo utilizada para calcular los pesos de redistribución de neumonías inespecíficas, GC2 y GC1.
+## Tabla S2. Frecuencia observada de defunciones según grupo etario, sexo y grupo de causa, utilizada en el cálculo de los pesos de redistribución para neumonías inespecíficas (NNE) y códigos *garbage* nivel 1 y 2 (GC1 y GC2). Argentina, 2010–2023.
 
 ```{r}
 #| id: tabs2
@@ -188,7 +188,7 @@ tabs2 |>
 ```
 
 \newpage
-## Tabla S3. Distribución de las defunciones por grupo de causa y grupo de edad en varones, expresada como frecuencia absoluta y porcentaje. Argentina (2010–2023).
+## Tabla S3. Distribución absoluta y relativa (%) de las defunciones por grupo de causas y grupo de edad en varones. Argentina, 2010–2023.
 
 ```{r}
 #| id: tabs3
@@ -235,7 +235,7 @@ tabs3 |>
 ```
 
 \newpage
-## Tabla S4. Distribución de las defunciones por grupo de causa y grupo de edad en mujeres, expresada como frecuencia absoluta y porcentaje. Argentina (2010–2023).
+## Tabla S4. Distribución absoluta y relativa (%) de las defunciones por grupo de causas y grupo de edad en mujeres. Argentina, 2010–2023.
 
 ```{r}
 #| id: tabs4
@@ -282,7 +282,7 @@ tabs4 |>
 ```
 
 \newpage
-## Tabla S5. Cambios en las frecuencias (%) de muertes por causas definidas durante los distintos pasos de redistribución de códigos garbage (GC), Argentina (2010-2023).
+## Tabla S5. Cambios en la frecuencia relativa (%) de defunciones por causas definidas según los pasos de redistribución de códigos garbage (GC). Argentina, 2010–2023.
 
 ```{r}
 #| id: tabs5
@@ -307,12 +307,10 @@ tabs5 |>
   ) |>
 
   width(width = rep(1.5, 10), unit = "cm")
-
-# width(width = c(1.5, 1.5, 1.5, 3, 3, 2), unit = "cm")
 ```
 
 
-## Figura S6. Distribución regional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
+## Figura S6. Distribución regional de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad. Argentina, 2010–2023. Las curvas ilustran la densidad de las tasas según el nivel de GC y los puntos indican los valores observados.
 
 ```{r}
 #| id: figs6
@@ -348,7 +346,7 @@ bind_rows(tasa_gc_arg, tasa_gc_reg) |>
   )
 ```
 
-## Figura S7. Distribución jurisdiccional de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Argentina (2010-2023). Las curvas representan la distribución de las tasas según nivel de GC y los puntos corresponden a los valores observados.
+## Figura S7. Distribución jurisdiccional de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad. Argentina, 2010–2023. Las curvas ilustran la densidad de las tasas según el nivel de GC y los puntos indican los valores observados.
 
 ```{r}
 #| id: figs7
@@ -384,7 +382,7 @@ tasa_gc_jur |>
   )
 ```
 
-## Tabla S8. Coeficientes de la regresión joinpoint de las tasas estandarizadas de mortalidad por códigos garbage (GC1-GC4) por región y jurisdicción, Argentina (2010-2023).
+## Tabla S8. Coeficientes de regresión joinpoint de las tasas de mortalidad estandarizadas por edad según nivel de código *garbage* (GC1 a GC4), región y jurisdicción. Argentina, 2010–2023.
 
 ```{r}
 #| id: tabs8
@@ -414,7 +412,7 @@ tab_mod |>
   autofit()
 ```
 
-## Figura S9. Evolución temporal de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Región Centro por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
+## Figura S9. Evolución temporal de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad en las jurisdicciones de la Región Centro. Argentina, 2010–2023. Los puntos representan las tasas observadas en escala logarítmica (log-tasa) y las líneas corresponden a los valores ajustados mediante modelos de regresión joinpoint. Las líneas verticales en gris señalan los puntos de cambio en la tendencia, mientras que la variación de color en líneas y puntos identifica los distintos períodos delimitados.
 
 ```{r}
 #| id: figs9
@@ -426,15 +424,18 @@ names(mod_centro) <- str_remove_all(names(mod_centro), "Centro:")
 # ---- Gráfico
 gg_jpoint(
   mods = mod_centro,
-  facets = "grid",
   geom = "linepoint",
+  facets = "grid",
+  color.by = "period",
   aapc = TRUE,
   psize = 2,
-  cbpal = "managua"
-)
+  date.breaks = "3 years"
+) +
+  scale_y_log10(name = "log(tasa)") +
+  scale_cbpal_color(palette = "managua", name = "Período")
 ```
 
-## Figura S10. Evolución temporal de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Región NEA por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
+## Figura S10. Evolución temporal de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad en las jurisdicciones de la Región NEA. Argentina, 2010–2023. Los puntos representan las tasas observadas en escala logarítmica (log-tasa) y las líneas corresponden a los valores ajustados mediante modelos de regresión joinpoint. Las líneas verticales en gris señalan los puntos de cambio en la tendencia, mientras que la variación de color en líneas y puntos identifica los distintos períodos delimitados.
 
 ```{r}
 #| id: figs10
@@ -446,15 +447,18 @@ names(mod_NEA) <- str_remove_all(names(mod_NEA), "NEA:")
 # ---- Gráfico
 gg_jpoint(
   mods = mod_NEA,
-  facets = "grid",
   geom = "linepoint",
+  facets = "grid",
+  color.by = "period",
   aapc = TRUE,
   psize = 2,
-  cbpal = "managua"
-)
+  date.breaks = "3 years"
+) +
+  scale_y_log10(name = "log(tasa)") +
+  scale_cbpal_color(palette = "managua", name = "Período")
 ```
 
-## Figura S11. Evolución temporal de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Región NOA por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
+## Figura S11. Evolución temporal de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad en las jurisdicciones de la Región NOA. Argentina, 2010–2023. Los puntos representan las tasas observadas en escala logarítmica (log-tasa) y las líneas corresponden a los valores ajustados mediante modelos de regresión joinpoint. Las líneas verticales en gris señalan los puntos de cambio en la tendencia, mientras que la variación de color en líneas y puntos identifica los distintos períodos delimitados.
 
 ```{r}
 #| id: figs11
@@ -466,15 +470,18 @@ names(mod_NOA) <- str_remove_all(names(mod_NOA), "NOA:")
 # ---- Gráfico
 gg_jpoint(
   mods = mod_NOA,
-  facets = "grid",
   geom = "linepoint",
+  facets = "grid",
+  color.by = "period",
   aapc = TRUE,
   psize = 2,
-  cbpal = "managua"
-)
+  date.breaks = "3 years"
+) +
+  scale_y_log10(name = "log(tasa)") +
+  scale_cbpal_color(palette = "managua", name = "Período")
 ```
 
-## Figura S12. Evolución temporal de las tasas de mortalidad por códigos garbage (GC) estandarizadas por edad, Regiones Cuyo y Patagonia por jurisdicciones, Argentina (2010-2023). Los puntos representan los valores observados en escala logarítmica (log-tasa) y las líneas los valores ajustados mediante modelos de regresión joinpoint. Las líneas grises verticales indican los puntos de cambio en la pendiente.
+## Figura S12. Evolución temporal de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad en las jurisdicciones de las regiones Cuyo y Patagonia. Argentina, 2010–2023. Los puntos representan las tasas observadas en escala logarítmica (log-tasa) y las líneas corresponden a los valores ajustados mediante modelos de regresión joinpoint. Las líneas verticales en gris señalan los puntos de cambio en la tendencia, mientras que la variación de color en líneas y puntos identifica los distintos períodos delimitados.
 
 ```{r}
 #| id: figs12
@@ -486,11 +493,14 @@ names(mod_cuyo) <- str_remove_all(names(mod_cuyo), "Cuyo:|Patagonia:")
 # ---- Gráfico
 gg_jpoint(
   mods = mod_cuyo,
-  facets = "grid",
   geom = "linepoint",
+  facets = "grid",
+  color.by = "period",
   aapc = TRUE,
   psize = 2,
-  cbpal = "managua"
-)
+  date.breaks = "3 years"
+) +
+  scale_y_log10(name = "log(tasa)") +
+  scale_cbpal_color(palette = "managua", name = "Período")
 ```
 

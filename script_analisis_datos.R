@@ -3,7 +3,7 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 30-09-2026 11:44
+# Última modificación: 2026-10-05 09:53:26
 
 # Cargar paquetes --------------------------------------------------------
 # remotes::install_github("https://github.com/datos-ine/joinpointR")
@@ -172,6 +172,7 @@ tab1 <- datos_tab1 |>
     caption = "Tabla 1. Principales códigos garbage de nivel 1 y 2 (GC1-GC2) registrados como causa básica de defunción en Argentina (2010-2023)."
   )
 
+
 ## Guardar como DOCX ----
 # save_as_docx(
 #   tab1,
@@ -210,7 +211,8 @@ fig2 <- datos_fig2 |>
     text = element_text(family = "Times New Roman", size = 12)
   )
 
-## Guardar como PNG ----
+
+# # Guardar como PNG ----
 # ggsave(
 #   fig2,
 #   filename = "figs_tablas/Figura2.png",
@@ -323,6 +325,7 @@ fig3 <- datos_fig3 |>
     text = element_text(family = "Times New Roman"),
     axis.text.x = element_text(angle = 90)
   )
+
 
 ## Guardar como PNG ----
 # ggsave(
@@ -519,56 +522,24 @@ mod_jur <- model_jp_grid(
 # Figura 4 ---------------------------------------------------------------
 fig4 <- c(mod_ar, mod_reg) |>
   gg_jpoint(
-    geom = "linepoint",
     facets = "grid",
     aapc = TRUE,
     date.breaks = "3 years",
-    cbpal = "managua",
-    size = 1.5,
-    hjust = 1,
-    border_color = NA,
-    name = NULL
-  ) +
-  scale_y_log10()
-
-fig4b <- c(mod_ar, mod_reg) |>
-  gg_jpoint(
-    facets = "grid",
-    aapc = TRUE,
-    date.breaks = "3 years",
-    cbpal = "managua",
     color.by = "period",
     size = 1.5,
     hjust = 1,
     border_color = NA,
     name = "Período"
   ) +
-  scale_y_log10()
-
-fig4c <- c(mod_ar, mod_reg) |>
-  gg_jpoint(
-    facets = "grid",
-    aapc = TRUE,
-    date.breaks = "3 years",
-    cbpal = "managua",
-    color.by = "trend",
-    size = 1.5,
-    hjust = 1,
-    border_color = NA,
-    name = "APC"
-  ) +
   scale_y_log10() +
-  scale_color_manual(values = c("#572948", "#5E89C3"))
+  scale_cbpal_color(palette = "managua", name = "Período")
 
 ## Guardar como PNG ----
-ggsave(
-  fig4c,
-  filename = "figs_tablas/Figura4.png",
-  width = 17,
-  height = 20,
-  units = "cm",
-  dpi = 300
-)
-
-# Limpiar environment ----------------------------------------------------
-rm(datos_gc_raw, pob_est_2022, proy_2010_2023, datos_tab1, fig2, fig3, fig4)
+# ggsave(
+#   fig4,
+#   filename = "figs_tablas/Figura4.png",
+#   width = 17,
+#   height = 20,
+#   units = "cm",
+#   dpi = 300
+# )
