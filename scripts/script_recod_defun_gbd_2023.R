@@ -7,7 +7,7 @@
 ### Recategorización y redistribución de códigos garbage (GC)
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 28-10-2026 09:27
+# Última modificación: 28-10-2026 12:19
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -2148,9 +2148,50 @@ datos_gc <- recod_defun |>
   )
 
 
+# Crear dataset para análisis EM -----------------------------------------
+datos_em <- recod_defun |>
+  # --- Quitar datos fuera del rango ---
+  filter_out(anio > 2022 | mes == 0) |>
+
+  # --- Separar paso 4 ---
+  separate_wider_delim(
+    cols = gbd_paso4,
+    names = c("grupo_causa", "causa"),
+    delim = ":"
+  ) |>
+
+  # --- Modificar causa ---
+  mutate(
+    causa = if_else(
+      cie10_cod %in% c("U07.1", "U07.2"),
+      "COVID-19",
+      causa
+    )
+  ) |>
+
+  # --- Estimar frecuencias ---
+  count(
+    anio,
+    mes,
+    region_deis,
+    jurisd_deis,
+    sexo,
+    grupo_edad,
+    grupo_causa,
+    causa
+  ) |>
+
+  # --- Variables caracter a factor ---
+  mutate(
+    across(.cols = where(is.character), .fns = ~ factor(.x))
+  )
+
 # Exportar datos ---------------------------------------------------------
 ## ----- Tabla de frecuencias -----
 export(tab_fr, "figs_tablas/tab_s2.csv")
 
 ## ---- Datos GC -----
 export(datos_gc, "clean/arg_recod_defun_gbd23.rds")
+
+## ---- Datos EM-----
+export(datos_gc, "../EM_ENT_CE/clean/arg_defun_mensuales.rda")
