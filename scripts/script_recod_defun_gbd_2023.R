@@ -2194,4 +2194,4 @@ export(tab_fr, "figs_tablas/tab_s2.csv")
 export(datos_gc, "clean/arg_recod_defun_gbd23.rds")
 
 ## ---- Datos EM-----
-export(datos_gc, "../EM_ENT_CE/clean/arg_defun_mensuales.rda")
+export(datos_em, "../EM_ENT_CE/clean/arg_defun_mensuales.rda")
