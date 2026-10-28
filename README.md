@@ -1,2 +1,2 @@
 # Introducción
-Este repositorio contiene los datasets y scripts de R utilizados para la elaboración del artículo "Lo que se oculta en la basura: redistribución de códigos garbage en Argentina".
+Este repositorio contiene los datasets y scripts de R utilizados para la elaboración del artículo "Lo que se oculta en la basura: redistribución de códigos garbage en Argentina". Registrado en Zenodo: https://doi.org/10.5281/zenodo.23732292
