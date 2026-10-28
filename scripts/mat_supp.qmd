@@ -1,0 +1,503 @@
+---
+title: "Material suplementario"
+author: 
+      - name: Tamara Ricardo
+        orcid: 0000-0002-0921-2611
+      - name: Juan I. Irassar
+        orcid: 0000-0003-2215-6682
+      - name: M. Fernanda Aguirre
+        orcid: 0000-0002-3979-865X
+      - name: M. Jimena Marro
+        orcid: 0000-0002-9483-2304
+format: 
+    pdf:
+      papersize: a4
+      mainfont: Arial
+      fontsize: 12pt
+      geometry:
+      - top=20mm
+      - left=20mm
+      - heightrounded
+---
+
+```{r}
+#| id: Configuración inicial
+#| echo: false
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE,
+  fig.align = "center",
+  fig.asp = 1.25
+)
+```
+
+```{r}
+#| id: Cargar paquetes
+#| include: false
+# ---- Paquetes ----
+pacman::p_load(
+  patchwork,
+  ggridges,
+  gtsummary
+)
+
+# ---- Script análisis ----
+source(here::here("scripts", "script_analisis_datos.R"))
+```
+
+```{r}
+#| id: Cargar y limpiar datos
+#| include: false
+# ---- Datos Tabla S1 ----
+tabs1 <- import("../figs_tablas/tabla_s1.xlsx")
+
+
+# ---- Datos Tabla S2 ----
+tabs2 <- import("../figs_tablas/tab_s2.csv") |>
+  # --- Organizar niveles edad ---
+  mutate(
+    grupo_edad = fct_relevel(
+      grupo_edad,
+      "<20 años",
+      "20-39",
+      "40-49",
+      "50-59",
+      "60-69",
+      "70-79",
+      "≥80 años"
+    )
+  ) |>
+
+  # --- Separar grupos nivel 1 y 2 ---
+  separate_wider_delim(cols = causa, delim = ":", names = c("g1", "g2")) |>
+
+  # --- Ordenar datos ----
+  arrange(grupo_edad, g1)
+
+
+# ---- Datos Tabla S5 ----
+tabs5 <- datos_fig3 |>
+  # --- Seleccionar columnas ---
+  select(paso:n) |>
+
+  # --- Formato wide ---
+  pivot_wider(names_from = paso, values_from = n) |>
+
+  # --- Pasar a porcentajes ---
+  mutate(across(
+    .cols = where(is.numeric),
+    .fns = ~ .x / sum(.x)
+  )) |>
+
+  # --- Cambio porcentual paso 1 a paso2a ---
+  mutate(cambio_pct2a = (paso2a - paso1) / paso1, .after = paso2a) |>
+
+  # --- Cambio porcentual total ---
+  mutate(cambio_pct = (paso4 - paso1) / paso1) |>
+
+  # --- Razón de cambio ---
+  mutate(cambio_razon = paso4 / paso1) |>
+
+  # --- Convertir a porcentajes ---
+  mutate(across(
+    .cols = c(paso1:cambio_pct),
+    .fns = ~ .x * 100
+  ))
+
+
+# ---- Coeficientes regresión ----
+tab_mod <- get_summary(models = c(mod_reg, mod_jur)) |>
+  # --- Separar columnas ---
+  separate(
+    col = group_var,
+    into = c("nivel", "region", "jurisdiccion"),
+    fill = "right",
+    extra = "merge"
+  ) |>
+
+  # --- Reemplazar NAs ---
+  mutate(region = replace_na(region, "Argentina")) |>
+
+  # --- Redondear cifras ---
+  mutate(across(.cols = where(is.numeric), .fns = ~ round(.x, 2))) |>
+
+  # --- Unir CI del APC ---
+  mutate(
+    ci = paste0(apc_lower, "; ", apc_upper, " ", apc_sig),
+    .after = apc
+  ) |>
+
+  # Unir AAPC y significancia
+  unite(col = "aapc", c(aapc, aapc_sig), sep = " ") |>
+
+  # Ordenar filas
+  arrange(nivel, region) |>
+
+  # Seleccionar columnas
+  select(-contains("_"))
+```
+
+## Tabla S1. Definición de grupos de causas y códigos *garbage* mediante códigos de la Clasificación Internacional de Enfermedades, décima revisión (CIE-10), adaptados de las categorías del estudio de Carga Global de Enfermedades 2023 (GBD 2023). Los códigos inexistentes o mal clasificados fueron depurados.
+
+```{r}
+#| id: tabs1
+tabs1 |>
+  # --- Convertir a flextable ---
+  flextable() |>
+
+  # --- Encabezados ---
+  set_header_labels(
+    nivel1 = "Grupo causas",
+    nivel2 = "Causas",
+    codigos = "Códigos CIE-10"
+  ) |>
+
+  # --- Formato tabla ---
+  tab_fmt() |>
+  merge_v(j = 1:2) |>
+  width(width = c(3, 3, 10), unit = "cm")
+```
+
+\newpage
+## Tabla S2. Frecuencia observada de defunciones según grupo etario, sexo y grupo de causa, utilizada en el cálculo de los pesos de redistribución para neumonías inespecíficas (NNE) y códigos *garbage* nivel 1 y 2 (GC1 y GC2). Argentina, 2010–2023.
+
+```{r}
+#| id: tabs2
+tabs2 |>
+  flextable() |>
+
+  # --- Encabezado ---
+  set_header_labels(
+    grupo_edad = "Grupo etario",
+    g1 = "Grupo causa",
+    g2 = "Causa"
+  ) |>
+
+  # --- Formato de tabla ---
+  tab_fmt() |>
+  merge_v(j = 2) |>
+  colformat_double(
+    big.mark = ".",
+    decimal.mark = ",",
+    digits = 3
+  ) |>
+  width(width = c(rep(3, 5)), unit = "cm")
+```
+
+\newpage
+## Tabla S3. Distribución absoluta y relativa (%) de las defunciones por grupo de causas y grupo de edad en varones. Argentina, 2010–2023.
+
+```{r}
+#| id: tabs3
+# ---- Datos para la tabla ----
+tabs3 <- datos_gc |>
+  # --- Filtrar sexo masculino ---
+  filter_out(sexo == "Femenino") |>
+
+  # --- Crear grupo nivel 1 ---
+  mutate(
+    grupo_n1 = case_when(
+      str_detect(gbd_paso1, "GC1|GC2") ~ "GC1-GC2",
+      str_detect(gbd_paso1, "GC3|GC4") ~ "GC3-GC4",
+      .default = str_remove(gbd_paso1, ":.*")
+    )
+  ) |>
+
+  # --- Seleccionar columnas ---
+  select(grupo_edad, grupo_n1, n) |>
+
+  # --- Individualizar filas ---
+  uncount(n)
+
+# ---- Tabla ----
+tabs3 |>
+  tbl_cross(
+    row = grupo_edad,
+    col = grupo_n1,
+    percent = "row",
+    digits = c(0, 1),
+    label = list(grupo_n1 = "Grupo causa", grupo_edad = "Grupo edad")
+  ) |>
+
+  # --- Añadir significancia ---
+  add_p() |>
+  bold_p() |>
+
+  # --- Formato tabla ---
+  bold_labels() |>
+  as_flex_table() |>
+  tab_fmt() |>
+  merge_v(j = 8) |>
+  width(width = c(rep(2, 8)), unit = "cm")
+```
+
+\newpage
+## Tabla S4. Distribución absoluta y relativa (%) de las defunciones por grupo de causas y grupo de edad en mujeres. Argentina, 2010–2023.
+
+```{r}
+#| id: tabs4
+# ---- Datos para la tabla ----
+tabs4 <- datos_gc |>
+  # --- Filtrar sexo femenino ---
+  filter(sexo == "Femenino") |>
+
+  # --- Crear grupo nivel 1 ---
+  mutate(
+    grupo_n1 = case_when(
+      str_detect(gbd_paso1, "GC1|GC2") ~ "GC1-GC2",
+      str_detect(gbd_paso1, "GC3|GC4") ~ "GC3-GC4",
+      .default = str_remove(gbd_paso1, ":.*")
+    )
+  ) |>
+
+  # --- Seleccionar columnas ---
+  select(grupo_edad, grupo_n1, n) |>
+
+  # --- Individualizar filas ---
+  uncount(n)
+
+# ---- Tabla ----
+tabs4 |>
+  tbl_cross(
+    row = grupo_edad,
+    col = grupo_n1,
+    percent = "row",
+    digits = c(0, 1),
+    label = list(grupo_n1 = "Grupo causa", grupo_edad = "Grupo edad")
+  ) |>
+
+  # --- Añadir significancia ---
+  add_p() |>
+  bold_p() |>
+
+  # --- Formato tabla ---
+  bold_labels() |>
+  as_flex_table() |>
+  tab_fmt() |>
+  merge_v(j = 8) |>
+  width(width = c(rep(2, 8)), unit = "cm")
+```
+
+\newpage
+## Tabla S5. Cambios en la frecuencia relativa (%) de defunciones por causas definidas según los pasos de redistribución de códigos garbage (GC). Argentina, 2010–2023.
+
+```{r}
+#| id: tabs5
+tabs5 |>
+  flextable() |>
+
+  # --- Encabezados ---
+  set_header_labels(
+    grupo_causa = "Grupo causa",
+    causa = "Causa",
+    cambio_pct2a = "Cambio %",
+    cambio_pct = "Cambio total %",
+    cambio_razon = "Razón de cambio"
+  ) |>
+
+  # --- Formato de tabla ---
+  tab_fmt() |>
+  colformat_double(
+    big.mark = ".",
+    decimal.mark = ",",
+    digits = 2
+  ) |>
+
+  width(width = rep(1.5, 10), unit = "cm")
+```
+
+
+## Figura S6. Distribución regional de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad. Argentina, 2010–2023. Las curvas ilustran la densidad de las tasas según el nivel de GC y los puntos indican los valores observados.
+
+```{r}
+#| id: figs6
+bind_rows(tasa_gc_arg, tasa_gc_reg) |>
+  # --- Gráfico ---
+  ggplot(aes(x = value, y = nivel, fill = nivel)) +
+  facet_wrap(~region_deis, ncol = 2) +
+
+  # --- Geometrías ---
+  geom_density_ridges(
+    jittered_points = TRUE,
+    position = "raincloud",
+    color = NA,
+    alpha = 0.6,
+    point_color = "grey40",
+    point_alpha = 0.35,
+    scale = 3
+  ) +
+
+  # --- Escalas ---
+  scale_cbpal_fill(palette = "managua", name = NULL) +
+
+  # --- Layout ---
+  labs(
+    x = "Tasa est. (100.000 hab.)",
+    y = NULL
+  ) +
+
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    strip.text = element_text(face = "bold")
+  )
+```
+
+## Figura S7. Distribución jurisdiccional de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad. Argentina, 2010–2023. Las curvas ilustran la densidad de las tasas según el nivel de GC y los puntos indican los valores observados.
+
+```{r}
+#| id: figs7
+tasa_gc_jur |>
+  # Gráfico
+  ggplot(aes(x = value, y = nivel, fill = nivel)) +
+  facet_wrap(~jurisd_deis, ncol = 3) +
+
+  # Geometrías
+  geom_density_ridges(
+    jittered_points = TRUE,
+    position = "raincloud",
+    color = NA,
+    alpha = 0.6,
+    point_color = "grey40",
+    point_alpha = 0.35,
+    scale = 3
+  ) +
+
+  # Escalas
+  scale_cbpal_fill(palette = "managua", name = NULL) +
+
+  # Layout
+  labs(
+    x = "Tasa est. (100.000 hab.)",
+    y = NULL
+  ) +
+
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    strip.text = element_text(face = "bold")
+  )
+```
+
+## Tabla S8. Coeficientes de regresión joinpoint de las tasas de mortalidad estandarizadas por edad según nivel de código *garbage* (GC1 a GC4), región y jurisdicción. Argentina, 2010–2023.
+
+```{r}
+#| id: tabs8
+tab_mod |>
+  select(-segment) |>
+
+  # --- Generar tabla ---
+  flextable() |>
+
+  # --- Encabezados ---
+  set_header_labels(
+    nivel = "Grupo",
+    region = "Región",
+    jurisdiccion = "Jurisdicción",
+    jp = "JP",
+    period = "Período",
+    apc = "APC",
+    ci = "95% IC",
+    aapc = "AAPC"
+  ) |>
+
+  # --- Formato tabla ---
+  tab_fmt() |>
+  merge_v(j = 2:4, combine = TRUE) |>
+
+  merge_v(j = "region") |>
+  merge_v(j = "aapc")
+```
+
+## Figura S9. Evolución temporal de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad en las jurisdicciones de la Región Centro. Argentina, 2010–2023. Las líneas verticales en gris señalan los puntos de cambio en la tendencia Los puntos representan las tasas observadas en escala logarítmica y las líneas, los valores ajustados mediante modelos de regresión joinpoint. El color de ambos elementos indica la dirección de la tendencia según el cambio porcentual anual (APC). Al pie de cada panel se presenta el cambio porcentual anual promedio (AAPC); el asterisco indica significancia estadística (p < 0,05).
+
+```{r}
+#| id: figs9
+# ---- Datos para el gráfico ----
+mod_centro <- mod_jur[grepl("Centro", names(mod_jur))]
+
+names(mod_centro) <- str_remove_all(names(mod_centro), "Centro:")
+
+# ---- Gráfico
+gg_jpoint(
+  models = mod_centro,
+  geom = "linepoint",
+  facets = "grid",
+  color.by = "trend",
+  aapc = TRUE,
+  psize = 2,
+  date.breaks = "3 years"
+) +
+  scale_y_log10(name = "log(tasa)") +
+  scale_cbpal_color(palette = "managua", name = "Tendencia")
+```
+
+## Figura S10. Evolución temporal de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad en las jurisdicciones de la Región NEA. Argentina, 2010–2023. Las líneas verticales en gris señalan los puntos de cambio en la tendencia Los puntos representan las tasas observadas en escala logarítmica y las líneas, los valores ajustados mediante modelos de regresión joinpoint. El color de ambos elementos indica la dirección de la tendencia según el cambio porcentual anual (APC). Al pie de cada panel se presenta el cambio porcentual anual promedio (AAPC); el asterisco indica significancia estadística (p < 0,05).
+
+```{r}
+#| id: figs10
+# ---- Datos para el gráfico ----
+mod_NEA <- mod_jur[grepl("NEA", names(mod_jur))]
+
+names(mod_NEA) <- str_remove_all(names(mod_NEA), "NEA:")
+
+# ---- Gráfico
+gg_jpoint(
+  models = mod_NEA,
+  geom = "linepoint",
+  facets = "grid",
+  color.by = "trend",
+  aapc = TRUE,
+  psize = 2,
+  date.breaks = "3 years"
+) +
+  scale_y_log10(name = "log(tasa)") +
+  scale_cbpal_color(palette = "managua", name = "Tendencia")
+```
+
+## Figura S11. Evolución temporal de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad en las jurisdicciones de la Región NOA. Argentina, 2010–2023. Las líneas verticales en gris señalan los puntos de cambio en la tendencia Los puntos representan las tasas observadas en escala logarítmica y las líneas, los valores ajustados mediante modelos de regresión joinpoint. El color de ambos elementos indica la dirección de la tendencia según el cambio porcentual anual (APC). Al pie de cada panel se presenta el cambio porcentual anual promedio (AAPC); el asterisco indica significancia estadística (p < 0,05).
+
+```{r}
+#| id: figs11
+# ---- Datos para el gráfico ----
+mod_NOA <- mod_jur[grepl("NOA", names(mod_jur))]
+
+names(mod_NOA) <- str_remove_all(names(mod_NOA), "NOA:")
+
+# ---- Gráfico
+gg_jpoint(
+  models = mod_NOA,
+  geom = "linepoint",
+  facets = "grid",
+  color.by = "trend",
+  aapc = TRUE,
+  psize = 2,
+  date.breaks = "3 years"
+) +
+  scale_y_log10(name = "log(tasa)") +
+  scale_cbpal_color(palette = "managua", name = "Tendencia")
+```
+
+## Figura S12. Evolución temporal de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad en las jurisdicciones de las regiones Cuyo y Patagonia. Argentina, 2010–2023. Las líneas verticales en gris señalan los puntos de cambio en la tendencia Los puntos representan las tasas observadas en escala logarítmica y las líneas, los valores ajustados mediante modelos de regresión joinpoint. El color de ambos elementos indica la dirección de la tendencia según el cambio porcentual anual (APC). Al pie de cada panel se presenta el cambio porcentual anual promedio (AAPC); el asterisco indica significancia estadística (p < 0,05).
+
+```{r}
+#| id: figs12
+# ---- Datos para el gráfico ----
+mod_cuyo <- mod_jur[grepl("Cuyo|Pat", names(mod_jur))]
+
+names(mod_cuyo) <- str_remove_all(names(mod_cuyo), "Cuyo:|Patagonia:")
+
+# ---- Gráfico
+gg_jpoint(
+  models = mod_cuyo,
+  geom = "linepoint",
+  facets = "grid",
+  color.by = "trend",
+  aapc = TRUE,
+  psize = 2,
+  date.breaks = "3 years"
+) +
+  scale_y_log10(name = "log(tasa)") +
+  scale_cbpal_color(palette = "managua", name = "Tendencia")
+```
