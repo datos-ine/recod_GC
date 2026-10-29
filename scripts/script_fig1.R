@@ -2,7 +2,7 @@
 ### redistribución hacia causas específicas
 ### Figura 1
 ### Autora: Tamara Ricardo
-# Última modificación: 2026-10-28 09:28:26 -03
+# Última modificación: 2026-10-29 09:11:42 -0
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -17,8 +17,7 @@ fig1 <- grViz(
   digraph G {
     rankdir=LR
    graph[
-    fontsize = 14
-    fontname="Arial"
+    fontsize = 12
     style = filled
     nodesep=.5
     ranksep=.15
@@ -29,14 +28,14 @@ fig1 <- grViz(
     shape = plain
     style = filled
     fillcolor="grey95"
-    fontsize = 14
-    fontname="Arial"
+    fontsize = 12
     width=3.25
    ]
   
    subgraph cluster_paso1{
     label = <<b>Paso 1<br/> Categorizar grupos de causas</b>>
     fillcolor="#FFCE66BF" 
+    fontsize=14
   
     ent1[label = <
     <table border="0" cellborder = "1" cellspacing  ="0">
@@ -122,7 +121,7 @@ fig1 <- grViz(
    subgraph cluster_paso2{
     label = <<b>Paso 2<br/>Recategorizar GC3-GC4</b>>
     fillcolor="#92463ABF"
-    // labelloc=b
+    fontsize=14
     
   
   ent2[label = <
@@ -203,7 +202,8 @@ fig1 <- grViz(
   
     t3[
       label = <<b>Paso 3:<br/> Redistribuir GC2*</b>>
-        style = plaintext
+        style = plaintext,      
+    fontsize=14
         ]
 
     ent3[label = <
@@ -281,7 +281,8 @@ fig1 <- grViz(
 
     t4[
     label = <<b>Paso 4:<br/> Redistribuir GC1*</b>>
-      style = plaintext
+      style = plaintext,
+    fontsize=14
       ]
     
   ent4[label = <
@@ -379,4 +380,14 @@ export_svg(fig1) |>
   rsvg_eps(
     file = "figs_tablas/Figura1.eps",
     width = 560
+  )
+
+
+## Guardar como PNG ----
+export_svg(fig1) |>
+  charToRaw() |>
+  rsvg_png(
+    file = "figs_tablas/Figura1.png",
+    width = 567,
+    height = 794
   )

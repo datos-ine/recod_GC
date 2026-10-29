@@ -24,7 +24,7 @@ pacman::p_load(
 tab_fmt <- function(x) {
   x |>
     bold(part = "header") |>
-    font(fontname = "Arial", part = "all") |>
+    font(fontname = "Times New Roman", part = "all") |>
     fontsize(size = 12, part = "all") |>
     line_spacing(space = 2, part = "all") |>
     align(align = "left", part = "all") |>
@@ -218,7 +218,7 @@ fig2 <- datos_fig2 |>
   theme(
     legend.position = "bottom",
     axis.text.x = element_text(angle = 90),
-    text = element_text(size = 12)
+    text = element_text(size = 12, family = "serif")
   )
 
 
@@ -227,6 +227,16 @@ fig2 <- datos_fig2 |>
 #   fig2,
 #   filename = "figs_tablas/Figura2.eps",
 #   width = 17,
+#   height = 20,
+#   units = "cm",
+#   dpi = 300
+# )
+
+# ## Guardar como PNG ----
+# ggsave(
+#   fig2,
+#   filename = "figs_tablas/Figura2.png",
+#   width = 15,
 #   height = 20,
 #   units = "cm",
 #   dpi = 300
@@ -322,7 +332,8 @@ fig3 <- datos_fig3 |>
   theme_minimal() +
   theme(
     legend.position = "bottom",
-    axis.text.x = element_text(angle = 90)
+    axis.text.x = element_text(angle = 90),
+    text = element_text(size = 12, family = "serif")
   )
 
 
@@ -332,6 +343,16 @@ fig3 <- datos_fig3 |>
 #   filename = "figs_tablas/Figura3.eps",
 #   width = 17,
 #   height = 20,
+#   units = "cm",
+#   dpi = 300
+# )
+
+# ## Guardar como PNG ----
+# ggsave(
+#   fig3,
+#   filename = "figs_tablas/Figura3.png",
+#   width = 15,
+#   height = 18,
 #   units = "cm",
 #   dpi = 300
 # )
@@ -521,7 +542,13 @@ fig4 <- c(mod_ar, mod_reg) |>
     jp = FALSE,
     alpha = 1
   ) +
-  scale_cbpal_color(palette = "managua", name = "Tendencia")
+  scale_cbpal_color(
+    palette = "managua",
+    reverse = TRUE,
+    name = "APC",
+    labels = c("Descendente", "Ascendente", "No significativo")
+  ) +
+  theme(text = element_text(size = 12, family = "serif"))
 
 # ## Guardar como EPS ----
 # ggsave(
@@ -529,6 +556,16 @@ fig4 <- c(mod_ar, mod_reg) |>
 #   filename = "figs_tablas/Figura4.eps",
 #   width = 17,
 #   height = 20,
+#   units = "cm",
+#   dpi = 300
+# )
+
+## Guardar como PNG ----
+# ggsave(
+#   fig4,
+#   filename = "figs_tablas/Figura4.png",
+#   width = 15,
+#   height = 19,
 #   units = "cm",
 #   dpi = 300
 # )
