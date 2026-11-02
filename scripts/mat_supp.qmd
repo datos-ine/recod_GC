@@ -184,7 +184,7 @@ tabs2 |>
   tab_fmt() |>
   merge_v(j = 2) |>
   colformat_double(
-    big.mark = " ",
+    big.mark = ".",
     decimal.mark = ",",
     suffix = "%",
     digits = 2
@@ -229,7 +229,7 @@ tabs3 |>
   adorn_ns(
     position = "front",
     format_func = function(x) {
-      format(x, big.mark = " ", decimal.mark = ",")
+      format(x, big.mark = ".", decimal.mark = ",")
     }
   ) |>
   mutate(p.value = "<0,001") |>
@@ -275,7 +275,7 @@ tabs4 |>
   adorn_ns(
     position = "front",
     format_func = function(x) {
-      format(x, big.mark = " ", decimal.mark = ",")
+      format(x, big.mark = ".", decimal.mark = ",")
     }
   ) |>
   mutate(p.value = "<0,001") |>

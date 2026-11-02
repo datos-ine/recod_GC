@@ -4,7 +4,7 @@
 ## - Proyecciones poblacionales por sexo y grupo etario quinquenal, 2010-2023 (INDEC)
 ## - Población estándar por sexo y grupo etario, Argentina, Censo 2022 (INDEC)
 ### Autora: Tamara Ricardo
-# Última modificación: 2026-10-28 09:47:25 -03
+# Última modificación: 2026-10-28 10:52
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -99,27 +99,17 @@ proy_2010_2023 <- map(
       str_detect(prov_1, "90|38|66|10|86") ~ "NOA",
       str_detect(prov_1, "42|58|62|26|78|94") ~ "Patagonia",
     )
-  ) |>
-
-  # Crear subregión DEIS
-  mutate(
-    subregion_deis = case_when(
-      str_detect(prov_1, "50") ~ "Cuyo1",
-      str_detect(prov_1, "46|70|74") ~ "Cuyo2",
-      str_detect(prov_1, "90") ~ "NOA",
-      str_detect(prov_1, "38|66") ~ "NOA1",
-      str_detect(prov_1, "10|86") ~ "NOA2",
-      str_detect(prov_1, "42|58|62") ~ "Patagonia Norte",
-      str_detect(prov_1, "26|78|94") ~ "Patagonia Sur",
-      .default = region_deis
-    )
-  ) |>
+  ) |> 
 
   # Crear jurisdicción DEIS
   mutate(
     jurisd_deis = case_when(
-      str_detect(subregion_deis, "Cuyo2|NOA1|NOA2|Pat") ~ subregion_deis,
       str_detect(prov_1, "CABA") ~ "CABA",
+      str_detect(prov_1, "SAN |LA R") ~ "Cuyo2",
+      str_detect(prov_1, "JUJ|SAL") ~ "NOA1",
+      str_detect(prov_1, "CAT|EST") ~ "NOA2",
+      str_detect(prov_1, "PAM|NEU|NEG") ~ "Patagonia Norte",
+      str_detect(prov_1, "CHU|CRUZ|FUE") ~ "Patagonia SUR",
       .default = str_to_title(str_sub(prov_1, 4))
     )
   ) |>
@@ -150,7 +140,6 @@ proy_2010_2023 <- map(
   # Agrupar datos
   count(
     region_deis,
-    subregion_deis,
     jurisd_deis,
     anio = parse_number(anio),
     sexo,
@@ -167,7 +156,7 @@ proy_2010_2023 <- map(
 proy_mes_2010_2022 <- proy_2010_2023 |>
   # Expandir dataset
   expand(
-    nesting(region_deis, subregion_deis, jurisd_deis),
+    nesting(region_deis, jurisd_deis),
     sexo,
     grupo_edad,
     fecha = seq(
@@ -200,7 +189,6 @@ proy_mes_2010_2022 <- proy_2010_2023 |>
     anio,
     mes,
     region_deis,
-    subregion_deis,
     jurisd_deis,
     sexo,
     grupo_edad,

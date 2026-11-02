@@ -7,7 +7,7 @@
 ### Recategorización y redistribución de códigos garbage (GC)
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 28-10-2026 12:19
+# Última modificación: 2026-11-02 11:08
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -2169,6 +2169,17 @@ datos_em <- recod_defun |>
     )
   ) |>
 
+  # --- Modificar grupo causa ---
+  mutate(
+    grupo_causa = case_when(
+      causa %in% c("CRD", "DM-CKD", "ECV", "NPL") ~ "ENT-OBJ",
+      causa %in% c("CA", "SH", "TRA", "VI") ~ "CE-OBJ",
+      grupo_causa == "CMNN" ~ grupo_causa,
+      .default = paste0(grupo_causa, "-OTR")
+    ) |>
+      fct_relevel("ENT-OBJ", "ENT-OTR")
+  ) |>
+
   # --- Estimar frecuencias ---
   count(
     anio,
@@ -2186,6 +2197,7 @@ datos_em <- recod_defun |>
     across(.cols = where(is.character), .fns = ~ factor(.x))
   )
 
+
 # Exportar datos ---------------------------------------------------------
 ## ----- Tabla de frecuencias -----
 export(tab_fr, "figs_tablas/tab_s2.csv")
@@ -2194,4 +2206,4 @@ export(tab_fr, "figs_tablas/tab_s2.csv")
 export(datos_gc, "clean/arg_recod_defun_gbd23.rds")
 
 ## ---- Datos EM-----
-export(datos_em, "../EM_ENT_CE/clean/arg_defun_mensuales.rda")
+export(datos_em, "../EM_ENT_CE/clean/arg_defun_mensuales.rds")
