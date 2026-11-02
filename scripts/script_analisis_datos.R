@@ -42,8 +42,7 @@ tab_fmt <- function(x) {
 pob_est_2022 <- import(here("clean", "arg_pob_est_2022.rds"))
 
 ## Proyecciones poblacionales Argentina (2010-2023) -----
-proy_2010_2023 <- import(here("clean", "arg_proy_mensual_2010_2022.rds")) |>
-  filter(mes == 1)
+proy_2010_2023 <- import(here("clean", "arg_proy_2010_2023.rds"))
 
 
 ## Defunciones por grupo de causas -----
@@ -385,7 +384,7 @@ tasa_gc_arg <- datos_gc |>
       count(
         anio,
         grupo_edad,
-        wt = proy_pob,
+        wt = proy,
         name = "pob"
       )
   ) |>
@@ -432,7 +431,7 @@ tasa_gc_reg <- datos_gc |>
         anio,
         region_deis,
         grupo_edad,
-        wt = proy_pob,
+        wt = proy,
         name = "pob"
       )
   ) |>
@@ -478,7 +477,7 @@ tasa_gc_jur <- datos_gc |>
         region_deis,
         jurisd_deis,
         grupo_edad,
-        wt = proy_pob,
+        wt = proy,
         name = "pob"
       )
   ) |>

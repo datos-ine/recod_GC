@@ -4,7 +4,7 @@
 ## - Proyecciones poblacionales por sexo y grupo etario quinquenal, 2010-2023 (INDEC)
 ## - Población estándar por sexo y grupo etario, Argentina, Censo 2022 (INDEC)
 ### Autora: Tamara Ricardo
-# Última modificación: 2026-10-28 10:52
+# Última modificación: 2026-10-28 11:17
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -99,7 +99,7 @@ proy_2010_2023 <- map(
       str_detect(prov_1, "90|38|66|10|86") ~ "NOA",
       str_detect(prov_1, "42|58|62|26|78|94") ~ "Patagonia",
     )
-  ) |> 
+  ) |>
 
   # Crear jurisdicción DEIS
   mutate(
@@ -109,7 +109,7 @@ proy_2010_2023 <- map(
       str_detect(prov_1, "JUJ|SAL") ~ "NOA1",
       str_detect(prov_1, "CAT|EST") ~ "NOA2",
       str_detect(prov_1, "PAM|NEU|NEG") ~ "Patagonia Norte",
-      str_detect(prov_1, "CHU|CRUZ|FUE") ~ "Patagonia SUR",
+      str_detect(prov_1, "CHU|CRUZ|FUE") ~ "Patagonia Sur",
       .default = str_to_title(str_sub(prov_1, 4))
     )
   ) |>
@@ -193,14 +193,23 @@ proy_mes_2010_2022 <- proy_2010_2023 |>
     sexo,
     grupo_edad,
     proy_pob
-  )
+  ) |>
+
+  # Filtrar datos 2023
+  filter_out(anio == 2023)
 
 
 # Exportar datos limpios -------------------------------------------------
+## ---- Proyecciones poblacionales ----
+export(
+  proy_2010_2023,
+  file = "clean/arg_proy_2010_2023.rds"
+)
+
 ## ---- Proyecciones poblacionales mensuales ----
 export(
   proy_mes_2010_2022,
-  file = "clean/arg_proy_mensual_2010_2022.rds"
+  file = "../EM_ENT_CE/clean/arg_proy_mensual_2010_2022.rds"
 )
 
 
