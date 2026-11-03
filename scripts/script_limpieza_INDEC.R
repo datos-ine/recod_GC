@@ -4,7 +4,7 @@
 ## - Proyecciones poblacionales por sexo y grupo etario quinquenal, 2010-2023 (INDEC)
 ## - Población estándar por sexo y grupo etario, Argentina, Censo 2022 (INDEC)
 ### Autora: Tamara Ricardo
-# Última modificación: 2026-10-28 11:17
+# Última modificación: 2026-11-03 12:58:57
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -152,64 +152,11 @@ proy_2010_2023 <- map(
   mutate(across(.cols = where(is.character), .fns = ~ factor(.x)))
 
 
-# Estimar población mensual ----------------------------------------------
-proy_mes_2010_2022 <- proy_2010_2023 |>
-  # Expandir dataset
-  expand(
-    nesting(region_deis, jurisd_deis),
-    sexo,
-    grupo_edad,
-    fecha = seq(
-      from = ymd("2010-01-01"),
-      to = ymd("2023-12-01"),
-      by = "1 month"
-    )
-  ) |>
-
-  # Crear columna para mes y año
-  mutate(
-    anio = year(fecha),
-    mes = month(fecha)
-  ) |>
-
-  # Unir con base población anual
-  left_join(
-    proy_2010_2023 |>
-      mutate(fecha = make_date(anio))
-  ) |>
-
-  # Interpolación lineal
-  mutate(
-    proy_pob = na.approx(proy, x = fecha, na.rm = FALSE),
-    .by = c(jurisd_deis, sexo, grupo_edad)
-  ) |>
-
-  # Ordenar columnas
-  select(
-    anio,
-    mes,
-    region_deis,
-    jurisd_deis,
-    sexo,
-    grupo_edad,
-    proy_pob
-  ) |>
-
-  # Filtrar datos 2023
-  filter_out(anio == 2023)
-
-
 # Exportar datos limpios -------------------------------------------------
 ## ---- Proyecciones poblacionales ----
 export(
   proy_2010_2023,
   file = "clean/arg_proy_2010_2023.rds"
-)
-
-## ---- Proyecciones poblacionales mensuales ----
-export(
-  proy_mes_2010_2022,
-  file = "../EM_ENT_CE/clean/arg_proy_mensual_2010_2022.rds"
 )
 
 
