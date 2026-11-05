@@ -7,7 +7,7 @@
 ### Recategorización y redistribución de códigos garbage (GC)
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 2026-11-02 11:08
+# Última modificación: 2026-11-05 09:01:02
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -2151,7 +2151,9 @@ datos_gc <- recod_defun |>
 # Crear dataset para análisis EM -----------------------------------------
 datos_em <- recod_defun |>
   # --- Quitar datos fuera del rango ---
-  filter_out(anio > 2022 | mes == 0) |>
+  filter_out(
+    anio > 2022 | mes == 0 | grupo_edad == "<20 años"
+  ) |>
 
   # --- Separar paso 4 ---
   separate_wider_delim(
@@ -2169,16 +2171,28 @@ datos_em <- recod_defun |>
     )
   ) |>
 
-  # --- Modificar grupo causa ---
+  # --- Crear subgrupo causa ---
   mutate(
-    grupo_causa = case_when(
+    subgrupo_causa = case_when(
       causa %in% c("CRD", "DM-CKD", "ECV", "NPL") ~ "ENT-OBJ",
-      causa %in% c("CA", "SH", "TRA", "VI") ~ "CE-OBJ",
+      causa %in% c("SH", "TRA", "VI") ~ "CE-OBJ",
       grupo_causa == "CMNN" ~ grupo_causa,
       .default = paste0(grupo_causa, "-OTR")
     ) |>
       fct_relevel("ENT-OBJ", "ENT-OTR")
   ) |>
+
+  # --- Modificar grupo etario ---
+  mutate(
+    grupo_edad = fct_collapse(
+      grupo_edad,
+      "40-59" = c("40-49", "50-59"),
+      "60-79" = c("60-69", "70-79")
+    )
+  ) |>
+
+  # --- Quitar niveles vacíos ---
+  droplevels() |>
 
   # --- Estimar frecuencias ---
   count(
@@ -2189,6 +2203,7 @@ datos_em <- recod_defun |>
     sexo,
     grupo_edad,
     grupo_causa,
+    subgrupo_causa,
     causa
   ) |>
 
