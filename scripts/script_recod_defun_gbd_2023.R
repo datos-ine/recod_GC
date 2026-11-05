@@ -7,7 +7,7 @@
 ### Recategorización y redistribución de códigos garbage (GC)
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 2026-11-05 09:01:02
+# Última modificación: 2026-11-05 09:22:25
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -2221,4 +2221,4 @@ export(tab_fr, "figs_tablas/tab_s2.csv")
 export(datos_gc, "clean/arg_recod_defun_gbd23.rds")
 
 ## ---- Datos EM-----
-export(datos_em, "../EM_ENT_CE/clean/arg_defun_mensuales.rds")
+export(datos_em, "../EM_COVID-19/clean/arg_defun_mensuales_2010_2022.rds")
