@@ -7,7 +7,7 @@
 ### Recategorización y redistribución de códigos garbage (GC)
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 2026-11-05 09:22:25
+# Última modificación: 2026-11-06 08:42:57
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -2162,15 +2162,6 @@ datos_em <- recod_defun |>
     delim = ":"
   ) |>
 
-  # --- Modificar causa ---
-  mutate(
-    causa = if_else(
-      cie10_cod %in% c("U07.1", "U07.2"),
-      "COVID-19",
-      causa
-    )
-  ) |>
-
   # --- Crear subgrupo causa ---
   mutate(
     subgrupo_causa = case_when(
@@ -2180,6 +2171,16 @@ datos_em <- recod_defun |>
       .default = paste0(grupo_causa, "-OTR")
     ) |>
       fct_relevel("ENT-OBJ", "ENT-OTR")
+  ) |>
+
+  # --- Modificar causa ---
+  mutate(
+    causa = case_when(
+      causa %in% c("SH", "VI") ~ "SH-VI",
+      cie10_cod %in% c("U07.1", "U07.2") ~ "COVID-19",
+      causa %in% c("CRD", "DM-CKD", "ECV", "NPL", "TRA") ~ causa,
+      .default = subgrupo_causa
+    )
   ) |>
 
   # --- Modificar grupo etario ---
