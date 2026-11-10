@@ -7,7 +7,7 @@
 ### Recategorización y redistribución de códigos garbage (GC)
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 2026-11-06 08:42:57
+# Última modificación: 2026-11-10 12:30:26
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -2148,70 +2148,18 @@ datos_gc <- recod_defun |>
   )
 
 
-# Crear dataset para análisis EM -----------------------------------------
+# # Crear dataset para análisis EM -----------------------------------------
 datos_em <- recod_defun |>
   # --- Quitar datos fuera del rango ---
   filter_out(
     anio > 2022 | mes == 0 | grupo_edad == "<20 años"
   ) |>
 
-  # --- Separar paso 4 ---
-  separate_wider_delim(
-    cols = gbd_paso4,
-    names = c("grupo_causa", "causa"),
-    delim = ":"
-  ) |>
-
-  # --- Crear subgrupo causa ---
-  mutate(
-    subgrupo_causa = case_when(
-      causa %in% c("CRD", "DM-CKD", "ECV", "NPL") ~ "ENT-OBJ",
-      causa %in% c("SH", "TRA", "VI") ~ "CE-OBJ",
-      grupo_causa == "CMNN" ~ grupo_causa,
-      .default = paste0(grupo_causa, "-OTR")
-    ) |>
-      fct_relevel("ENT-OBJ", "ENT-OTR")
-  ) |>
-
-  # --- Modificar causa ---
-  mutate(
-    causa = case_when(
-      causa %in% c("SH", "VI") ~ "SH-VI",
-      cie10_cod %in% c("U07.1", "U07.2") ~ "COVID-19",
-      causa %in% c("CRD", "DM-CKD", "ECV", "NPL", "TRA") ~ causa,
-      .default = subgrupo_causa
-    )
-  ) |>
-
-  # --- Modificar grupo etario ---
-  mutate(
-    grupo_edad = fct_collapse(
-      grupo_edad,
-      "40-59" = c("40-49", "50-59"),
-      "60-79" = c("60-69", "70-79")
-    )
-  ) |>
+  # --- Seleccionar columnas ---
+  select(anio:grupo_edad, gbd_paso4) |>
 
   # --- Quitar niveles vacíos ---
-  droplevels() |>
-
-  # --- Estimar frecuencias ---
-  count(
-    anio,
-    mes,
-    region_deis,
-    jurisd_deis,
-    sexo,
-    grupo_edad,
-    grupo_causa,
-    subgrupo_causa,
-    causa
-  ) |>
-
-  # --- Variables caracter a factor ---
-  mutate(
-    across(.cols = where(is.character), .fns = ~ factor(.x))
-  )
+  droplevels()
 
 
 # Exportar datos ---------------------------------------------------------
@@ -2222,4 +2170,4 @@ export(tab_fr, "figs_tablas/tab_s2.csv")
 export(datos_gc, "clean/arg_recod_defun_gbd23.rds")
 
 ## ---- Datos EM-----
-export(datos_em, "../EM_COVID-19/clean/arg_defun_mensuales_2010_2022.rds")
+export(datos_em, "../EM_COVID-19/raw/arg_defun_mensuales_2010_2022.rds")
