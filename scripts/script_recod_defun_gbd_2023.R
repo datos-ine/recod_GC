@@ -7,7 +7,7 @@
 ### Recategorización y redistribución de códigos garbage (GC)
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 2026-11-10 12:30:26
+# Última modificación: 2026-11-10 12:49:19
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -2155,11 +2155,17 @@ datos_em <- recod_defun |>
     anio > 2022 | mes == 0 | grupo_edad == "<20 años"
   ) |>
 
-  # --- Seleccionar columnas ---
-  select(anio:grupo_edad, gbd_paso4) |>
+  # --- Modificar causas ---
+  mutate(
+    gbd_paso4 = if_else(
+      cie10_cod %in% c("U07.1", "U07.2"),
+      "COVID-19",
+      gbd_paso4
+    )
+  ) |>
 
-  # --- Quitar niveles vacíos ---
-  droplevels()
+  # --- Seleccionar columnas ---
+  select(anio:grupo_edad, gbd_paso4)
 
 
 # Exportar datos ---------------------------------------------------------
@@ -2170,4 +2176,4 @@ export(tab_fr, "figs_tablas/tab_s2.csv")
 export(datos_gc, "clean/arg_recod_defun_gbd23.rds")
 
 ## ---- Datos EM-----
-export(datos_em, "../EM_COVID-19/raw/arg_defun_mensuales_2010_2022.rds")
+export(datos_em, "../EM_COVID-19/raw/arg_defun_mensuales_2010_2022.csv")
