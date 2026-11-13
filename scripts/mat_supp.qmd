@@ -1,26 +1,28 @@
 ---
 title: "Material suplementario"
-author: 
-      - name: Tamara Ricardo
-        orcid: 0000-0002-0921-2611
-      - name: Juan I. Irassar
-        orcid: 0000-0003-2215-6682
-      - name: M. Fernanda Aguirre
-        orcid: 0000-0002-3979-865X
-      - name: M. Jimena Marro
-        orcid: 0000-0002-9483-2304
+# author: 
+#       - name: Tamara Ricardo
+#         orcid: 0000-0002-0921-2611
+#       - name: Juan I. Irassar
+#         orcid: 0000-0003-2215-6682
+#       - name: M. Fernanda Aguirre
+#         orcid: 0000-0002-3979-865X
+#       - name: M. Jimena Marro
+#         orcid: 0000-0002-9483-2304
 format: 
     pdf:
       papersize: a4
+      mainfont: "Times New Roman"
+      sansfont: "Times New Roman"
       fontsize: 12pt     
       geometry:
       - top=25mm
-      - left=25mm
+      - left=30mm
       - heightrounded
       include-in-header:
         text: |
          \usepackage{setspace}
-          \doublespacing
+          \onehalfspacing
 ---
 
 ```{r}
@@ -162,7 +164,7 @@ tabs1 |>
   # --- Formato tabla ---
   tab_fmt() |>
   merge_v(j = 1:2) |>
-  width(width = c(3, 3, 10), unit = "cm")
+  width(width = c(3, 3, 9), unit = "cm")
 ```
 
 \newpage
@@ -347,7 +349,7 @@ bind_rows(tasa_gc_arg, tasa_gc_reg) |>
   theme_minimal() +
   theme(
     legend.position = "bottom",
-    text = element_text(size = 12, family = "serif")
+    text = element_text(size = 12)
   )
 ```
 
@@ -384,7 +386,7 @@ tasa_gc_jur |>
   theme_minimal() +
   theme(
     legend.position = "bottom",
-    text = element_text(size = 12, family = "serif")
+    text = element_text(size = 12)
   )
 ```
 \newpage
@@ -443,7 +445,7 @@ gg_jpoint(
     name = "APC",
     labels = c("Descendente", "Ascendente", "No significativo")
   ) +
-  theme(text = element_text(size = 12, family = "serif"))
+  theme(text = element_text(size = 12))
 ```
 
 ## Figura S10. Evolución temporal de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad en las jurisdicciones de la Región NEA. Argentina, 2010–2023. Los puntos representan las tasas observadas en escala logarítmica y las líneas, los valores ajustados mediante modelos de regresión joinpoint. El color de ambos elementos indica la dirección de la tendencia según el cambio porcentual anual (APC).
@@ -471,7 +473,7 @@ gg_jpoint(
     name = "APC",
     labels = c("Descendente", "Ascendente", "No significativo")
   ) +
-  theme(text = element_text(size = 12, family = "serif"))
+  theme(text = element_text(size = 12))
 ```
 
 ## Figura S11. Evolución temporal de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad en las jurisdicciones de la Región NOA. Argentina, 2010–2023. Los puntos representan las tasas observadas en escala logarítmica y las líneas, los valores ajustados mediante modelos de regresión joinpoint. El color de ambos elementos indica la dirección de la tendencia según el cambio porcentual anual (APC).
@@ -499,7 +501,7 @@ gg_jpoint(
     name = "APC",
     labels = c("Descendente", "Ascendente", "No significativo")
   ) +
-  theme(text = element_text(size = 12, family = "serif"))
+  theme(text = element_text(size = 12))
 ```
 
 ## Figura S12. Evolución temporal de las tasas de mortalidad por códigos *garbage* (GC) estandarizadas por edad en las jurisdicciones de las regiones Cuyo y Patagonia. Argentina, 2010–2023. Los puntos representan las tasas observadas en escala logarítmica y las líneas, los valores ajustados mediante modelos de regresión joinpoint. El color de ambos elementos indica la dirección de la tendencia según el cambio porcentual anual (APC).
@@ -527,5 +529,5 @@ gg_jpoint(
     name = "APC",
     labels = c("Descendente", "Ascendente", "No significativo")
   ) +
-  theme(text = element_text(size = 12, family = "serif"))
+  theme(text = element_text(size = 12))
 ```

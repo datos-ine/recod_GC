@@ -3,7 +3,7 @@
 ### Análisis de datos
 ### Autora: Tamara Ricardo
 ### Revisor: Juan I. Irassar
-# Última modificación: 2026-10-28 09:41:36 -03
+# Última modificación: "2026-11-12 13:42:26
 
 # Cargar paquetes --------------------------------------------------------
 pacman::p_load(
@@ -26,7 +26,7 @@ tab_fmt <- function(x) {
     bold(part = "header") |>
     font(fontname = "Times New Roman", part = "all") |>
     fontsize(size = 12, part = "all") |>
-    line_spacing(space = 2, part = "all") |>
+    line_spacing(space = 1, part = "all") |>
     align(align = "left", part = "all") |>
     merge_v(j = 1) |>
     merge_v(j = 2:3, combine = TRUE) |>
@@ -217,7 +217,7 @@ fig2 <- datos_fig2 |>
   theme(
     legend.position = "bottom",
     axis.text.x = element_text(angle = 90),
-    text = element_text(size = 12, family = "serif")
+    text = element_text(size = 12, family = "Times New Roman")
   )
 
 
@@ -332,7 +332,7 @@ fig3 <- datos_fig3 |>
   theme(
     legend.position = "bottom",
     axis.text.x = element_text(angle = 90),
-    text = element_text(size = 12, family = "serif")
+    text = element_text(size = 12, family = "Times New Roman")
   )
 
 
@@ -547,7 +547,7 @@ fig4 <- c(mod_ar, mod_reg) |>
     name = "APC",
     labels = c("Descendente", "Ascendente", "No significativo")
   ) +
-  theme(text = element_text(size = 12, family = "serif"))
+  theme(text = element_text(size = 12, family = "Times New Roman"))
 
 # ## Guardar como EPS ----
 # ggsave(

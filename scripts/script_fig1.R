@@ -18,6 +18,7 @@ fig1 <- grViz(
     rankdir=LR
    graph[
     fontsize = 12
+    fontname = "Times-Roman"
     style = filled
     nodesep=.5
     ranksep=.15
@@ -35,7 +36,6 @@ fig1 <- grViz(
    subgraph cluster_paso1{
     label = <<b>Paso 1<br/> Categorizar grupos de causas</b>>
     fillcolor="#FFCE66BF" 
-    fontsize=14
   
     ent1[label = <
     <table border="0" cellborder = "1" cellspacing  ="0">
@@ -121,7 +121,6 @@ fig1 <- grViz(
    subgraph cluster_paso2{
     label = <<b>Paso 2<br/>Recategorizar GC3-GC4</b>>
     fillcolor="#92463ABF"
-    fontsize=14
     
   
   ent2[label = <
@@ -202,8 +201,7 @@ fig1 <- grViz(
   
     t3[
       label = <<b>Paso 3:<br/> Redistribuir GC2*</b>>
-        style = plaintext,      
-    fontsize=14
+        style = plaintext
         ]
 
     ent3[label = <
@@ -281,8 +279,7 @@ fig1 <- grViz(
 
     t4[
     label = <<b>Paso 4:<br/> Redistribuir GC1*</b>>
-      style = plaintext,
-    fontsize=14
+      style = plaintext
       ]
     
   ent4[label = <
